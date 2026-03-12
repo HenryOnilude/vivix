@@ -1,8 +1,8 @@
 <script>
   import { onMount } from 'svelte';
-  import { gsap } from 'gsap';
   import { interpret } from './interpreter.js';
   import { dc, fv, tc, tb } from './utils.js';
+  import { animateBar, animateFrame, animateVar } from './animations.js';
 
   const examples = [
     {
@@ -72,29 +72,6 @@
       changed: s.changed || null,
       done: s.done || false
     }));
-  }
-
-  // GSAP actions
-  function animateFrame(node, p) {
-    if (p.isNew) {
-      gsap.from(node, { scaleY: 0, opacity: 0, duration: 0.6, ease: 'back.out(1.7)', transformOrigin: 'top center' });
-    }
-    return { update(np) {
-      if (np.isNew) gsap.from(node, { scaleY: 0, opacity: 0, duration: 0.6, ease: 'back.out(1.7)', transformOrigin: 'top center' });
-    }};
-  }
-
-  function animateVar(node, p) {
-    function run(flash) {
-      if (flash) gsap.fromTo(node, { color: '#fff', scale: 1.3 }, { color: p.color || '#e0e0e0', scale: 1, duration: 0.8, ease: 'power2.out' });
-    }
-    run(p.flash);
-    return { update(np) { run(np.flash); }};
-  }
-
-  function animateBar(node, p) {
-    gsap.to(node, { height: p.active ? p.h + '%' : (p.h * 0.3) + '%', opacity: p.active ? 1 : 0.2, duration: 0.6, ease: 'power2.out' });
-    return { update(np) { gsap.to(node, { height: np.active ? np.h + '%' : (np.h * 0.3) + '%', opacity: np.active ? 1 : 0.2, duration: 0.6, ease: 'power2.out' }); }};
   }
 
   function runCode() {

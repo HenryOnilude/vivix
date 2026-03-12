@@ -3,6 +3,7 @@
   import { gsap } from 'gsap';
   import { interpret } from './interpreter.js';
   import { dc, fv, tc, tb, totalBytes, byteSize, COMPLEXITY_BARS } from './utils.js';
+  import { animateBar } from './animations.js';
 
   const ACCENT = '#38bdf8';
   const examples = [
@@ -70,21 +71,6 @@
     }
     run(p.status, p.color);
     return { update(np) { run(np.status, np.color); } };
-  }
-
-  function animateBar(node, p) {
-    gsap.to(node, {
-      height: p.active ? p.h + '%' : (p.h * 0.3) + '%',
-      opacity: p.active ? 1 : 0.2,
-      duration: 0.8, ease: 'power2.out'
-    });
-    return { update(np) {
-      gsap.to(node, {
-        height: np.active ? np.h + '%' : (np.h * 0.3) + '%',
-        opacity: np.active ? 1 : 0.2,
-        duration: 0.8, ease: 'power2.out'
-      });
-    }};
   }
 
   const bars = [

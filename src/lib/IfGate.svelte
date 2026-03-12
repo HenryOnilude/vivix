@@ -3,6 +3,7 @@
   import { gsap } from 'gsap';
   import { interpret } from './interpreter.js';
   import { dc, fv, tc, tb, totalBytes, byteSize } from './utils.js';
+  import { animateBar, animatePath, animateBall, animateArrow } from './animations.js';
 
   const ACCENT = '#ff8866';
   const examples = [
@@ -69,50 +70,6 @@
     }
     run(p.status, p.color);
     return { update(np) { run(np.status, np.color); } };
-  }
-
-  function animatePath(node, _p) {
-    const len = node.getTotalLength();
-    gsap.fromTo(node,
-      { strokeDasharray: len, strokeDashoffset: len },
-      { strokeDashoffset: 0, duration: 1.0, ease: 'power2.inOut' }
-    );
-    return { update() {
-      const l = node.getTotalLength();
-      gsap.fromTo(node, { strokeDasharray: l, strokeDashoffset: l }, { strokeDashoffset: 0, duration: 1.0, ease: 'power2.inOut' });
-    }};
-  }
-
-  function animateBall(node, p) {
-    function run(taken) {
-      if (taken) {
-        gsap.fromTo(node, { attr: { cx: 150, cy: 30 } }, { attr: { cx: 60, cy: 145 }, duration: 1.2, ease: 'power2.inOut' });
-      } else {
-        gsap.fromTo(node, { attr: { cx: 150, cy: 30 } }, { attr: { cx: 240, cy: 145 }, duration: 1.2, ease: 'power2.inOut' });
-      }
-    }
-    run(p.taken);
-    return { update(np) { run(np.taken); } };
-  }
-
-  function animateBar(node, p) {
-    gsap.to(node, {
-      height: p.active ? p.h + '%' : (p.h * 0.3) + '%',
-      opacity: p.active ? 1 : 0.2,
-      duration: 0.8, ease: 'power2.out'
-    });
-    return { update(np) {
-      gsap.to(node, {
-        height: np.active ? np.h + '%' : (np.h * 0.3) + '%',
-        opacity: np.active ? 1 : 0.2,
-        duration: 0.8, ease: 'power2.out'
-      });
-    }};
-  }
-
-  function animateArrow(node, _p) {
-    gsap.from(node, { opacity: 0, x: -10, duration: 0.5, ease: 'power2.out' });
-    return { update() { gsap.from(node, { opacity: 0, x: -10, duration: 0.5, ease: 'power2.out' }); } };
   }
 
   const bars = [

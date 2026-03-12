@@ -1,8 +1,8 @@
 <script>
   import { onMount } from 'svelte';
-  import { gsap } from 'gsap';
   import { interpret } from './interpreter.js';
   import { dc, fv, tc, tb } from './utils.js';
+  import { makeAnimateBox, makeAnimateVal, animateBar, animateElement } from './animations.js';
 
   const examples = [
     {
@@ -85,34 +85,8 @@
     return arrs;
   }
 
-  // GSAP actions
-  function animateBox(node, p) {
-    function run(s) {
-      if (s === 'new') gsap.from(node, { scaleY: 0, opacity: 0, duration: 0.7, ease: 'back.out(1.7)', transformOrigin: 'bottom center' });
-      else if (s === 'changed') gsap.fromTo(node, { borderColor: '#f59e0b' }, { borderColor: '#1a1a2e', duration: 1.2 });
-    }
-    run(p.status);
-    return { update(np) { run(np.status); } };
-  }
-
-  function animateVal(node, p) {
-    function run(s, col) {
-      if (s === 'new') gsap.from(node, { scale: 0, opacity: 0, duration: 0.65, delay: 0.3, ease: 'back.out(2)' });
-      else if (s === 'changed') gsap.fromTo(node, { color: '#fff', scale: 1.3 }, { color: col, scale: 1, duration: 0.8, ease: 'power2.out' });
-    }
-    run(p.status, p.color);
-    return { update(np) { run(np.status, np.color); } };
-  }
-
-  function animateElement(node, p) {
-    if (p.isNew) gsap.from(node, { x: 30, opacity: 0, duration: 0.5, ease: 'power2.out' });
-    return { update(np) { if (np.isNew) gsap.from(node, { x: 30, opacity: 0, duration: 0.5, ease: 'power2.out' }); }};
-  }
-
-  function animateBar(node, p) {
-    gsap.to(node, { height: p.active ? p.h + '%' : (p.h * 0.3) + '%', opacity: p.active ? 1 : 0.2, duration: 0.6, ease: 'power2.out' });
-    return { update(np) { gsap.to(node, { height: np.active ? np.h + '%' : (np.h * 0.3) + '%', opacity: np.active ? 1 : 0.2, duration: 0.6, ease: 'power2.out' }); }};
-  }
+  const animateBox = makeAnimateBox('#88aaff');
+  const animateVal = makeAnimateVal();
 
   // Derive variable diff status for animations
   let prevVars = $state({});
