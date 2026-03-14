@@ -446,8 +446,13 @@ export function interpret(code, options = {}) {
 
   // Start step
   steps.push(makeStep(-1, findNextLine(lines, -1), vars, output, null, 'start',
-    'The CPU begins reading your program from line 1. The Program Counter (PC) is set to the first instruction.',
-    'PC → line 1', state, options));
+    'V8 ENGINE STARTUP:\n\n' +
+    '1. PARSING — V8\'s parser (similar to Acorn) reads your source code and builds an Abstract Syntax Tree (AST).\n' +
+    '2. IGNITION — V8\'s bytecode interpreter compiles the AST into compact bytecode. This is fast to generate but runs slower than machine code.\n' +
+    '3. EXECUTION — Ignition begins executing bytecode line by line. The Program Counter (PC) is set to the first instruction.\n\n' +
+    'If a function or loop becomes "hot" (runs many times), V8\'s TurboFan JIT compiler will optimize it into native machine code for maximum speed.\n\n' +
+    'The call stack starts with a single Global frame. All top-level variables live here.',
+    'PC → line 1 | Ignition start', state, options));
 
   // Walk top-level statements (with runtime error recovery)
   try {
@@ -552,7 +557,7 @@ function walkVarDeclaration(stmt, nextLi, vars, output, lines, steps, state, opt
       if (options.trackObjects) state.extra.objOps++;
 
       steps.push(makeStep(nodeLine(stmt), nextLi, vars, output, names[0], 'obj-destruct',
-        `DESTRUCTURING:\n\n${names.map(n => `  ${n} = ${fv(vars[n])}`).join('\n')}\n\nEach destructured key is an O(1) hash lookup.`,
+        `DESTRUCTURING:\n\n${names.map(n => `  ${n} = ${fv(vars[n])}`).join('\n')}\n\nEach destructured key is an O(1) hash lookup.\n\nV8 Internal — Inline Caches for Destructuring:\nV8 creates an inline cache (IC) for each destructured property. Since all properties are accessed from the same object with the same hidden class, V8 can use a monomorphic IC — the fastest access pattern. Each lookup becomes a direct memory offset read.`,
         `DESTRUCT: ${names.length} keys`, state, options));
     }
     else if (decl.id.type === 'ArrayPattern') {
@@ -584,7 +589,7 @@ function walkExpressionStatement(stmt, nextLi, vars, output, lines, steps, state
     const str = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
     output.push(str);
     steps.push(makeStep(li, nextLi, vars, output, null, 'output',
-      `console.log outputs: ${str}\n\nNo variables changed. I/O operation only.`,
+      `console.log outputs: ${str}\n\nNo variables changed. I/O operation only.\n\nV8 Internal — Side Effects & Deoptimization:\nconsole.log is a "side effect" — it interacts with the outside world (stdout). V8's TurboFan optimizer is cautious around side effects because they can't be reordered or eliminated.\n\nInside a hot loop, console.log acts as a deoptimization barrier — TurboFan cannot move it, remove it, or optimize across it. This is why logging inside tight loops significantly slows down production code.`,
       `I/O: stdout ← ${str}`, state, options));
     return;
   }
@@ -602,7 +607,7 @@ function walkExpressionStatement(stmt, nextLi, vars, output, lines, steps, state
     evalNode(expr, vars);
     state.memOps++;
     steps.push(makeStep(li, nextLi, vars, output, name, 'assign',
-      `UPDATE: ${name}${expr.operator}\n\nBefore: ${fv(old)}\nAfter: ${fv(vars[name])}`,
+      `UPDATE: ${name}${expr.operator}\n\nBefore: ${fv(old)}\nAfter: ${fv(vars[name])}\n\nV8 Internal — SMI Fast Path:\n${typeof vars[name] === 'number' && Number.isInteger(vars[name]) && vars[name] >= -1073741824 && vars[name] <= 1073741823 ? `The result (${vars[name]}) fits in a 31-bit SMI. V8 handles this increment entirely in the pointer tag — no heap allocation, no boxing. This is the fastest possible numeric operation in V8.` : `The result overflows the SMI range or is a double. V8 must allocate a HeapNumber on the heap to store it. This is slower than the SMI fast path.`}`,
       `${name}${expr.operator} → ${fv(vars[name])}`, state, options));
     return;
   }
@@ -625,7 +630,7 @@ function walkAssignmentExpr(expr, li, nextLi, vars, output, lines, steps, state,
     state.memOps++;
 
     steps.push(makeStep(li, nextLi, vars, output, name, 'assign',
-      `REASSIGNMENT: ${name}\n\nBefore: ${fv(old)}\nAfter: ${fv(vars[name])}\n\nThe old value is overwritten in place.`,
+      `REASSIGNMENT: ${name}\n\nBefore: ${fv(old)}\nAfter: ${fv(vars[name])}\n\nThe old value is overwritten in place.\n\nV8 Internal — Inline Cache (IC):\nV8 remembers the type of "${name}" from previous accesses. ${typeof old === typeof vars[name] ? `The type hasn't changed (${typeof vars[name]}), so V8's IC stays "monomorphic" — the fastest state. The next read of "${name}" is a single pointer dereference.` : `The type CHANGED (${typeof old} → ${typeof vars[name]}), which makes V8's IC "polymorphic" or "megamorphic" — slower because V8 must now check multiple types. This can prevent TurboFan optimization.`}`,
       `${name}: ${fv(old)} → ${fv(vars[name])}`, state, options));
   }
   else if (expr.left.type === 'MemberExpression') {
@@ -639,7 +644,7 @@ function walkAssignmentExpr(expr, li, nextLi, vars, output, lines, steps, state,
 
     const phase = Array.isArray(vars[objName]) ? 'arr-set' : 'obj-set';
     steps.push(makeStep(li, nextLi, vars, output, objName, phase,
-      `PROPERTY SET: ${objName}[${fv(prop)}] = ${fv(vars[objName]?.[prop])}\n\nO(1) hash map operation.`,
+      `PROPERTY SET: ${objName}[${fv(prop)}] = ${fv(vars[objName]?.[prop])}\n\nO(1) hash map operation.\n\nV8 Internal — Hidden Class Transition:\nAdding a new property causes V8 to transition the object's hidden class (Map). Each unique property addition creates a new Map in the transition tree. Objects that add properties in the SAME ORDER share Maps, enabling fast inline-cached access.\n\nIf you add properties in inconsistent orders across similar objects, V8 falls into "dictionary mode" (slow properties) — losing the fast-path optimization.`,
       `SET: ${objName}[${fv(prop)}]`, state, options,
       false, { highlightKey: String(prop) }));
   }
@@ -663,7 +668,7 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
         if (options.trackArrays) state.extra.arrOps++;
         if (options.trackDS) state.extra.dsOps++;
         steps.push(makeStep(li, nextLi, vars, output, objName, 'ds-push',
-          `PUSH: ${objName}.push(${args.map(fv).join(', ')})\n\nElement added at index ${obj.length - 1}.\nNo other elements move — O(1).\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]`,
+          `PUSH: ${objName}.push(${args.map(fv).join(', ')})\n\nElement added at index ${obj.length - 1}.\nNo other elements move — O(1).\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nV8 Internal — Backing Store:\nArrays in V8 have a backing store (FixedArray) with extra capacity. Push appends to the end — if capacity remains, it's a single memory write. If the backing store is full, V8 allocates a new one ~1.5× larger and copies elements over (amortized O(1)).\n\nElements kind: ${obj.every(v => typeof v === 'number' && Number.isInteger(v)) ? 'PACKED_SMI — fastest, unboxed integers' : obj.every(v => typeof v === 'number') ? 'PACKED_DOUBLE — fast, unboxed doubles' : 'PACKED_ELEMENTS — tagged pointers (mixed types)'}`,
           `PUSH: ${objName}[${obj.length - 1}] ← ${fv(args[0])} | O(1)`, state, options,
           false, { highlightIndex: obj.length - 1 }));
         return;
@@ -675,7 +680,7 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
         if (options.trackArrays) state.extra.arrOps++;
         if (options.trackDS) state.extra.dsOps++;
         steps.push(makeStep(li, nextLi, vars, output, objName, 'ds-pop',
-          `POP: ${objName}.pop() → ${fv(result)}\n\nRemoves last element. O(1).\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]`,
+          `POP: ${objName}.pop() → ${fv(result)}\n\nRemoves last element. O(1).\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nV8 Internal:\nPop sets the last element slot to "the_hole" (V8's internal marker for deleted elements) and decrements the length. The backing store is NOT immediately shrunk — V8 avoids frequent reallocation. The removed value becomes eligible for GC if no other references exist.`,
           `POP: ${fv(result)} | O(1)`, state, options));
         return;
       }
@@ -686,7 +691,7 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
         if (options.trackArrays) state.extra.arrOps++;
         if (options.trackDS) state.extra.dsOps++;
         steps.push(makeStep(li, nextLi, vars, output, objName, 'ds-dequeue',
-          `SHIFT: ${objName}.shift() → ${fv(result)}\n\nRemoves first element. All remaining elements shift left.\nThis is O(n) — ${obj.length} elements moved.\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]`,
+          `SHIFT: ${objName}.shift() → ${fv(result)}\n\nRemoves first element. All remaining elements shift left.\nThis is O(n) — ${obj.length} element${obj.length !== 1 ? 's' : ''} moved.\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nV8 Internal — Expensive Operation:\nShift must copy every remaining element one position left in the backing store. Unlike pop (O(1)), shift touches every element — this is why queues built on arrays are slow.\n\nFor a proper O(1) queue, use a circular buffer or linked list. V8 cannot optimize away the element copying because shift fundamentally changes every element's index.`,
           `SHIFT: ${fv(result)} | O(n)`, state, options));
         return;
       }
@@ -697,7 +702,7 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
         state.comps += Math.ceil(obj.length * Math.log2(obj.length || 1));
         if (options.trackDS) state.extra.dsOps++;
         steps.push(makeStep(li, nextLi, vars, output, objName, 'ds-sort',
-          `SORT: ${objName}.sort() — in-place\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nTime: O(n log n). Uses TimSort.`,
+          `SORT: ${objName}.sort() — in-place\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nTime: O(n log n). ~${Math.ceil(obj.length * Math.log2(obj.length || 1))} comparisons estimated.\n\nV8 Internal — TimSort:\nV8 uses TimSort (since 2019, implemented in Torque — V8's internal language). TimSort is a hybrid merge-sort + insertion-sort that exploits existing order in the data.\n\nKey details:\n  • Finds natural "runs" of already-sorted elements\n  • Small runs are extended with binary insertion sort\n  • Runs are merged with a modified merge sort\n  • Best case: O(n) if already sorted\n  • Worst case: O(n log n)\n  • Stable sort — equal elements keep their original order`,
           `SORT: ${objName} | O(n log n)`, state, options));
         return;
       }
@@ -735,7 +740,7 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
     const result = evalNode(expr, vars);
     
     steps.push(makeStep(li, nextLi, vars, output, null, 'fn-call',
-      `FUNCTION CALL: ${fnName}(${expr.arguments.map(a => fv(evalNode(a, vars))).join(', ')})\n\nResult: ${fv(result)}`,
+      `FUNCTION CALL: ${fnName}(${expr.arguments.map(a => fv(evalNode(a, vars))).join(', ')})\n\nResult: ${fv(result)}\n\nV8 Internal — Call Stack Frame:\nV8 pushes a new frame onto the call stack containing:\n  • Return address — where to resume in the caller\n  • Arguments — ${expr.arguments.length} arg${expr.arguments.length !== 1 ? 's' : ''} passed\n  • Local variables — allocated as the function body executes\n  • Context pointer — link to outer scope for closure access\n\nV8 uses an inline cache (IC) at this call site. If ${fnName}() is always the same function, the IC is "monomorphic" and V8 can skip the lookup — jumping directly to the function's code.`,
       `CALL: ${fnName}()`, state, options));
 
     if (options.trackCalls && state.extra.stack.length > 1) {
@@ -758,7 +763,7 @@ function walkIfStatement(stmt, nextLi, vars, output, lines, steps, state, option
   const condStr = lines[li] ? lines[li].trim() : '';
 
   steps.push(makeStep(li, null, vars, output, null, 'condition',
-    `CONDITION: ${condStr}\n\nEvaluated: ${condVal ? 'TRUE' : 'FALSE'}\n\nThe CPU ${condVal ? 'enters the if-block' : 'skips the if-block'}.`,
+    `CONDITION: ${condStr}\n\nEvaluated: ${condVal ? 'TRUE' : 'FALSE'}\n\nThe CPU ${condVal ? 'enters the if-block' : 'skips the if-block'}.\n\nV8 Internal — Branch Prediction & Speculation:\nModern CPUs predict which branch will be taken BEFORE evaluating the condition. V8's TurboFan compiler uses type feedback from Ignition to speculate on the likely path.\n\n${condVal ? 'The TRUE branch is taken. If this pattern repeats, TurboFan will optimize by assuming TRUE and generating faster code for this path.' : 'The FALSE branch is taken. The if-block code is skipped entirely — those bytecodes are never executed.'}\n\nIf the prediction is wrong (the branch flips), V8 must "deoptimize" — discard the optimized machine code and fall back to Ignition bytecode. This is called a "deopt" and is expensive.`,
     `CMP: ${condVal ? 'TRUE → enter' : 'FALSE → skip'}`, state, options,
     false, { cond: !!condVal }));
 
@@ -826,10 +831,21 @@ function walkForStatement(stmt, nextLi, vars, output, lines, steps, state, optio
       state.comps++;
       if (options.trackLoops) state.extra.loopIters++;
 
+      const iterNum = options.trackLoops ? state.extra.loopIters : guard;
+      const isHot = iterNum >= 3;
       steps.push(makeStep(li, null, vars, output, null, 'loop-test',
-        `LOOP TEST: ${testVal ? 'TRUE → execute body' : 'FALSE → exit loop'}\n\nIteration ${options.trackLoops ? state.extra.loopIters : guard}`,
-        `LOOP: ${testVal ? 'continue' : 'exit'}`, state, options,
-        false, { loopIter: options.trackLoops ? state.extra.loopIters : guard }));
+        `LOOP TEST: ${testVal ? 'TRUE → execute body' : 'FALSE → exit loop'}\n\nIteration ${iterNum}` +
+        `\n\nV8 Internal — ${isHot ? 'HOT LOOP DETECTED:' : 'Loop Profiling:'}\n` +
+        (isHot ?
+          `This loop has run ${iterNum} times. V8's Ignition interpreter has been collecting type feedback on every iteration — tracking what types the variables hold and which branches are taken.\n\n` +
+          `At this point, TurboFan (V8's optimizing JIT compiler) would kick in and compile this loop into optimized machine code using On-Stack Replacement (OSR) — the running bytecode is swapped out for native code MID-EXECUTION without restarting the loop.\n\n` +
+          `TurboFan optimizations applied:\n` +
+          `  • Loop-invariant code motion — expressions that don't change are hoisted out\n` +
+          `  • Bounds check elimination — array index checks are removed if proven safe\n` +
+          `  • Inlining — small function calls inside the loop are expanded inline` :
+          `V8's Ignition is still interpreting this loop as bytecode. Each iteration adds type feedback to the FeedbackVector. After enough iterations (~2-4 in practice), TurboFan will consider this loop "hot" and JIT-compile it.`),
+        `LOOP: ${testVal ? 'continue' : 'exit'}${isHot ? ' | JIT' : ''}`, state, options,
+        false, { loopIter: iterNum }));
 
       if (!testVal) break;
     }
@@ -860,9 +876,12 @@ function walkWhileStatement(stmt, nextLi, vars, output, lines, steps, state, opt
     state.comps++;
     if (options.trackLoops) state.extra.loopIters++;
 
+    const whileIter = options.trackLoops ? state.extra.loopIters : guard;
+    const whileHot = whileIter >= 3;
     steps.push(makeStep(li, null, vars, output, null, 'loop-test',
-      `WHILE TEST: ${testVal ? 'TRUE → execute body' : 'FALSE → exit loop'}`,
-      `WHILE: ${testVal ? 'continue' : 'exit'}`, state, options));
+      `WHILE TEST: ${testVal ? 'TRUE → execute body' : 'FALSE → exit loop'}\n\nIteration ${whileIter}` +
+      `\n\nV8 Internal — ${whileHot ? 'HOT LOOP → TurboFan JIT compiles this into native machine code via OSR.' : 'Ignition is collecting type feedback. TurboFan will optimize after ~2-4 iterations.'}`,
+      `WHILE: ${testVal ? 'continue' : 'exit'}${whileHot ? ' | JIT' : ''}`, state, options));
 
     if (!testVal) break;
 
@@ -885,7 +904,14 @@ function walkFunctionDeclaration(stmt, nextLi, vars, output, lines, steps, state
 
   const params = stmt.params.map(p => p.type === 'Identifier' ? p.name : '...').join(', ');
   steps.push(makeStep(li, nextLi, vars, output, name, 'fn-declare',
-    `FUNCTION DECLARATION: ${name}(${params})\n\nThe function is stored as a value in memory. It is NOT executed yet — it will run when called.\n\nParameters: ${params || '(none)'}`,
+    `FUNCTION DECLARATION: ${name}(${params})\n\nThe function is stored as a value in memory. It is NOT executed yet — it will run when called.\n\nParameters: ${params || '(none)'}` +
+    `\n\nV8 Internal — Lazy Compilation:\n` +
+    `V8 uses "lazy parsing" — it only fully parses and compiles a function when it's first CALLED, not when it's declared. Right now, V8 does a quick "pre-parse" to check for syntax errors and find the function boundaries, but doesn't generate bytecode yet.\n\n` +
+    `When ${name}() is called:\n` +
+    `  1. Full parse → AST for the function body\n` +
+    `  2. Ignition → bytecode generation\n` +
+    `  3. FeedbackVector created → tracks argument types for future optimization\n` +
+    `  4. If called often → TurboFan JIT compiles to native machine code`,
     `FUNC: ${name}(${params})`, state, options));
 }
 
@@ -894,7 +920,7 @@ function walkReturnStatement(stmt, nextLi, vars, output, lines, steps, state, op
   const li = nodeLine(stmt);
   const val = stmt.argument ? evalNode(stmt.argument, vars) : undefined;
   steps.push(makeStep(li, nextLi, vars, output, null, 'fn-return',
-    `RETURN: ${fv(val)}\n\nThe function exits and returns this value to the caller.`,
+    `RETURN: ${fv(val)}\n\nThe function exits and returns this value to the caller.\n\nV8 Internal — Stack Frame Teardown:\nWhen a function returns, V8:\n  1. Places the return value in the accumulator register\n  2. Restores the caller's frame pointer (FP) and stack pointer (SP)\n  3. Pops the current frame off the call stack\n  4. Jumps back to the return address saved when the function was called\n\nAll local variables in this frame become unreachable and eligible for garbage collection.`,
     `RETURN: ${fv(val)}`, state, options));
 }
 
@@ -959,16 +985,49 @@ function buildDeclBrain(name, val, keyword, vars) {
   const total = totalBytes(vars);
 
   if (isArr) {
-    return `ARRAY CREATED: "${name}" on the heap.\n\n${val.length} elements: [${val.map(fv).join(', ')}]\n\nArrays are contiguous blocks of memory. Each element is accessed by index in O(1).\n\nSize: ~${bytes} bytes | Total heap: ~${total} bytes`;
+    const allInts = val.every(v => typeof v === 'number' && Number.isInteger(v));
+    const allNums = val.every(v => typeof v === 'number');
+    const elemKind = allInts ? 'PACKED_SMI_ELEMENTS' : allNums ? 'PACKED_DOUBLE_ELEMENTS' : 'PACKED_ELEMENTS';
+    return `ARRAY CREATED: "${name}" on the heap.\n\n${val.length} elements: [${val.map(fv).join(', ')}]\n\n` +
+      `V8 Internal — Elements Kind: ${elemKind}\n` +
+      (allInts ? 'All elements are small integers (SMIs). V8 stores these unboxed — no heap allocation per element, just raw 31-bit integers. This is the fastest array type.\n' :
+       allNums ? 'All elements are doubles. V8 stores these in a contiguous 64-bit float buffer — no boxing needed. Fast numeric operations.\n' :
+       'Mixed types — V8 stores each element as a tagged pointer on the heap. This is slower than SMI or double arrays because each access requires type checking.\n') +
+      `\nArrays in V8 are backed by a FixedArray (dense) or HashTable (sparse). Yours is dense — O(1) index access.\n\n` +
+      `Size: ~${bytes} bytes | Total heap: ~${total} bytes`;
   }
   if (isObj) {
     const keys = Object.keys(val);
-    return `OBJECT CREATED: "${name}" on the heap.\n\n${keys.length} properties:\n${keys.map(k => `  "${k}": ${fv(val[k])}`).join('\n')}\n\nObjects are hash maps — O(1) property access.\n\nSize: ~${bytes} bytes | Total heap: ~${total} bytes`;
+    return `OBJECT CREATED: "${name}" on the heap.\n\n${keys.length} properties:\n${keys.map(k => `  "${k}": ${fv(val[k])}`).join('\n')}\n\n` +
+      `V8 Internal — Hidden Class (Map):\n` +
+      `V8 assigns a hidden class to every object. When you create {${keys.join(', ')}}, V8 builds a transition chain:\n` +
+      keys.map((k, i) => `  ${i === 0 ? '{}' : '{' + keys.slice(0, i).join(', ') + '}'} → add "${k}" → {${keys.slice(0, i + 1).join(', ')}}`).join('\n') + '\n\n' +
+      `Objects sharing the same property order share the same hidden class. This enables V8\'s inline caches — subsequent property lookups become a single memory offset instead of a hash lookup.\n\n` +
+      `Mode: "fast properties" (${keys.length} keys — well under the ~28 key threshold for dictionary mode).\n\n` +
+      `Size: ~${bytes} bytes | Total heap: ~${total} bytes`;
   }
   if (tp === 'function') {
-    return `FUNCTION: "${name}" stored in memory.\n\nNot executed yet — will run when called.`;
+    return `FUNCTION DECLARATION: "${name}" stored in memory.\n\n` +
+      `V8 Internal — Closure & Context:\n` +
+      `V8 creates a JSFunction object on the heap containing:\n` +
+      `  • SharedFunctionInfo — the parsed AST/bytecode (shared if this function is defined once)\n` +
+      `  • Context — a reference to the outer scope\'s variables (this is how closures work)\n` +
+      `  • FeedbackVector — empty for now; will collect type profiling data when the function is called\n\n` +
+      `The function is NOT executed yet. The bytecode sits in memory waiting to be invoked. If called frequently, TurboFan will JIT-compile it into optimized machine code.`;
   }
-  return `MEMORY ALLOCATION: "${name}" in the current scope.\n\nKeyword: ${keyword} (${keyword === 'const' ? 'cannot be reassigned' : 'can be reassigned'})\nType: ${tp}\nValue: ${fv(val)}\nSize: ~${bytes} bytes\n\nTotal heap: ~${total} bytes across ${Object.keys(vars).length} variable${Object.keys(vars).length > 1 ? 's' : ''}.`;
+  const isSmi = tp === 'number' && Number.isInteger(val) && val >= -1073741824 && val <= 1073741823;
+  const v8Type = isSmi ? 'SMI (Small Integer) — stored directly in the pointer, no heap allocation. Fastest possible representation.' :
+                 tp === 'number' ? 'HeapNumber — 64-bit IEEE 754 double allocated on the heap. V8 boxes non-SMI numbers.' :
+                 tp === 'string' ? `String (${val.length <= 10 ? 'internalized' : 'heap-allocated'}) — ${val.length <= 10 ? 'short strings are "internalized" (deduplicated) in V8\'s string table for fast comparison.' : 'longer strings live on the heap. V8 uses SeqOneByteString or SeqTwoByteString depending on character encoding.'}` :
+                 tp === 'boolean' ? 'Oddball — V8 pre-allocates singleton objects for true, false, null, and undefined. They\'re never garbage collected.' :
+                 val === null ? 'Oddball (null) — a singleton V8 root object. Costs zero allocation.' :
+                 val === undefined ? 'Oddball (undefined) — a singleton V8 root object. Costs zero allocation.' :
+                 'Tagged value on the heap.';
+  return `MEMORY ALLOCATION: "${name}" in the current scope.\n\n` +
+    `Keyword: ${keyword} (${keyword === 'const' ? 'cannot be reassigned — V8 can optimize reads since the value never changes' : 'mutable binding — V8 must check for reassignment'})\n` +
+    `Type: ${tp}\nValue: ${fv(val)}\n\n` +
+    `V8 Internal — Tagged Values:\n${v8Type}\n\n` +
+    `Size: ~${bytes} bytes\nTotal heap: ~${total} bytes across ${Object.keys(vars).length} variable${Object.keys(vars).length > 1 ? 's' : ''}.`;
 }
 
 function buildDoneBrain(vars, output, state) {
@@ -981,5 +1040,13 @@ function buildDoneBrain(vars, output, state) {
   if (state.extra.objOps) msg += `\nObject operations: ${state.extra.objOps}`;
   if (state.extra.dsOps) msg += `\nDS operations: ${state.extra.dsOps}`;
   msg += '\n\nThe call stack is now empty — the Global frame is popped.';
+  msg += '\n\nV8 GARBAGE COLLECTION:\n' +
+    `After execution, V8\'s garbage collector (Orinoco) can reclaim unreachable memory.\n\n` +
+    `• Young Generation (Scavenger) — short-lived objects (temporaries, loop variables) are collected quickly using a semi-space copying algorithm.\n` +
+    `• Old Generation (Mark-Compact) — long-lived objects that survived multiple GC cycles are collected less frequently using mark-sweep-compact.\n\n` +
+    `Your program allocated ~${total} bytes. ` +
+    (total < 100 ? 'This is tiny — likely fits entirely in V8\'s young generation and would be collected in a single Scavenger pass.' :
+     total < 1000 ? 'This is modest — most objects stay in the young generation. GC pause would be sub-millisecond.' :
+     'Larger allocations may promote objects to old generation if they persist across GC cycles.');
   return msg;
 }
