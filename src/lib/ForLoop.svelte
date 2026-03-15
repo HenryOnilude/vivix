@@ -3,6 +3,7 @@
   import { interpret, parseCode } from './interpreter.js';
   import { dc, fv, tb, tc, totalBytes, byteSize, COMPLEXITY_BARS } from './utils.js';
   import { makeAnimateBox, makeAnimateVal, animateBar } from './animations.js';
+  import CodeEditor from './CodeEditor.svelte';
 
   const examples = [
     {
@@ -179,7 +180,7 @@
       </div>
 
       {#if !hasRun}
-        <textarea class="code-editor" bind:value={codeText} spellcheck="false"></textarea>
+        <CodeEditor bind:value={codeText} accent="#ffcc66" />
       {:else}
         <div class="code-display">
           {#each codeLines as line, i}

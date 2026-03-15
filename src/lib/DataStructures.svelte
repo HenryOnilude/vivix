@@ -3,6 +3,7 @@
   import { interpret } from './interpreter.js';
   import { dc, fv, tc, tb } from './utils.js';
   import { makeAnimateBox, makeAnimateVal, animateBar } from './animations.js';
+  import CodeEditor from './CodeEditor.svelte';
 
   const examples = [
     { label: 'Stack (LIFO)', code: `let stack = [];\nstack.push(10);\nstack.push(20);\nstack.push(30);\nlet top = stack.pop();\nconsole.log(top);\nconsole.log(stack);`, complexity: { time: 'O(1)', space: 'O(n)', timeWhy: 'Stack push and pop both operate on the END of the array — no shifting required. Each operation is O(1) constant time regardless of stack size.', spaceWhy: 'O(n) — the stack grows linearly with the number of elements pushed. Each element occupies one slot in memory.' } },
@@ -116,7 +117,7 @@
         </div>
       </div>
       {#if !hasRun}
-        <textarea class="code-editor" bind:value={codeText} spellcheck="false"></textarea>
+        <CodeEditor bind:value={codeText} accent="#f472b6" />
       {:else}
         <div class="code-display">
           {#each codeLines as line, i}

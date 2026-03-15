@@ -3,6 +3,7 @@
   import { interpret } from './interpreter.js';
   import { dc, fv, tc, tb } from './utils.js';
   import { makeAnimateBox, makeAnimateVal, animateBar } from './animations.js';
+  import CodeEditor from './CodeEditor.svelte';
 
   const examples = [
     { label: 'Object Literal', code: `let user = { name: "Alice", age: 25 };\nconsole.log(user.name);\nconsole.log(user.age);`, complexity: { time: 'O(1)', space: 'O(1)', timeWhy: 'Creating an object literal and accessing properties by key are both O(1) — constant time. The JS engine uses a hash map internally, so property lookup does not depend on the number of keys.', spaceWhy: 'O(1) — the object stores a fixed number of key-value pairs. Memory is proportional to the number of properties, which is constant here (2 keys).' } },
@@ -115,7 +116,7 @@
         </div>
       </div>
       {#if !hasRun}
-        <textarea class="code-editor" bind:value={codeText} spellcheck="false"></textarea>
+        <CodeEditor bind:value={codeText} accent="#c084fc" />
       {:else}
         <div class="code-display">
           {#each codeLines as line, i}

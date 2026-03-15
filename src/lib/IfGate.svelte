@@ -4,6 +4,7 @@
   import { interpret } from './interpreter.js';
   import { dc, fv, tc, tb, totalBytes, byteSize } from './utils.js';
   import { animateBar, animatePath, animateBall, animateArrow } from './animations.js';
+  import CodeEditor from './CodeEditor.svelte';
 
   const ACCENT = '#ff8866';
   const examples = [
@@ -155,7 +156,7 @@
         </div>
       </div>
       {#if !hasRun}
-        <textarea class="editor" bind:value={codeText} spellcheck="false"></textarea>
+        <CodeEditor bind:value={codeText} accent="#ff8866" />
       {:else}
         <div class="code-view">
           {#each lines as ln, i}

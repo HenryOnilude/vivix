@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import CodeEditor from './CodeEditor.svelte';
 
   const examples = [
     {
@@ -328,7 +329,7 @@
         </div>
       </div>
       {#if !hasRun}
-        <textarea class="code-editor" bind:value={codeText} spellcheck="false"></textarea>
+        <CodeEditor bind:value={codeText} accent="#cc88ff" />
       {:else}
         <div class="code-display">
           {#each codeLines as line, i}
