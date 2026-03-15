@@ -264,3 +264,140 @@ describe('Step structure', () => {
     expect(output).toContain('42');
   });
 });
+
+// ═══════════════════════════════════════
+// Switch statement
+// ═══════════════════════════════════════
+describe('Switch', () => {
+  it('matches correct case', () => {
+    const { vars } = run('let day = "mon";\nlet result = "";\nswitch (day) {\n  case "sun": result = "weekend"; break;\n  case "mon": result = "weekday"; break;\n  default: result = "unknown";\n}');
+    expect(vars.result).toBe('weekday');
+  });
+
+  it('hits default when no case matches', () => {
+    const { vars } = run('let x = 99;\nlet out = "";\nswitch (x) {\n  case 1: out = "one"; break;\n  case 2: out = "two"; break;\n  default: out = "other";\n}');
+    expect(vars.out).toBe('other');
+  });
+
+  it('fall-through without break', () => {
+    const { vars } = run('let x = 1;\nlet out = 0;\nswitch (x) {\n  case 1: out += 1;\n  case 2: out += 2;\n  case 3: out += 3; break;\n  default: out += 100;\n}');
+    expect(vars.out).toBe(6);
+  });
+
+  it('generates switch-enter step', () => {
+    const { steps } = run('let x = 1;\nswitch (x) {\n  case 1: break;\n}');
+    expect(steps.some(s => s.phase === 'switch-enter')).toBe(true);
+  });
+});
+
+// ═══════════════════════════════════════
+// For...of loop
+// ═══════════════════════════════════════
+describe('For...of', () => {
+  it('iterates over array values', () => {
+    const { vars } = run('let arr = [10, 20, 30];\nlet sum = 0;\nfor (let val of arr) {\n  sum += val;\n}');
+    expect(vars.sum).toBe(60);
+  });
+
+  it('iterates over string characters', () => {
+    const { vars } = run('let str = "abc";\nlet out = "";\nfor (let ch of str) {\n  out += ch + "-";\n}');
+    expect(vars.out).toBe('a-b-c-');
+  });
+
+  it('for...in iterates over object keys', () => {
+    const { vars } = run('let obj = { a: 1, b: 2, c: 3 };\nlet keys = "";\nfor (let k in obj) {\n  keys += k;\n}');
+    expect(vars.keys).toBe('abc');
+  });
+});
+
+// ═══════════════════════════════════════
+// Do...while loop
+// ═══════════════════════════════════════
+describe('Do...while', () => {
+  it('executes body at least once', () => {
+    const { vars } = run('let x = 0;\ndo {\n  x += 1;\n} while (x < 0);');
+    expect(vars.x).toBe(1);
+  });
+
+  it('loops correctly', () => {
+    const { vars } = run('let x = 0;\ndo {\n  x += 1;\n} while (x < 5);');
+    expect(vars.x).toBe(5);
+  });
+});
+
+// ═══════════════════════════════════════
+// Arrow functions & closures
+// ═══════════════════════════════════════
+describe('Arrow functions & closures', () => {
+  it('arrow function expression', () => {
+    const { vars } = run('let double = (x) => x * 2;\nlet result = double(7);');
+    expect(vars.result).toBe(14);
+  });
+
+  it('arrow function with block body', () => {
+    const { vars } = run('let add = (a, b) => {\n  let sum = a + b;\n  return sum;\n};\nlet result = add(3, 4);');
+    expect(vars.result).toBe(7);
+  });
+
+  it('closure captures outer variable', () => {
+    const { vars } = run('let base = 10;\nfunction makeAdder(x) {\n  return base + x;\n}\nlet result = makeAdder(5);');
+    expect(vars.result).toBe(15);
+  });
+
+  it('higher-order function', () => {
+    const { vars } = run('function apply(fn, val) {\n  return fn(val);\n}\nlet triple = (x) => x * 3;\nlet result = apply(triple, 4);');
+    expect(vars.result).toBe(12);
+  });
+});
+
+// ═══════════════════════════════════════
+// Classes
+// ═══════════════════════════════════════
+describe('Classes', () => {
+  it('basic class with constructor', () => {
+    const { vars } = run('class Dog {\n  constructor(name) {\n    this.name = name;\n  }\n}\nlet d = new Dog("Rex");\nlet n = d.name;');
+    expect(vars.n).toBe('Rex');
+  });
+
+  it('class with method', () => {
+    const { vars } = run('class Counter {\n  constructor(start) {\n    this.val = start;\n  }\n  inc() {\n    this.val = this.val + 1;\n    return this.val;\n  }\n}\nlet c = new Counter(0);\nlet r = c.inc();');
+    expect(vars.r).toBe(1);
+  });
+
+  it('generates class-declare step', () => {
+    const { steps } = run('class Foo {\n  constructor() {}\n}');
+    expect(steps.some(s => s.phase === 'class-declare')).toBe(true);
+  });
+});
+
+// ═══════════════════════════════════════
+// Try/catch/finally
+// ═══════════════════════════════════════
+describe('Try/catch', () => {
+  it('catch handles thrown error', () => {
+    const { vars } = run('let msg = "";\ntry {\n  throw "oops";\n} catch (e) {\n  msg = e;\n}');
+    expect(vars.msg).toBe('oops');
+  });
+
+  it('finally always runs', () => {
+    const { vars } = run('let log = "";\ntry {\n  log += "try ";\n} finally {\n  log += "finally";\n}');
+    expect(vars.log).toBe('try finally');
+  });
+
+  it('catch + finally with throw', () => {
+    const { vars } = run('let log = "";\ntry {\n  log += "a";\n  throw "err";\n} catch (e) {\n  log += "b";\n} finally {\n  log += "c";\n}');
+    expect(vars.log).toBe('abc');
+  });
+
+  it('try without throw runs normally', () => {
+    const { vars } = run('let x = 0;\ntry {\n  x = 42;\n} catch (e) {\n  x = -1;\n}');
+    expect(vars.x).toBe(42);
+  });
+
+  it('generates try-enter and throw steps', () => {
+    const { steps } = run('let msg = "";\ntry {\n  throw "fail";\n} catch (e) {\n  msg = e;\n}');
+    expect(steps.some(s => s.phase === 'try-enter')).toBe(true);
+    expect(steps.some(s => s.phase === 'throw')).toBe(true);
+    expect(steps.some(s => s.phase === 'catch-enter')).toBe(true);
+  });
+});

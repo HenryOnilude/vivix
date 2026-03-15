@@ -122,6 +122,19 @@ function evalNode(node, vars) {
     case 'FunctionExpression':
       return createFuncFromNode(node, vars);
 
+    case 'NewExpression': {
+      const ctor = evalNode(node.callee, vars);
+      const args = node.arguments.map(a => evalNode(a, vars));
+      if (typeof ctor === 'function') return ctor(...args);
+      return {};
+    }
+
+    case 'ThisExpression':
+      return vars['this'] || {};
+
+    case 'ClassExpression':
+      return createClassFromNode(node, vars, node.superClass ? evalNode(node.superClass, vars) : null);
+
     case 'SequenceExpression':
       return node.expressions.reduce((_, expr) => evalNode(expr, vars), undefined);
 
@@ -293,10 +306,15 @@ function evalCall(node, vars) {
       if (method === 'toString') return obj.toString(args[0]);
     }
 
-    // Generic method call on objects
+    // Generic method call on objects (includes class prototype methods)
     if (obj && typeof obj[method] === 'function') {
       const args = node.arguments.map(a => evalNode(a, vars));
-      return obj[method](...args);
+      const fn = obj[method];
+      if (fn._isInterpreted) {
+        fn._thisBinding = obj;
+        return fn(...args);
+      }
+      return fn.call(obj, ...args);
     }
   }
 
@@ -340,8 +358,13 @@ function createFuncFromNode(node, outerVars) {
     return undefined;
   });
 
-  return function(...args) {
+  const fn = function(...args) {
     const localVars = { ...outerVars };
+    // If caller set _thisBinding, use it (for class method calls)
+    if (fn._thisBinding !== undefined) {
+      localVars['this'] = fn._thisBinding;
+      fn._thisBinding = undefined; // consume it
+    }
     paramNames.forEach((name, i) => {
       localVars[name] = i < args.length ? args[i] : defaults[i];
     });
@@ -356,6 +379,63 @@ function createFuncFromNode(node, outerVars) {
       return evalNode(node.body, localVars);
     }
   };
+  fn._isInterpreted = true;
+  return fn;
+}
+
+function createClassFromNode(stmt, outerVars, parentClass) {
+  // Find the constructor method
+  let ctorNode = null;
+  const methodDefs = [];
+  const staticDefs = [];
+  for (const item of stmt.body.body) {
+    if (item.type === 'MethodDefinition') {
+      if (item.kind === 'constructor') ctorNode = item.value;
+      else if (item.static) staticDefs.push(item);
+      else methodDefs.push(item);
+    }
+  }
+
+  // Build the constructor function
+  function ClassCtor(...args) {
+    const instance = Object.create(ClassCtor.prototype);
+    // Run constructor body
+    if (ctorNode) {
+      const localVars = { ...outerVars, this: instance };
+      ctorNode.params.forEach((p, i) => {
+        const name = p.type === 'Identifier' ? p.name : (p.type === 'AssignmentPattern' ? p.left.name : '_');
+        localVars[name] = i < args.length ? args[i] : (p.type === 'AssignmentPattern' ? evalNode(p.right, outerVars) : undefined);
+      });
+      for (const s of ctorNode.body.body) {
+        execStmtSimple(s, localVars);
+      }
+      // Copy this.* assignments back
+      for (const [k, v] of Object.entries(localVars.this || {})) {
+        instance[k] = v;
+      }
+    }
+    return instance;
+  }
+
+  // Set up prototype chain
+  if (parentClass) {
+    ClassCtor.prototype = Object.create(parentClass.prototype || {});
+    ClassCtor.prototype.constructor = ClassCtor;
+  }
+
+  // Add prototype methods
+  for (const m of methodDefs) {
+    const mName = m.key.type === 'Identifier' ? m.key.name : String(evalNode(m.key, outerVars));
+    ClassCtor.prototype[mName] = createFuncFromNode(m.value, outerVars);
+  }
+
+  // Add static methods
+  for (const m of staticDefs) {
+    const mName = m.key.type === 'Identifier' ? m.key.name : String(evalNode(m.key, outerVars));
+    ClassCtor[mName] = createFuncFromNode(m.value, outerVars);
+  }
+
+  return ClassCtor;
 }
 
 // Simple statement executor for function bodies (no step tracking)
@@ -401,19 +481,152 @@ function execStmtSimple(stmt, vars) {
       let guard = 0;
       while (guard++ < 10000) {
         if (stmt.test && !evalNode(stmt.test, vars)) break;
-        if (stmt.body.type === 'BlockStatement') {
-          for (const s of stmt.body.body) {
-            const r = execStmtSimple(s, vars);
-            if (r && r.__return__) return r;
-          }
-        } else {
-          const r = execStmtSimple(stmt.body, vars);
+        const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
+        let brk = false;
+        for (const s of body) {
+          if (s.type === 'BreakStatement') { brk = true; break; }
+          if (s.type === 'ContinueStatement') break;
+          const r = execStmtSimple(s, vars);
           if (r && r.__return__) return r;
         }
+        if (brk) break;
         if (stmt.update) evalNode(stmt.update, vars);
       }
       return null;
     }
+    case 'WhileStatement': {
+      let guard = 0;
+      while (guard++ < 10000) {
+        if (!evalNode(stmt.test, vars)) break;
+        const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
+        let brk = false;
+        for (const s of body) {
+          if (s.type === 'BreakStatement') { brk = true; break; }
+          if (s.type === 'ContinueStatement') break;
+          const r = execStmtSimple(s, vars);
+          if (r && r.__return__) return r;
+        }
+        if (brk) break;
+      }
+      return null;
+    }
+    case 'DoWhileStatement': {
+      let guard = 0;
+      while (guard++ < 10000) {
+        const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
+        let brk = false;
+        for (const s of body) {
+          if (s.type === 'BreakStatement') { brk = true; break; }
+          if (s.type === 'ContinueStatement') break;
+          const r = execStmtSimple(s, vars);
+          if (r && r.__return__) return r;
+        }
+        if (brk) break;
+        if (!evalNode(stmt.test, vars)) break;
+      }
+      return null;
+    }
+    case 'ForOfStatement':
+    case 'ForInStatement': {
+      const iterable = evalNode(stmt.right, vars);
+      const items = stmt.type === 'ForInStatement' ? Object.keys(iterable || {}) : (iterable || []);
+      const varName = stmt.left.type === 'VariableDeclaration'
+        ? stmt.left.declarations[0].id.name
+        : (stmt.left.type === 'Identifier' ? stmt.left.name : '_');
+      let guard = 0;
+      for (const item of items) {
+        if (guard++ > 10000) break;
+        vars[varName] = item;
+        const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
+        let brk = false;
+        for (const s of body) {
+          if (s.type === 'BreakStatement') { brk = true; break; }
+          if (s.type === 'ContinueStatement') break;
+          const r = execStmtSimple(s, vars);
+          if (r && r.__return__) return r;
+        }
+        if (brk) break;
+      }
+      return null;
+    }
+    case 'SwitchStatement': {
+      const disc = evalNode(stmt.discriminant, vars);
+      let matched = false;
+      let fell = false;
+      for (const c of stmt.cases) {
+        if (c.test) {
+          const caseVal = evalNode(c.test, vars);
+          if (!matched && !fell && disc !== caseVal) continue;
+          matched = true;
+        } else {
+          if (!matched) matched = true;
+        }
+        if (matched) {
+          let hitBreak = false;
+          for (const s of c.consequent) {
+            if (s.type === 'BreakStatement') { hitBreak = true; break; }
+            const r = execStmtSimple(s, vars);
+            if (r && r.__return__) return r;
+          }
+          if (hitBreak) break;
+          fell = true;
+        }
+      }
+      return null;
+    }
+    case 'TryStatement': {
+      try {
+        for (const s of stmt.block.body) {
+          const r = execStmtSimple(s, vars);
+          if (r && r.__return__) return r;
+        }
+      } catch (e) {
+        if (stmt.handler) {
+          if (stmt.handler.param) {
+            const paramName = stmt.handler.param.type === 'Identifier' ? stmt.handler.param.name : 'err';
+            vars[paramName] = e && e._thrownValue !== undefined ? e._thrownValue : (e ? e.message : 'error');
+          }
+          for (const s of stmt.handler.body.body) {
+            const r = execStmtSimple(s, vars);
+            if (r && r.__return__) return r;
+          }
+        }
+      }
+      if (stmt.finalizer) {
+        for (const s of stmt.finalizer.body) {
+          const r = execStmtSimple(s, vars);
+          if (r && r.__return__) return r;
+        }
+      }
+      return null;
+    }
+    case 'ThrowStatement': {
+      const val = evalNode(stmt.argument, vars);
+      const err = new Error(typeof val === 'string' ? val : String(val));
+      err._thrownValue = val;
+      throw err;
+    }
+    case 'ClassDeclaration': {
+      const name = stmt.id ? stmt.id.name : null;
+      const parentClass = stmt.superClass ? evalNode(stmt.superClass, vars) : null;
+      if (name) vars[name] = createClassFromNode(stmt, vars, parentClass);
+      return null;
+    }
+    case 'FunctionDeclaration': {
+      const name = stmt.id ? stmt.id.name : null;
+      if (name) vars[name] = createFuncFromNode(stmt, vars);
+      return null;
+    }
+    case 'BlockStatement': {
+      for (const s of stmt.body) {
+        const r = execStmtSimple(s, vars);
+        if (r && r.__return__) return r;
+      }
+      return null;
+    }
+    case 'BreakStatement':
+    case 'ContinueStatement':
+      return null;
     default:
       return null;
   }
@@ -512,10 +725,40 @@ function walkStatement(stmt, nextStmt, vars, output, lines, steps, state, option
       walkReturnStatement(stmt, nextLi, vars, output, lines, steps, state, options);
       break;
 
+    case 'SwitchStatement':
+      walkSwitchStatement(stmt, nextLi, vars, output, lines, steps, state, options, depth);
+      break;
+
+    case 'ForOfStatement':
+    case 'ForInStatement':
+      walkForOfStatement(stmt, nextLi, vars, output, lines, steps, state, options, depth);
+      break;
+
+    case 'DoWhileStatement':
+      walkDoWhileStatement(stmt, nextLi, vars, output, lines, steps, state, options, depth);
+      break;
+
+    case 'TryStatement':
+      walkTryStatement(stmt, nextLi, vars, output, lines, steps, state, options, depth);
+      break;
+
+    case 'ThrowStatement':
+      walkThrowStatement(stmt, nextLi, vars, output, lines, steps, state, options);
+      break;
+
+    case 'ClassDeclaration':
+      walkClassDeclaration(stmt, nextLi, vars, output, lines, steps, state, options);
+      break;
+
     case 'BlockStatement':
       for (let i = 0; i < stmt.body.length; i++) {
         walkStatement(stmt.body[i], stmt.body[i+1] || nextStmt, vars, output, lines, steps, state, options, depth);
       }
+      break;
+
+    case 'BreakStatement':
+    case 'ContinueStatement':
+      // Handled by loop/switch logic via exceptions
       break;
 
     default:
@@ -922,6 +1165,224 @@ function walkReturnStatement(stmt, nextLi, vars, output, lines, steps, state, op
   steps.push(makeStep(li, nextLi, vars, output, null, 'fn-return',
     `RETURN: ${fv(val)}\n\nThe function exits and returns this value to the caller.\n\nV8 Internal — Stack Frame Teardown:\nWhen a function returns, V8:\n  1. Places the return value in the accumulator register\n  2. Restores the caller's frame pointer (FP) and stack pointer (SP)\n  3. Pops the current frame off the call stack\n  4. Jumps back to the return address saved when the function was called\n\nAll local variables in this frame become unreachable and eligible for garbage collection.`,
     `RETURN: ${fv(val)}`, state, options));
+}
+
+// ── Switch Statement ──
+function walkSwitchStatement(stmt, nextLi, vars, output, lines, steps, state, options, depth) {
+  const li = nodeLine(stmt);
+  const disc = evalNode(stmt.discriminant, vars);
+  state.comps++;
+
+  steps.push(makeStep(li, null, vars, output, null, 'switch-enter',
+    `SWITCH: evaluating discriminant → ${fv(disc)}\n\nV8 Internal — Jump Tables:\nFor switch statements with integer cases, V8 can compile a jump table — a direct array of code addresses indexed by the case value. This is O(1) dispatch, much faster than chained if/else comparisons.\n\nFor non-integer or sparse cases, V8 falls back to sequential comparison (like if/else if chains).`,
+    `SWITCH: ${fv(disc)}`, state, options));
+
+  let matched = false;
+  let fell = false;
+  for (const c of stmt.cases) {
+    if (c.test) {
+      const caseVal = evalNode(c.test, vars);
+      state.comps++;
+      if (!matched && !fell) {
+        if (disc === caseVal) {
+          matched = true;
+          const caseLi = nodeLine(c);
+          steps.push(makeStep(caseLi, null, vars, output, null, 'switch-case',
+            `CASE ${fv(caseVal)}: MATCH — executing this branch.`,
+            `CASE: ${fv(caseVal)} ✓`, state, options));
+        } else {
+          const caseLi = nodeLine(c);
+          steps.push(makeStep(caseLi, null, vars, output, null, 'skip',
+            `CASE ${fv(caseVal)}: no match (${fv(disc)} !== ${fv(caseVal)}). Skipping.`,
+            `CASE: ${fv(caseVal)} ✗`, state, options));
+          continue;
+        }
+      }
+    } else {
+      // default case
+      if (!matched) {
+        matched = true;
+        const caseLi = nodeLine(c);
+        steps.push(makeStep(caseLi, null, vars, output, null, 'switch-default',
+          `DEFAULT: No case matched — executing default branch.`,
+          `DEFAULT`, state, options));
+      }
+    }
+    if (matched) {
+      let hitBreak = false;
+      for (const s of c.consequent) {
+        if (s.type === 'BreakStatement') { hitBreak = true; break; }
+        walkStatement(s, null, vars, output, lines, steps, state, options, depth + 1);
+      }
+      if (hitBreak) break;
+      fell = true; // fall-through to next case
+    }
+  }
+}
+
+// ── For...of / For...in Statement ──
+function walkForOfStatement(stmt, nextLi, vars, output, lines, steps, state, options, depth) {
+  const li = nodeLine(stmt);
+  const iterable = evalNode(stmt.right, vars);
+  const isForIn = stmt.type === 'ForInStatement';
+  const items = isForIn ? Object.keys(iterable || {}) : (iterable || []);
+  const varName = stmt.left.type === 'VariableDeclaration'
+    ? stmt.left.declarations[0].id.name
+    : (stmt.left.type === 'Identifier' ? stmt.left.name : '_');
+
+  steps.push(makeStep(li, null, vars, output, null, 'loop-init',
+    `${isForIn ? 'FOR...IN' : 'FOR...OF'}: iterating over ${fv(iterable)}\n\n${isForIn ? 'for...in iterates over enumerable property KEYS (strings).' : 'for...of iterates over iterable VALUES (arrays, strings, Maps, Sets).'}\n\n` +
+    `V8 Internal — Iterator Protocol:\n${isForIn ? 'V8 collects all enumerable keys from the object and its prototype chain using EnumCache (a cached list of keys attached to the hidden class). If the object\'s Map hasn\'t changed, this cache is reused — O(1) to start iteration.' : 'V8 calls the [Symbol.iterator]() method on the iterable to get an iterator object. Each iteration calls iterator.next(), which returns {value, done}. Arrays use a fast-path ArrayIterator that avoids creating intermediate objects.'}`,
+    `${isForIn ? 'FOR-IN' : 'FOR-OF'}: ${Array.isArray(items) ? items.length : '?'} items`, state, options));
+
+  let guard = 0;
+  for (const item of items) {
+    if (guard++ > 500) break;
+    vars[varName] = item;
+    state.memOps++;
+    if (options.trackLoops) state.extra.loopIters++;
+
+    const iterNum = options.trackLoops ? state.extra.loopIters : guard;
+    steps.push(makeStep(li, null, vars, output, varName, 'loop-test',
+      `${isForIn ? 'FOR...IN' : 'FOR...OF'} iteration ${iterNum}: ${varName} = ${fv(item)}` +
+      `\n\nV8 Internal — ${iterNum >= 3 ? 'HOT LOOP → TurboFan JIT via OSR.' : 'Ignition collecting type feedback.'}`,
+      `${isForIn ? 'FOR-IN' : 'FOR-OF'}: ${varName}=${fv(item)}`, state, options,
+      false, { loopIter: iterNum }));
+
+    const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
+    let hitBreak = false;
+    for (let i = 0; i < body.length; i++) {
+      if (body[i].type === 'BreakStatement') { hitBreak = true; break; }
+      if (body[i].type === 'ContinueStatement') break;
+      walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+    }
+    if (hitBreak) break;
+  }
+}
+
+// ── Do...While Statement ──
+function walkDoWhileStatement(stmt, nextLi, vars, output, lines, steps, state, options, depth) {
+  const li = nodeLine(stmt);
+  let guard = 0;
+  while (guard++ < 500) {
+    // Execute body first
+    const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
+    for (let i = 0; i < body.length; i++) {
+      walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+    }
+    // Then test
+    const testVal = evalNode(stmt.test, vars);
+    state.comps++;
+    if (options.trackLoops) state.extra.loopIters++;
+
+    const doIter = options.trackLoops ? state.extra.loopIters : guard;
+    steps.push(makeStep(li, null, vars, output, null, 'loop-test',
+      `DO...WHILE TEST: ${testVal ? 'TRUE → repeat body' : 'FALSE → exit loop'}\n\nIteration ${doIter}\n\ndo...while always executes the body at least once before checking the condition.\n\nV8 Internal — ${doIter >= 3 ? 'HOT LOOP → TurboFan JIT via OSR.' : 'Ignition collecting type feedback.'}`,
+      `DO-WHILE: ${testVal ? 'continue' : 'exit'}`, state, options));
+
+    if (!testVal) break;
+  }
+}
+
+// ── Try/Catch/Finally Statement ──
+function walkTryStatement(stmt, nextLi, vars, output, lines, steps, state, options, depth) {
+  const li = nodeLine(stmt);
+
+  steps.push(makeStep(li, null, vars, output, null, 'try-enter',
+    `TRY BLOCK: Entering protected code region.\n\nV8 Internal — Exception Handling:\nV8 sets up an exception handler on the stack. This is lightweight — just saving a pointer to the catch handler. There is NO performance cost for entering a try block if no exception is thrown.\n\nThe cost comes only when an exception IS thrown: V8 must unwind the stack, search for the matching catch handler, and create the Error object with a stack trace.`,
+    `TRY: enter`, state, options));
+
+  let caught = false;
+  try {
+    const tryBody = stmt.block.body;
+    for (let i = 0; i < tryBody.length; i++) {
+      walkStatement(tryBody[i], tryBody[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+    }
+  } catch (e) {
+    caught = true;
+    if (stmt.handler) {
+      const catchLi = nodeLine(stmt.handler);
+      const errVal = e && e._thrownValue !== undefined ? e._thrownValue : (e ? e.message : 'unknown error');
+      if (stmt.handler.param) {
+        const paramName = stmt.handler.param.type === 'Identifier' ? stmt.handler.param.name : 'err';
+        vars[paramName] = errVal;
+        state.memOps++;
+      }
+
+      steps.push(makeStep(catchLi, null, vars, output, null, 'catch-enter',
+        `CATCH: Exception caught → ${fv(errVal)}\n\nV8 Internal — Stack Unwinding:\nV8 unwound the call stack from the throw point to this catch handler. All intermediate stack frames were discarded. The Error object contains a .stack property with the full call trace — V8 captures this lazily (only formatted when .stack is actually read).`,
+        `CATCH: ${fv(errVal)}`, state, options));
+
+      const catchBody = stmt.handler.body.body;
+      for (let i = 0; i < catchBody.length; i++) {
+        walkStatement(catchBody[i], catchBody[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+      }
+    }
+  }
+
+  if (stmt.finalizer) {
+    const finLi = nodeLine(stmt.finalizer);
+    steps.push(makeStep(finLi, null, vars, output, null, 'finally-enter',
+      `FINALLY: This block ALWAYS runs — whether an exception was thrown or not.\n\nV8 Internal:\nFinally blocks are compiled as a separate code path that both the normal and exceptional control flows jump to. V8 ensures this block runs even if a return statement was executed inside try or catch.`,
+      `FINALLY`, state, options));
+
+    const finBody = stmt.finalizer.body;
+    for (let i = 0; i < finBody.length; i++) {
+      walkStatement(finBody[i], finBody[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+    }
+  }
+}
+
+// ── Throw Statement ──
+function walkThrowStatement(stmt, nextLi, vars, output, lines, steps, state, options) {
+  const li = nodeLine(stmt);
+  const val = evalNode(stmt.argument, vars);
+
+  steps.push(makeStep(li, null, vars, output, null, 'throw',
+    `THROW: ${fv(val)}\n\nAn exception is being thrown. Execution jumps to the nearest catch block.\n\nV8 Internal — Error Object Creation:\nWhen you throw, V8 creates an Error object and captures the current call stack. Stack trace capture is one of the most expensive operations in V8 — it must walk every frame on the call stack and record file/line information.\n\nPro tip: In hot paths, avoid throw for flow control. Use return values instead.`,
+    `THROW: ${fv(val)}`, state, options));
+
+  const err = new Error(typeof val === 'string' ? val : fv(val));
+  err._thrownValue = val;
+  throw err;
+}
+
+// ── Class Declaration ──
+function walkClassDeclaration(stmt, nextLi, vars, output, lines, steps, state, options) {
+  const li = nodeLine(stmt);
+  const name = stmt.id ? stmt.id.name : 'Anonymous';
+
+  // Extract methods and constructor
+  const methods = [];
+  let ctorParams = '';
+  for (const item of stmt.body.body) {
+    if (item.type === 'MethodDefinition') {
+      const mName = item.key.type === 'Identifier' ? item.key.name : String(evalNode(item.key, vars));
+      const params = item.value.params.map(p => p.type === 'Identifier' ? p.name : '...').join(', ');
+      if (item.kind === 'constructor') {
+        ctorParams = params;
+        methods.unshift(`constructor(${params})`);
+      } else {
+        methods.push(`${item.static ? 'static ' : ''}${mName}(${params})`);
+      }
+    }
+  }
+
+  // Build the class as a constructor function
+  const parentClass = stmt.superClass ? evalNode(stmt.superClass, vars) : null;
+  vars[name] = createClassFromNode(stmt, vars, parentClass);
+  state.memOps++;
+
+  steps.push(makeStep(li, nextLi, vars, output, name, 'class-declare',
+    `CLASS DECLARATION: ${name}${stmt.superClass ? ' extends ' + (stmt.superClass.name || '?') : ''}\n\n` +
+    `Methods: ${methods.length ? methods.join(', ') : '(none)'}\n\n` +
+    `V8 Internal — Hidden Classes & Prototypes:\n` +
+    `V8 creates a Map (hidden class) for instances of ${name}. All instances created by "new ${name}()" will share this Map if the constructor always assigns properties in the same order.\n\n` +
+    `The prototype chain:\n` +
+    `  instance → ${name}.prototype → ${stmt.superClass ? stmt.superClass.name + '.prototype → ' : ''}Object.prototype → null\n\n` +
+    `V8 uses inline caches on prototype method lookups. After the first call, method dispatch becomes a direct pointer — no prototype chain walking needed.` +
+    (stmt.superClass ? `\n\nInheritance: V8 links the prototype chains. The "super" keyword uses V8's internal [[HomeObject]] reference to find the parent class's methods.` : ''),
+    `CLASS: ${name}`, state, options));
 }
 
 // ═══ Helpers ═══
