@@ -1,11 +1,48 @@
 /**
  * AST-based JavaScript interpreter using Acorn.
  * Replaces all regex-based interpreters across modules.
- * 
+ *
  * Produces step-by-step execution traces with:
  *   lineIndex, nextLineIndex, vars, output, highlight, phase,
  *   brain, memLabel, memOps, comps, and module-specific fields.
  */
+
+/**
+ * @typedef {Object} StepData
+ * @property {number}             lineIndex      - 0-indexed source line currently executing (-1 = start/end)
+ * @property {number|null}        nextLineIndex  - 0-indexed line that will execute next
+ * @property {Record<string,*>}   vars           - Current variable bindings (deep-cloned snapshot)
+ * @property {string[]}           output         - Lines printed to stdout so far (console.log)
+ * @property {string|null}        highlight      - Name of the variable being written/read on this step
+ * @property {string}             phase          - Phase name: 'start'|'declare'|'assign'|'condition'|'output'|'done'|…
+ * @property {string}             brain          - Human-readable explanation shown in the "CPU brain" panel
+ * @property {string}             memLabel       - Short memory-operation label shown below the CPU SVG
+ * @property {number}             memOps         - Cumulative count of memory write operations
+ * @property {number}             comps          - Cumulative count of comparison operations
+ * @property {boolean}            [done]         - True on the final "program complete" step
+ * @property {*}                  [cond]         - Result of the last evaluated condition (for if/loop steps)
+ * @property {{name:string, from:*, to:*}|null} [changed] - Variable that changed on this step
+ * @property {number}             [loopIters]    - (ForLoop) iterations completed so far
+ * @property {number}             [calls]        - (FnCall) total function calls made
+ * @property {number}             [maxDepth]     - (FnCall) maximum call-stack depth reached
+ * @property {string[]}           [stack]        - (FnCall) current call-stack frame names
+ * @property {Record<string,Record<string,*>>} [frames] - (FnCall) per-frame variable snapshots
+ * @property {number}             [arrOps]       - (ArrayFlow) array-mutation operations
+ * @property {number|null}        [highlightIndex] - (ArrayFlow/DS) index of highlighted array element
+ * @property {number}             [objOps]       - (ObjExplorer) object-property operations
+ * @property {string|null}        [highlightKey] - (ObjExplorer/DS) key of highlighted object property
+ * @property {number}             [dsOps]        - (DataStructures) data-structure operations
+ */
+
+/**
+ * @typedef {Object} InterpreterOptions
+ * @property {boolean} [trackLoops]   - Emit `loopIters` counter and loop-specific phases
+ * @property {boolean} [trackCalls]   - Emit call-stack (`stack`, `frames`, `calls`, `maxDepth`)
+ * @property {boolean} [trackArrays]  - Emit `arrOps` and array-operation phases (arr-push, arr-pop, …)
+ * @property {boolean} [trackObjects] - Emit `objOps` and object-operation phases (obj-set, obj-access, …)
+ * @property {boolean} [trackDS]      - Emit `dsOps` and data-structure phases (ds-push, ds-pop, …)
+ */
+
 import * as acorn from 'acorn';
 import { dc, fv, byteSize, totalBytes } from './utils.js';
 
@@ -1489,6 +1526,70 @@ function buildDeclBrain(name, val, keyword, vars) {
     `Type: ${tp}\nValue: ${fv(val)}\n\n` +
     `V8 Internal — Tagged Values:\n${v8Type}\n\n` +
     `Size: ~${bytes} bytes\nTotal heap: ~${total} bytes across ${Object.keys(vars).length} variable${Object.keys(vars).length > 1 ? 's' : ''}.`;
+}
+
+// ── Unsupported-syntax guard ────────────────────────────────────────────────
+/**
+ * Walk an Acorn AST and report the first unsupported language feature.
+ * Returns { ok: true } or { ok: false, message: string }.
+ *
+ * @param {object} ast
+ * @returns {{ ok: boolean, message?: string }}
+ */
+export function checkSupported(ast) {
+  /** Features we know the interpreter cannot handle */
+  const UNSUPPORTED_TYPES = {
+    AwaitExpression:            'async/await',
+    YieldExpression:            'generators (yield)',
+    ImportDeclaration:          'import statements',
+    ExportNamedDeclaration:     'export statements',
+    ExportDefaultDeclaration:   'export statements',
+    ExportAllDeclaration:       'export statements',
+    TaggedTemplateExpression:   'tagged template literals',
+    ChainExpression:            'optional chaining (?.)',
+  };
+
+  const errors = [];
+
+  function walk(node) {
+    if (!node || typeof node !== 'object') return;
+
+    // Async functions (async flag on function nodes)
+    if (node.async === true && (
+      node.type === 'FunctionDeclaration' ||
+      node.type === 'FunctionExpression'  ||
+      node.type === 'ArrowFunctionExpression'
+    )) {
+      const line = node.loc ? node.loc.start.line : '?';
+      errors.push(`async functions (line ${line})`);
+    }
+
+    if (UNSUPPORTED_TYPES[node.type]) {
+      const line = node.loc ? node.loc.start.line : '?';
+      errors.push(`${UNSUPPORTED_TYPES[node.type]} (line ${line})`);
+    }
+
+    // Walk all child properties
+    for (const key of Object.keys(node)) {
+      if (key === 'type' || key === 'loc' || key === 'range' ||
+          key === 'start' || key === 'end') continue;
+      const child = node[key];
+      if (Array.isArray(child)) {
+        child.forEach(c => { if (c && typeof c === 'object' && c.type) walk(c); });
+      } else if (child && typeof child === 'object' && child.type) {
+        walk(child);
+      }
+    }
+  }
+
+  if (ast && ast.body) ast.body.forEach(walk);
+
+  if (errors.length === 0) return { ok: true };
+  const unique = [...new Set(errors)];
+  return {
+    ok:      false,
+    message: `Unsupported feature: ${unique[0]}. This visualizer doesn't support this syntax yet.`
+  };
 }
 
 function buildDoneBrain(vars, output, state) {

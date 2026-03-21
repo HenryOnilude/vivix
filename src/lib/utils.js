@@ -97,6 +97,101 @@ export const COMPLEXITY_BARS = [
   { label: 'O(n²)', h: 100, color: '#f87171' },
 ];
 
+// ── Dynamic complexity analyser ──────────────────────────────────────────────
+/**
+ * Heuristically derive time/space complexity from an Acorn AST.
+ * Rules:
+ *   0 loops  → O(1)
+ *   1 loop   → O(n)   [O(n·lg) if .sort() also present]
+ *   2+ loops → O(n²)  [simplified]
+ *
+ * @param {object} ast  — result of acorn.parse(...)
+ * @returns {{ time:string, space:string, timeWhy:string, spaceWhy:string, dynamic:boolean }}
+ */
+export function analyzeComplexity(ast) {
+  let maxLoopDepth  = 0;
+  let currentDepth  = 0;
+  let hasSort       = false;
+  let dynamicAllocs = 0; // ArrayExpression / ObjectExpression at top-level
+
+  const LOOP_TYPES = new Set([
+    'ForStatement', 'WhileStatement', 'DoWhileStatement',
+    'ForOfStatement', 'ForInStatement',
+  ]);
+
+  function walk(node) {
+    if (!node || typeof node !== 'object') return;
+
+    if (LOOP_TYPES.has(node.type)) {
+      currentDepth++;
+      maxLoopDepth = Math.max(maxLoopDepth, currentDepth);
+      walk(node.body);
+      currentDepth--;
+      // Also walk loop init/test/update but don't count as depth
+      if (node.init)   walk(node.init);
+      if (node.test)   walk(node.test);
+      if (node.update) walk(node.update);
+      return;
+    }
+
+    if (node.type === 'CallExpression') {
+      if (node.callee && node.callee.type === 'MemberExpression' &&
+          !node.callee.computed && node.callee.property &&
+          node.callee.property.name === 'sort') {
+        hasSort = true;
+      }
+    }
+
+    if (node.type === 'ArrayExpression' || node.type === 'ObjectExpression') {
+      dynamicAllocs++;
+    }
+
+    // Walk all child properties generically
+    for (const key of Object.keys(node)) {
+      if (key === 'type' || key === 'loc' || key === 'range' ||
+          key === 'start' || key === 'end') continue;
+      const child = node[key];
+      if (Array.isArray(child)) {
+        child.forEach(c => { if (c && typeof c === 'object' && c.type) walk(c); });
+      } else if (child && typeof child === 'object' && child.type) {
+        walk(child);
+      }
+    }
+  }
+
+  if (ast && ast.body) ast.body.forEach(walk);
+
+  // ── Time complexity ──────────────────────────────────────────────────────
+  let time, timeWhy;
+  if (maxLoopDepth === 0) {
+    time    = 'O(1)';
+    timeWhy = 'No loops detected — each statement runs a fixed number of times regardless of input size.';
+  } else if (maxLoopDepth === 1) {
+    if (hasSort) {
+      time    = 'O(n·lg)';
+      timeWhy = 'One loop plus a .sort() call — the sort dominates at O(n log n), so total time is O(n log n).';
+    } else {
+      time    = 'O(n)';
+      timeWhy = 'One loop detected — it runs n times, giving linear time growth.';
+    }
+  } else {
+    time    = 'O(n²)';
+    timeWhy = `${maxLoopDepth} nested loops detected — each adds a factor of n, giving O(n${maxLoopDepth > 2 ? maxLoopDepth : '²'}) growth.`;
+  }
+
+  // ── Space complexity (heuristic) ─────────────────────────────────────────
+  let space, spaceWhy;
+  if (dynamicAllocs === 0) {
+    space    = 'O(1)';
+    spaceWhy = 'No dynamic array or object literals detected — variables use constant space.';
+  } else {
+    space    = 'O(n)';
+    spaceWhy = 'Array or object literals detected — space grows with the amount of data stored.';
+  }
+
+  return { time, space, timeWhy, spaceWhy, dynamic: true };
+}
+
 // ── Playback controller factory ──
 export function createPlayback(getSteps, onUpdate) {
   let timer = null;

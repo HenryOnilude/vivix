@@ -1,20 +1,14 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
-  import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightActiveLine, drawSelection } from '@codemirror/view';
-  import { EditorState } from '@codemirror/state';
-  import { javascript } from '@codemirror/lang-javascript';
-  import { syntaxHighlighting, defaultHighlightStyle, bracketMatching, indentOnInput } from '@codemirror/language';
-  import { defaultKeymap, indentWithTab, history, historyKeymap } from '@codemirror/commands';
-  import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
-  import { highlightSelectionMatches } from '@codemirror/search';
 
   let { value = $bindable(''), accent = '#38bdf8', readonly = false, onchange = null } = $props();
 
   let container;
   let view;
   let updating = false;
+  let loaded = $state(false);
 
-  function buildTheme(col) {
+  function buildTheme(col, EditorView) {
     return EditorView.theme({
       '&': {
         backgroundColor: '#08080e',
@@ -76,27 +70,46 @@
     }, { dark: true });
   }
 
-  const syntaxColors = syntaxHighlighting(defaultHighlightStyle.define([
-    { tag: ['keyword'], color: '#c084fc' },
-    { tag: ['string', 'special(string)'], color: '#4ade80' },
-    { tag: ['number', 'integer', 'float'], color: '#fb923c' },
-    { tag: ['bool'], color: '#f59e0b' },
-    { tag: ['variableName'], color: '#e0e0e0' },
-    { tag: ['function(variableName)'], color: '#38bdf8' },
-    { tag: ['definition(variableName)'], color: '#e0e0e0' },
-    { tag: ['propertyName'], color: '#60a5fa' },
-    { tag: ['operator'], color: '#888' },
-    { tag: ['comment'], color: '#3a3a5e', fontStyle: 'italic' },
-    { tag: ['punctuation'], color: '#555' },
-    { tag: ['className'], color: '#fbbf24' },
-    { tag: ['typeName'], color: '#f472b6' },
-    { tag: ['null'], color: '#666' },
-    { tag: ['regexp'], color: '#f87171' },
-  ]));
+  onMount(async () => {
+    // ── Lazy-load CodeMirror — keeps it out of the initial JS bundle ──────────
+    const [
+      { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightActiveLine, drawSelection },
+      { EditorState },
+      { javascript },
+      { syntaxHighlighting, defaultHighlightStyle, bracketMatching, indentOnInput },
+      { defaultKeymap, indentWithTab, history, historyKeymap },
+      { closeBrackets, closeBracketsKeymap },
+      { highlightSelectionMatches },
+    ] = await Promise.all([
+      import('@codemirror/view'),
+      import('@codemirror/state'),
+      import('@codemirror/lang-javascript'),
+      import('@codemirror/language'),
+      import('@codemirror/commands'),
+      import('@codemirror/autocomplete'),
+      import('@codemirror/search'),
+    ]);
 
-  function createState(doc, col) {
-    return EditorState.create({
-      doc,
+    const syntaxColors = syntaxHighlighting(defaultHighlightStyle.define([
+      { tag: ['keyword'], color: '#c084fc' },
+      { tag: ['string', 'special(string)'], color: '#4ade80' },
+      { tag: ['number', 'integer', 'float'], color: '#fb923c' },
+      { tag: ['bool'], color: '#f59e0b' },
+      { tag: ['variableName'], color: '#e0e0e0' },
+      { tag: ['function(variableName)'], color: '#38bdf8' },
+      { tag: ['definition(variableName)'], color: '#e0e0e0' },
+      { tag: ['propertyName'], color: '#60a5fa' },
+      { tag: ['operator'], color: '#888' },
+      { tag: ['comment'], color: '#3a3a5e', fontStyle: 'italic' },
+      { tag: ['punctuation'], color: '#555' },
+      { tag: ['className'], color: '#fbbf24' },
+      { tag: ['typeName'], color: '#f472b6' },
+      { tag: ['null'], color: '#666' },
+      { tag: ['regexp'], color: '#f87171' },
+    ]));
+
+    const state = EditorState.create({
+      doc: value,
       extensions: [
         lineNumbers(),
         highlightActiveLineGutter(),
@@ -114,7 +127,7 @@
           indentWithTab,
         ]),
         javascript(),
-        buildTheme(col),
+        buildTheme(accent, EditorView),
         syntaxColors,
         EditorState.tabSize.of(2),
         EditorView.editable.of(!readonly),
@@ -128,13 +141,9 @@
         }),
       ],
     });
-  }
 
-  onMount(() => {
-    view = new EditorView({
-      state: createState(value, accent),
-      parent: container,
-    });
+    view = new EditorView({ state, parent: container });
+    loaded = true;
   });
 
   onDestroy(() => {
@@ -156,7 +165,11 @@
   });
 </script>
 
-<div class="cm-wrapper" bind:this={container}></div>
+<div class="cm-wrapper" bind:this={container}>
+  {#if !loaded}
+    <div class="cm-loading">Loading editor…</div>
+  {/if}
+</div>
 
 <style>
   .cm-wrapper {
@@ -168,9 +181,19 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    background: #08080e;
   }
   .cm-wrapper :global(.cm-editor) {
     flex: 1;
     min-height: 0;
+  }
+  .cm-loading {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    color: #333;
+    font-family: monospace;
   }
 </style>
