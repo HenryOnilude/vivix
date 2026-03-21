@@ -4,13 +4,14 @@
    *
    * Handles:
    *   • All shared $state/$derived variables
-   *   • Step controls (first/prev/next/last/auto/slider)
+   *   • Step controls (first/prev/next/last/auto/timeline scrubber)
    *   • Code panel (editor ↔ highlighted display)
    *   • CPU dashboard (via CpuDash child, with snippet hooks)
    *   • Heap memory card (opt-out via showHeap=false)
    *   • STDOUT card
    *   • Complexity analysis card (dynamic or preset)
    *   • Unsupported-syntax error messages
+   *   • Keyboard shortcuts (← → Space Home End) when not focused in editor
    *
    * Snippet hooks for module-specific content (all receive the current step `sd`):
    *   topPanel(sd)      — inserted between CPU and heap (e.g. branch flowchart, loop tracker)
@@ -80,13 +81,17 @@
   let timer    = $state(null);
   let hasRun   = $state(false);
   let err      = $state('');
+  let speed    = $state(1);   // 0.5 | 1 | 2 | 4
   /** @type {CxData|null} */
   let dynamicCx = $state(null);
 
   // ── Derived ────────────────────────────────────────────────────────────────
   let lines  = $derived(codeText.split('\n'));
   let sd     = $derived(step >= 0 && step < steps.length ? steps[step] : null);
-  let prev   = $derived(step > 0  && step < steps.length ? steps[step - 1] : null);
+  let prev   = $derived(step >= 1 && step < steps.length ? steps[step - 1] : null);
+
+  /** Playback interval in ms — derived from speed */
+  let interval = $derived(Math.round(1800 / speed));
 
   /** True when the code in the editor doesn't match the selected example */
   let isCustomCode = $derived(codeText !== (examples[selEx]?.code ?? ''));
@@ -137,25 +142,31 @@
     return '#555';
   }
 
+  // ── Phase icon for timeline markers ────────────────────────────────────────
+  function phIcon(ph) {
+    if (!ph) return '▶';
+    if (ph === 'done')                                    return '✓';
+    if (ph === 'condition' || ph === 'else-enter' || ph === 'skip') return '?';
+    if (ph.startsWith('loop'))                            return '↻';
+    if (ph.startsWith('fn-'))                             return 'ƒ';
+    return '▶';
+  }
+
   // ── Core execute ───────────────────────────────────────────────────────────
   function _runCode() {
     err = '';
     try {
       let rawSteps;
       if (typeof executeCode === 'function') {
-        // Module supplies its own executor (e.g. AsyncAwait simulation)
         rawSteps = executeCode(codeText);
         dynamicCx = null;
       } else {
-        // Standard AST-based interpreter path
         const { ast, error: parseErr } = parseCode(codeText);
         if (parseErr) throw new Error(parseErr);
 
-        // Unsupported-syntax guard
         const check = checkSupported(ast);
         if (!check.ok) throw new Error(check.message);
 
-        // Dynamic complexity (only when user has written custom code)
         if (isCustomCode) dynamicCx = analyzeComplexity(ast);
         else              dynamicCx = null;
 
@@ -180,16 +191,29 @@
   function goNext()  { if (hasRun && step < total - 1) step++; }
   function goLast()  { if (hasRun) step = total - 1; }
 
+  function _startTimer(ms) {
+    timer = setInterval(() => {
+      if (step < total - 1) step++;
+      else { clearInterval(timer); timer = null; playing = false; }
+    }, ms);
+  }
+
   function toggleAuto() {
     if (playing) {
       clearInterval(timer); timer = null; playing = false;
     } else {
       if (step >= total - 1) step = 0;
       playing = true;
-      timer = setInterval(() => {
-        if (step < total - 1) step++;
-        else { clearInterval(timer); timer = null; playing = false; }
-      }, 1800);
+      _startTimer(interval);
+    }
+  }
+
+  /** Change speed; restart timer if currently playing */
+  function setSpeed(s) {
+    speed = s;
+    if (playing) {
+      clearInterval(timer);
+      _startTimer(Math.round(1800 / s));
     }
   }
 
@@ -206,7 +230,43 @@
     if (playing) { clearInterval(timer); timer = null; playing = false; }
   }
 
-  onMount(() => () => { if (timer) clearInterval(timer); });
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+  function handleKey(e) {
+    if (!hasRun) return;
+    const el = document.activeElement;
+    if (!el) return;
+    // Don't intercept when typing in CodeMirror or any editable element
+    if (el.closest('.cm-editor') || el.isContentEditable ||
+        el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
+
+    switch (e.code) {
+      case 'ArrowLeft':  e.preventDefault(); goPrev();      break;
+      case 'ArrowRight': e.preventDefault(); goNext();      break;
+      case 'Space':      e.preventDefault(); toggleAuto();  break;
+      case 'Home':       e.preventDefault(); goFirst();     break;
+      case 'End':        e.preventDefault(); goLast();      break;
+    }
+  }
+
+  // ── Timeline helpers ───────────────────────────────────────────────────────
+  /** Marker position as a percentage (handles total=1 edge case) */
+  function markerPct(i) {
+    return total > 1 ? (i / (total - 1)) * 100 : 0;
+  }
+
+  /** Fill width percentage up to current step */
+  let fillPct = $derived(total > 1 ? (step / (total - 1)) * 100 : 0);
+
+  /** Whether to show icons inside markers (too many = just dots) */
+  let showIcons = $derived(total <= 35);
+
+  onMount(() => {
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      if (timer) clearInterval(timer);
+    };
+  });
 </script>
 
 <div class="mod">
@@ -277,16 +337,50 @@
       {#if err}<div class="err">{err}</div>{/if}
 
       {#if hasRun}
+        <!-- Step controls row -->
         <div class="ctrls">
-          <button class="cb" onclick={goFirst} disabled={step <= 0}>⟪</button>
-          <button class="cb" onclick={goPrev}  disabled={step <= 0}>‹</button>
-          <button class="cb abtn" style="color:{accent};border-color:{accent}33" onclick={toggleAuto}>{playing ? '⏸' : '⏵'}</button>
-          <button class="cb" onclick={goNext}  disabled={step >= total - 1}>›</button>
-          <button class="cb" onclick={goLast}  disabled={step >= total - 1}>⟫</button>
+          <button class="cb" onclick={goFirst} disabled={step <= 0} title="First (Home)">⟪</button>
+          <button class="cb" onclick={goPrev}  disabled={step <= 0} title="Back (←)">‹</button>
+          <button class="cb abtn" style="color:{accent};border-color:{accent}33"
+            onclick={toggleAuto} title="Play/Pause (Space)">{playing ? '⏸' : '⏵'}</button>
+          <button class="cb" onclick={goNext}  disabled={step >= total - 1} title="Forward (→)">›</button>
+          <button class="cb" onclick={goLast}  disabled={step >= total - 1} title="Last (End)">⟫</button>
           <span class="sc">{step + 1}/{total}</span>
+          <!-- Speed selector -->
+          <div class="speed-row">
+            {#each [0.5, 1, 2, 4] as s}
+              <button
+                class="spd-btn"
+                class:spd-act={speed === s}
+                style="--acc:{accent}"
+                onclick={() => setSpeed(s)}
+                title="{s === 0.5 ? '3600' : s === 1 ? '1800' : s === 2 ? '900' : '450'}ms per step"
+              >{s}x</button>
+            {/each}
+          </div>
         </div>
-        <input type="range" class="slider" min="0" max={total - 1} bind:value={step}
-          style="accent-color:{accent}" />
+
+        <!-- Timeline scrubber -->
+        <div class="timeline" style="--acc:{accent}">
+          <div class="tl-track">
+            <!-- Progress fill -->
+            <div class="tl-fill" style="width:{fillPct}%"></div>
+            <!-- Step markers -->
+            {#each steps as s, i}
+              {@const isActive = i === step}
+              {@const isPast   = i < step}
+              <button
+                class="tl-dot"
+                class:tl-active={isActive}
+                class:tl-past={isPast}
+                style="left:{markerPct(i)}%;--ph:{phColor(s.phase)}"
+                title="Step {i + 1}: {s.phase ?? 'exec'} — {s.brain ? s.brain.slice(0, 60) : ''}"
+                onclick={() => step = i}
+                aria-label="Go to step {i + 1}"
+              >{#if showIcons || isActive}<span class="tl-icon">{phIcon(s.phase)}</span>{/if}</button>
+            {/each}
+          </div>
+        </div>
       {/if}
     </div>
 
@@ -468,14 +562,99 @@
   .ax      { opacity:0; }
   .lt      { white-space:pre; color:#ccc; }
 
-  .ctrls  { display:flex; gap:4px; flex-shrink:0; }
+  /* ── Step controls ─────────────────────────────────────────────────────── */
+  .ctrls  { display:flex; gap:4px; align-items:center; flex-shrink:0; }
   .cb     { background:#0a0a12; border:1px solid #1a1a2e; border-radius:4px; color:#888; font-size:0.8rem; padding:3px 10px; cursor:pointer; }
   .cb:hover:not(:disabled) { border-color:#333; color:#eee; }
   .cb:disabled { opacity:0.2; cursor:default; }
   .abtn   { /* colour set inline */ }
   .sc     { font-size:0.6rem; color:#333; margin-left:6px; font-family:monospace; }
-  .slider { width:100%; margin-top:2px; }
   .err    { background:#ef444412; border:1px solid #ef444433; border-radius:4px; color:#ef4444; font-size:0.72rem; padding:5px 10px; flex-shrink:0; }
+
+  /* ── Speed selector ────────────────────────────────────────────────────── */
+  .speed-row { display:flex; gap:2px; align-items:center; margin-left:auto; }
+  .spd-btn   { background:#0a0a12; border:1px solid #1a1a2e; border-radius:3px; color:#444; font-size:0.52rem; padding:2px 6px; cursor:pointer; font-family:monospace; letter-spacing:0.3px; transition:all 0.15s; }
+  .spd-btn:hover  { border-color:#333; color:#aaa; }
+  .spd-btn.spd-act { border-color:color-mix(in srgb, var(--acc) 50%, transparent); color:var(--acc); background:color-mix(in srgb, var(--acc) 8%, transparent); }
+
+  /* ── Timeline scrubber ─────────────────────────────────────────────────── */
+  .timeline { flex-shrink:0; padding:6px 0 2px; }
+
+  .tl-track {
+    position:relative;
+    height:28px;
+    display:flex;
+    align-items:center;
+    /* side padding so edge markers aren't clipped */
+    margin:0 10px;
+  }
+
+  /* The base track line */
+  .tl-track::before {
+    content:'';
+    position:absolute;
+    left:0; right:0;
+    height:2px;
+    background:#1a1a2e;
+    border-radius:1px;
+  }
+
+  /* Progress fill */
+  .tl-fill {
+    position:absolute;
+    left:0;
+    height:2px;
+    background:var(--acc);
+    border-radius:1px;
+    opacity:0.35;
+    pointer-events:none;
+    transition:width 0.12s;
+  }
+
+  /* Individual step markers */
+  .tl-dot {
+    position:absolute;
+    transform:translateX(-50%);
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    background:#0d0d16;
+    border:1.5px solid #252538;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    z-index:1;
+    transition:border-color 0.15s, background 0.15s, width 0.15s, height 0.15s, box-shadow 0.15s;
+  }
+  .tl-dot:hover:not(.tl-active) {
+    border-color:#555;
+    transform:translateX(-50%) scale(1.25);
+    z-index:3;
+  }
+  .tl-dot.tl-past {
+    border-color:color-mix(in srgb, var(--acc) 35%, transparent);
+    background:color-mix(in srgb, var(--acc) 6%, #0d0d16);
+  }
+  .tl-dot.tl-active {
+    width:22px;
+    height:22px;
+    background:var(--acc);
+    border-color:var(--acc);
+    z-index:4;
+    box-shadow:0 0 10px color-mix(in srgb, var(--acc) 45%, transparent);
+  }
+  .tl-dot.tl-active:hover { transform:translateX(-50%) scale(1.1); }
+
+  .tl-icon {
+    font-size:0.45rem;
+    line-height:1;
+    color:#555;
+    pointer-events:none;
+  }
+  .tl-active .tl-icon { color:#0a0a0f; font-size:0.6rem; font-weight:700; }
+  .tl-past .tl-icon { color:color-mix(in srgb, var(--acc) 60%, transparent); }
 
   /* ── Visual panel (right) ──────────────────────────────────────────────── */
   .vis-panel { width:480px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; overflow-y:auto; overflow-x:hidden; padding-right:2px; }
