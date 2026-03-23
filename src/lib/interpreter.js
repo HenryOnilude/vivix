@@ -32,15 +32,18 @@
  * @property {number}             [objOps]       - (ObjExplorer) object-property operations
  * @property {string|null}        [highlightKey] - (ObjExplorer/DS) key of highlighted object property
  * @property {number}             [dsOps]        - (DataStructures) data-structure operations
+ * @property {Array<{name:string,vars:object,isClosure:boolean,persists?:boolean}>} [scopeChain] - (Closures) scope frames from global to current
+ * @property {Record<string,*>}   [closureVars]  - (Closures) variables being accessed from a closure scope on this step
  */
 
 /**
  * @typedef {Object} InterpreterOptions
- * @property {boolean} [trackLoops]   - Emit `loopIters` counter and loop-specific phases
- * @property {boolean} [trackCalls]   - Emit call-stack (`stack`, `frames`, `calls`, `maxDepth`)
- * @property {boolean} [trackArrays]  - Emit `arrOps` and array-operation phases (arr-push, arr-pop, …)
- * @property {boolean} [trackObjects] - Emit `objOps` and object-operation phases (obj-set, obj-access, …)
- * @property {boolean} [trackDS]      - Emit `dsOps` and data-structure phases (ds-push, ds-pop, …)
+ * @property {boolean} [trackLoops]    - Emit `loopIters` counter and loop-specific phases
+ * @property {boolean} [trackCalls]    - Emit call-stack (`stack`, `frames`, `calls`, `maxDepth`)
+ * @property {boolean} [trackArrays]   - Emit `arrOps` and array-operation phases (arr-push, arr-pop, …)
+ * @property {boolean} [trackObjects]  - Emit `objOps` and object-operation phases (obj-set, obj-access, …)
+ * @property {boolean} [trackDS]       - Emit `dsOps` and data-structure phases (ds-push, ds-pop, …)
+ * @property {boolean} [trackClosures] - Emit `scopeChain` and `closureVars`; enables closure-create/closure-call phases
  */
 
 import * as acorn from 'acorn';
@@ -384,6 +387,9 @@ function evalCall(node, vars) {
   return undefined;
 }
 
+// ── Module-level flag: set to true during interpret() when trackClosures is on ──
+let _globalTrackClosures = false;
+
 function createFuncFromNode(node, outerVars) {
   const paramNames = node.params.map(p => {
     if (p.type === 'Identifier') return p.name;
@@ -394,6 +400,7 @@ function createFuncFromNode(node, outerVars) {
     if (p.type === 'AssignmentPattern') return evalNode(p.right, outerVars);
     return undefined;
   });
+  const paramSet = new Set(paramNames);
 
   const fn = function(...args) {
     const localVars = { ...outerVars };
@@ -405,19 +412,102 @@ function createFuncFromNode(node, outerVars) {
     paramNames.forEach((name, i) => {
       localVars[name] = i < args.length ? args[i] : defaults[i];
     });
+
+    let returnVal = undefined;
     if (node.body.type === 'BlockStatement') {
       for (const stmt of node.body.body) {
         const result = execStmtSimple(stmt, localVars);
-        if (result && result.__return__) return result.value;
+        if (result && result.__return__) { returnVal = result.value; break; }
       }
-      return undefined;
     } else {
       // Arrow with expression body
-      return evalNode(node.body, localVars);
+      returnVal = evalNode(node.body, localVars);
     }
+
+    // trackClosures: write back primitive mutations to outer scope (closure semantics)
+    if (_globalTrackClosures) {
+      for (const key of Object.keys(outerVars)) {
+        if (!paramSet.has(key) && localVars[key] !== outerVars[key]) {
+          outerVars[key] = localVars[key];
+        }
+      }
+    }
+
+    return returnVal;
   };
   fn._isInterpreted = true;
+  // Attach AST node and outer scope reference for closure detection
+  if (_globalTrackClosures) {
+    fn._astNode = node;
+    fn._closureOuterVars = outerVars;
+  }
   return fn;
+}
+
+// ── Closure-detection AST helpers ──────────────────────────────────────────
+
+function collectIdentifierRefs(node, refs = new Set()) {
+  if (!node || typeof node !== 'object') return refs;
+  if (node.type === 'Identifier') { refs.add(node.name); return refs; }
+  for (const key of Object.keys(node)) {
+    if (key === 'type' || key === 'loc' || key === 'start' || key === 'end' || key === 'range') continue;
+    const child = node[key];
+    if (Array.isArray(child)) child.forEach(c => { if (c && typeof c === 'object') collectIdentifierRefs(c, refs); });
+    else if (child && typeof child === 'object') collectIdentifierRefs(child, refs);
+  }
+  return refs;
+}
+
+function collectDeclaredNames(bodyNode) {
+  const names = new Set();
+  function walk(node) {
+    if (!node || typeof node !== 'object') return;
+    if (node.type === 'VariableDeclaration') {
+      for (const d of node.declarations) {
+        if (d.id && d.id.type === 'Identifier') names.add(d.id.name);
+        else if (d.id && d.id.type === 'ObjectPattern') d.id.properties.forEach(p => { if (p.value && p.value.type === 'Identifier') names.add(p.value.name); });
+        else if (d.id && d.id.type === 'ArrayPattern') d.id.elements.forEach(e => { if (e && e.type === 'Identifier') names.add(e.name); });
+      }
+    }
+    if (node.type === 'FunctionDeclaration' && node.id) names.add(node.id.name);
+    // Don't recurse into nested functions — they have their own scope
+    if (node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') return;
+    for (const key of Object.keys(node)) {
+      if (['type','loc','start','end','range'].includes(key)) continue;
+      const child = node[key];
+      if (Array.isArray(child)) child.forEach(c => { if (c && typeof c === 'object') walk(c); });
+      else if (child && typeof child === 'object') walk(child);
+    }
+  }
+  walk(bodyNode);
+  return names;
+}
+
+const _CLOSURE_BUILTINS = new Set([
+  'undefined','null','true','false','Infinity','NaN','console','Math','Object','Array',
+  'String','Number','Boolean','parseInt','parseFloat','isNaN','isFinite','arguments','this',
+]);
+
+/** Returns the set of variable names captured from outer scope by a function node. */
+function detectClosureVarNames(funcNode, outerVarNames) {
+  if (!funcNode || !funcNode.body) return new Set();
+  const refs = collectIdentifierRefs(funcNode.body);
+  const localNames = new Set(
+    (funcNode.params || []).map(p =>
+      p.type === 'Identifier' ? p.name :
+      (p.type === 'AssignmentPattern' ? p.left.name : '_')
+    )
+  );
+  if (funcNode.body.type === 'BlockStatement') {
+    for (const n of collectDeclaredNames(funcNode.body)) localNames.add(n);
+  }
+  const captured = new Set();
+  for (const ref of refs) {
+    if (!localNames.has(ref) && outerVarNames.has(ref) && !_CLOSURE_BUILTINS.has(ref)) {
+      captured.add(ref);
+    }
+  }
+  return captured;
 }
 
 function createClassFromNode(stmt, outerVars, parentClass) {
@@ -676,9 +766,11 @@ function execStmtSimple(stmt, vars) {
 // ═══════════════════════════════════════════════════════
 
 export function interpret(code, options = {}) {
+  _globalTrackClosures = !!options.trackClosures;
   const lines = code.split('\n');
   const { ast, error } = parseCode(code);
   if (error) {
+    _globalTrackClosures = false;
     return { steps: [], error };
   }
 
@@ -693,6 +785,7 @@ export function interpret(code, options = {}) {
   if (options.trackArrays) state.extra.arrOps = 0;
   if (options.trackObjects) state.extra.objOps = 0;
   if (options.trackDS) state.extra.dsOps = 0;
+  if (options.trackClosures) { state.extra.closureRegistry = {}; state.extra.closureVars = {}; }
 
   // Start step
   steps.push(makeStep(-1, findNextLine(lines, -1), vars, output, null, 'start',
@@ -717,6 +810,7 @@ export function interpret(code, options = {}) {
     steps.push(makeStep(-1, -1, vars, output, null, 'error',
       `Runtime error on line ${errLine}: ${runtimeErr.message}\n\nThe interpreter could not continue past this point. Check your code for unsupported syntax or undefined variables.`,
       `ERROR at line ${errLine}`, state, options, true));
+    _globalTrackClosures = false;
     return { steps, error: `Line ${errLine}: ${runtimeErr.message}` };
   }
 
@@ -725,6 +819,7 @@ export function interpret(code, options = {}) {
     buildDoneBrain(vars, output, state),
     `DONE | ${state.memOps} writes`, state, options, true));
 
+  _globalTrackClosures = false;
   return { steps, error: null };
 }
 
@@ -814,10 +909,65 @@ function walkVarDeclaration(stmt, nextLi, vars, output, lines, steps, state, opt
       vars[name] = val;
       state.memOps++;
 
-      const phase = detectPhase(val, options);
+      let phase = detectPhase(val, options);
       if (Array.isArray(val) && options.trackArrays) state.extra.arrOps++;
       if (typeof val === 'object' && val !== null && !Array.isArray(val) && options.trackObjects) state.extra.objOps++;
       if ((Array.isArray(val) || (typeof val === 'object' && val !== null && !Array.isArray(val))) && options.trackDS) state.extra.dsOps++;
+
+      // ── trackClosures: detect closure creation / closure call ──
+      if (options.trackClosures) {
+        // Check if init was a call to a registered closure → closure-call
+        if (decl.init && decl.init.type === 'CallExpression') {
+          const callee = decl.init.callee;
+          let calledName = null;
+          if (callee.type === 'Identifier') calledName = callee.name;
+          else if (callee.type === 'MemberExpression' && !callee.computed) {
+            const on = callee.object.type === 'Identifier' ? callee.object.name : null;
+            if (on) calledName = `${on}.${callee.property.name}`;
+          }
+          if (calledName && state.extra.closureRegistry[calledName]) {
+            const info = state.extra.closureRegistry[calledName];
+            const cVars = {};
+            for (const vn of info.capturedVarNames) {
+              if (info.closureScope && vn in info.closureScope) cVars[vn] = info.closureScope[vn];
+            }
+            state.extra.closureVars = cVars;
+            phase = 'closure-call';
+          }
+        }
+        // Check if val is a function that closes over outer vars → closure-create
+        if (phase !== 'closure-call' && typeof val === 'function' && val._isInterpreted && val._astNode && val._closureOuterVars) {
+          const outerNames = new Set(Object.keys(val._closureOuterVars));
+          const captured = detectClosureVarNames(val._astNode, outerNames);
+          if (captured.size > 0) {
+            state.extra.closureRegistry[name] = { created: true, capturedVarNames: [...captured], closureScope: val._closureOuterVars };
+            const cVars = {};
+            for (const vn of captured) { if (vn in val._closureOuterVars) cVars[vn] = val._closureOuterVars[vn]; }
+            state.extra.closureVars = cVars;
+            phase = 'closure-create';
+          }
+        }
+        // Check if val is an object whose methods close over outer vars → closure-create
+        if (phase !== 'closure-call' && phase !== 'closure-create' && val && typeof val === 'object' && !Array.isArray(val)) {
+          for (const [mkey, prop] of Object.entries(val)) {
+            if (typeof prop === 'function' && prop._isInterpreted && prop._astNode && prop._closureOuterVars) {
+              const outerNames = new Set(Object.keys(prop._closureOuterVars));
+              const captured = detectClosureVarNames(prop._astNode, outerNames);
+              if (captured.size > 0) {
+                const regKey = `${name}.${mkey}`;
+                if (!state.extra.closureRegistry[regKey]) {
+                  state.extra.closureRegistry[regKey] = { created: true, capturedVarNames: [...captured], closureScope: prop._closureOuterVars };
+                }
+                const cVars = {};
+                for (const vn of captured) { if (vn in prop._closureOuterVars) cVars[vn] = prop._closureOuterVars[vn]; }
+                state.extra.closureVars = cVars;
+                phase = 'closure-create';
+                break;
+              }
+            }
+          }
+        }
+      }
 
       steps.push(makeStep(nodeLine(stmt), nextLi, vars, output, name, phase,
         buildDeclBrain(name, val, stmt.kind, vars),
@@ -1018,8 +1168,20 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
     }
 
     const result = evalNode(expr, vars);
-    
-    steps.push(makeStep(li, nextLi, vars, output, null, 'fn-call',
+
+    // trackClosures: detect standalone closure call
+    let callPhase = 'fn-call';
+    if (options.trackClosures && state.extra.closureRegistry[fnName]) {
+      callPhase = 'closure-call';
+      const info = state.extra.closureRegistry[fnName];
+      const cVars = {};
+      for (const vn of info.capturedVarNames) {
+        if (info.closureScope && vn in info.closureScope) cVars[vn] = info.closureScope[vn];
+      }
+      state.extra.closureVars = cVars;
+    }
+
+    steps.push(makeStep(li, nextLi, vars, output, null, callPhase,
       `FUNCTION CALL: ${fnName}(${expr.arguments.map(a => fv(evalNode(a, vars))).join(', ')})\n\nResult: ${fv(result)}\n\nV8 Internal — Call Stack Frame:\nV8 pushes a new frame onto the call stack containing:\n  • Return address — where to resume in the caller\n  • Arguments — ${expr.arguments.length} arg${expr.arguments.length !== 1 ? 's' : ''} passed\n  • Local variables — allocated as the function body executes\n  • Context pointer — link to outer scope for closure access\n\nV8 uses an inline cache (IC) at this call site. If ${fnName}() is always the same function, the IC is "monomorphic" and V8 can skip the lookup — jumping directly to the function's code.`,
       `CALL: ${fnName}()`, state, options));
 
@@ -1182,8 +1344,25 @@ function walkFunctionDeclaration(stmt, nextLi, vars, output, lines, steps, state
     state.extra.calls = state.extra.calls || 0;
   }
 
+  let fnPhase = 'fn-declare';
+  // trackClosures: check if this function itself closes over outer vars
+  if (options.trackClosures) {
+    const fn = vars[name];
+    if (fn && fn._astNode && fn._closureOuterVars) {
+      const outerNames = new Set(Object.keys(fn._closureOuterVars).filter(k => k !== name));
+      const captured = detectClosureVarNames(fn._astNode, outerNames);
+      if (captured.size > 0) {
+        state.extra.closureRegistry[name] = { created: true, capturedVarNames: [...captured], closureScope: fn._closureOuterVars };
+        const cVars = {};
+        for (const vn of captured) { if (vn in fn._closureOuterVars) cVars[vn] = fn._closureOuterVars[vn]; }
+        state.extra.closureVars = cVars;
+        fnPhase = 'closure-create';
+      }
+    }
+  }
+
   const params = stmt.params.map(p => p.type === 'Identifier' ? p.name : '...').join(', ');
-  steps.push(makeStep(li, nextLi, vars, output, name, 'fn-declare',
+  steps.push(makeStep(li, nextLi, vars, output, name, fnPhase,
     `FUNCTION DECLARATION: ${name}(${params})\n\nThe function is stored as a value in memory. It is NOT executed yet — it will run when called.\n\nParameters: ${params || '(none)'}` +
     `\n\nV8 Internal — Lazy Compilation:\n` +
     `V8 uses "lazy parsing" — it only fully parses and compiles a function when it's first CALLED, not when it's declared. Right now, V8 does a quick "pre-parse" to check for syntax errors and find the function boundaries, but doesn't generate bytecode yet.\n\n` +
@@ -1472,6 +1651,22 @@ function makeStep(lineIndex, nextLineIndex, vars, output, highlight, phase, brai
   }
   if (options.trackObjects) step.objOps = state.extra.objOps || 0;
   if (options.trackDS) step.dsOps = state.extra.dsOps || 0;
+  if (options.trackClosures) {
+    // Build scope chain: Global frame + one frame per registered closure
+    const reg = state.extra.closureRegistry || {};
+    const scopeChain = [{ name: 'Global', vars: dc(vars), isClosure: false }];
+    for (const [cname, info] of Object.entries(reg)) {
+      if (info.created && info.closureScope && info.capturedVarNames) {
+        const cVars = {};
+        for (const vn of info.capturedVarNames) {
+          if (vn in info.closureScope) cVars[vn] = dc(info.closureScope[vn]);
+        }
+        scopeChain.push({ name: cname, vars: cVars, isClosure: true });
+      }
+    }
+    step.scopeChain = scopeChain;
+    step.closureVars = dc(state.extra.closureVars || {});
+  }
   return step;
 }
 
@@ -1601,6 +1796,10 @@ function buildDoneBrain(vars, output, state) {
   if (state.extra.arrOps) msg += `\nArray operations: ${state.extra.arrOps}`;
   if (state.extra.objOps) msg += `\nObject operations: ${state.extra.objOps}`;
   if (state.extra.dsOps) msg += `\nDS operations: ${state.extra.dsOps}`;
+  if (state.extra.closureRegistry) {
+    const n = Object.keys(state.extra.closureRegistry).length;
+    if (n > 0) msg += `\nClosures created: ${n}`;
+  }
   msg += '\n\nThe call stack is now empty — the Global frame is popped.';
   msg += '\n\nV8 GARBAGE COLLECTION:\n' +
     `After execution, V8\'s garbage collector (Orinoco) can reclaim unreachable memory.\n\n` +

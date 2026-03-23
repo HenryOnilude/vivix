@@ -9,6 +9,7 @@
   import ObjExplorer from './lib/ObjExplorer.svelte';
   import DataStructures from './lib/DataStructures.svelte';
   import AsyncAwait from './lib/AsyncAwait.svelte';
+  import Closures from './lib/Closures.svelte';
 
   let route = $state(getRoute());
 
@@ -43,6 +44,8 @@
     <DataStructures />
   {:else if route === 'async'}
     <AsyncAwait />
+  {:else if route === 'closures'}
+    <Closures />
   {:else}
     <div class="not-found">
       <p>Module not found</p>

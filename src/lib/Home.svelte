@@ -71,6 +71,15 @@
       color: '#cc66ff',
       icon: '⏳',
       status: 'live'
+    },
+    {
+      id: 'closures',
+      title: 'closureScope',
+      subtitle: 'Closures & Scope',
+      description: 'Watch scope boxes nest and persist. See exactly which variables a closure captures and why they survive after the outer function returns.',
+      color: '#00d4aa',
+      icon: '⊃',
+      status: 'live'
     }
   ];
 </script>
