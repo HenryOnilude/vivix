@@ -21,6 +21,21 @@
       highlightKey: s.highlightKey || null,
     };
   }
+
+  /** Simple hash to bucket: sum of char codes mod N_BUCKETS */
+  function hashKey(key, buckets = 4) {
+    return [...key].reduce((acc, c) => acc + c.charCodeAt(0), 0) % buckets;
+  }
+
+  /** Pre-compute bucket layout: returns array of { key, bucket, row } */
+  function bucketLayout(keys) {
+    const counts = [0, 0, 0, 0];
+    return keys.slice(0, 8).map(key => {
+      const b = hashKey(key);
+      const row = counts[b]++;
+      return { key, bucket: b, row };
+    });
+  }
 </script>
 
 <!-- ── ObjExplorer module ───────────────────────────────────────────────── -->
@@ -30,7 +45,7 @@
   titlePrefix="obj"
   titleAccent="Explorer"
   subtitle="— Objects"
-  desc="See how key-value pairs are stored in hash maps on the heap — property access, nesting, spread, destructuring"
+  desc="See how key-value pairs are stored in hash maps — O(1) access via hash buckets"
   interpreterOptions={{ trackObjects: true }}
   {mapStep}
   showHeap={false}
@@ -72,6 +87,7 @@
             <text x="8"  y="11" fill={ACCENT} font-size="11" font-family="monospace" font-weight="700" opacity="0.4">{'}'}</text>
           </svg>
           <span class="obj-card-title">{objName}</span>
+          <span class="obj-access-badge">access: O(1)</span>
           <span class="obj-card-count">{Object.keys(objVal).length} keys</span>
         </div>
         <div class="obj-props">
@@ -121,6 +137,74 @@
     {/if}
   {/snippet}
 
+  <!-- Hash map internals — shows bucket assignment for each object's keys -->
+  {#snippet bottomPanel(sd)}
+    {@const objs = Object.entries(sd.vars || {}).filter(([, v]) => typeof v === 'object' && v !== null && !Array.isArray(v))}
+    {#if objs.length > 0}
+      {#key sd}
+        {#each objs as [objName, objVal]}
+          {@const keys = Object.keys(objVal)}
+          {#if keys.length > 0}
+            <div class="hash-card">
+              <div class="hash-hdr">
+                <svg width="12" height="12" viewBox="0 0 12 12">
+                  <rect x="1" y="1" width="10" height="10" rx="2" fill="none" stroke={ACCENT} stroke-width="1" opacity="0.5"/>
+                  <line x1="4" y1="1" x2="4" y2="11" stroke={ACCENT} stroke-width="0.5" opacity="0.3"/>
+                  <line x1="8" y1="1" x2="8" y2="11" stroke={ACCENT} stroke-width="0.5" opacity="0.3"/>
+                </svg>
+                <span class="hash-title">HASH MAP — {objName}</span>
+                <span class="hash-subtitle">Each key hashes to a bucket in O(1)</span>
+              </div>
+
+              {#key keys.join(',')}
+                {@const layout = bucketLayout(keys)}
+                {@const maxRow = Math.max(...layout.map(l => l.row), 0)}
+                <svg viewBox="0 0 300 {Math.max(60, (maxRow + 1) * 18 + 40)}" class="hash-svg">
+                  <!-- Bucket headers -->
+                  {#each [0,1,2,3] as b}
+                    {@const bx = 6 + b * 73}
+                    <rect x={bx} y="4" width="66" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
+                    <text x={bx + 33} y="15" text-anchor="middle" fill="#333" font-size="6" font-family="monospace">bucket {b}</text>
+                  {/each}
+
+                  <!-- Key pills dropped into buckets -->
+                  {#each layout as item}
+                    {@const bx  = 6 + item.bucket * 73}
+                    {@const ky  = 26 + item.row * 18}
+                    {@const isHL = sd.highlightKey === item.key && sd.highlight === objName}
+                    <rect x={bx} y={ky} width="66" height="14" rx="2"
+                      fill={isHL ? ACCENT + '25' : '#0d0d1a'}
+                      stroke={isHL ? ACCENT : '#1a1a2e'}
+                      stroke-width={isHL ? 1 : 0.5}/>
+                    <text x={bx + 5} y={ky + 10} fill={isHL ? ACCENT : '#666'} font-size="6" font-family="monospace">"{item.key}"</text>
+                    {#if isHL}
+                      <text x={bx + 60} y={ky + 10} text-anchor="end" fill={ACCENT} font-size="5.5" font-family="monospace">← hit</text>
+                    {/if}
+                  {/each}
+
+                <!-- Lookup arrows from key to bucket -->
+                {#if sd.highlightKey && sd.highlight === objName && keys.includes(sd.highlightKey)}
+                  {@const hk = sd.highlightKey}
+                  {@const b = hashKey(hk)}
+                  <text x="150" y={Math.max(60, Math.ceil(keys.length / 2) * 22 + 32)} text-anchor="middle"
+                    fill={ACCENT} font-size="6.5" font-family="monospace">
+                    hash("{hk}") → bucket {b} → O(1) lookup
+                  </text>
+                {:else}
+                  <text x="150" y={Math.max(60, Math.ceil(keys.length / 2) * 22 + 32)} text-anchor="middle"
+                    fill="#2a2a3e" font-size="6" font-family="monospace">
+                    hash(key) → bucket index → O(1) access regardless of object size
+                  </text>
+                {/if}
+                </svg>
+              {/key}
+            </div>
+          {/if}
+        {/each}
+      {/key}
+    {/if}
+  {/snippet}
+
   <!-- Complexity live stats -->
   {#snippet liveStats(sd)}
     <span class="cx-s">
@@ -136,12 +220,22 @@
   <!-- Placeholder -->
   {#snippet placeholder()}
     <div class="vis-placeholder">
-      <svg viewBox="0 0 200 140" class="ph-svg">
-        <text x="70"  y="45"  fill="#1a1a2e" font-size="24" font-family="monospace" font-weight="700">{'{'}</text>
-        <text x="85"  y="65"  fill="#1a1a2e" font-size="8"  font-family="monospace">k: v</text>
-        <text x="85"  y="80"  fill="#1a1a2e" font-size="8"  font-family="monospace">k: v</text>
-        <text x="110" y="95"  fill="#1a1a2e" font-size="24" font-family="monospace" font-weight="700">{'}'}</text>
-        <text x="100" y="125" text-anchor="middle" fill="#222" font-size="8" font-family="monospace">key-value hash map</text>
+      <svg viewBox="0 0 220 150" class="ph-svg">
+        <!-- Object notation -->
+        <text x="60"  y="32" fill="#1a1a2e" font-size="18" font-family="monospace" font-weight="700">{'{'}</text>
+        <text x="80"  y="48" fill="#1a1a2e" font-size="8"  font-family="monospace">name: "Alice"</text>
+        <text x="80"  y="62" fill="#1a1a2e" font-size="8"  font-family="monospace">age: 25</text>
+        <text x="150" y="72" fill="#1a1a2e" font-size="18" font-family="monospace" font-weight="700">{'}'}</text>
+        <!-- Hash buckets -->
+        <rect x="30"  y="85" width="36" height="18" rx="2" fill="none" stroke="#1a1a2e" stroke-width="1"/>
+        <rect x="70"  y="85" width="36" height="18" rx="2" fill="none" stroke="#1a1a2e" stroke-width="1"/>
+        <rect x="110" y="85" width="36" height="18" rx="2" fill="none" stroke="#1a1a2e" stroke-width="1"/>
+        <rect x="150" y="85" width="36" height="18" rx="2" fill="none" stroke="#1a1a2e" stroke-width="1"/>
+        <text x="48"  y="97" text-anchor="middle" fill="#1a1a2e" font-size="5.5" font-family="monospace">bucket 0</text>
+        <text x="88"  y="97" text-anchor="middle" fill="#1a1a2e" font-size="5.5" font-family="monospace">bucket 1</text>
+        <text x="128" y="97" text-anchor="middle" fill="#1a1a2e" font-size="5.5" font-family="monospace">bucket 2</text>
+        <text x="168" y="97" text-anchor="middle" fill="#1a1a2e" font-size="5.5" font-family="monospace">bucket 3</text>
+        <text x="110" y="125" text-anchor="middle" fill="#222" font-size="8" font-family="monospace">key → hash → bucket → O(1)</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see objects in action</p>
     </div>
@@ -151,18 +245,26 @@
 
 <style>
   /* Object cards */
-  .obj-card      { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .obj-card-hdr  { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
+  .obj-card       { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .obj-card-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .obj-card-title { font-size:0.65rem; color:#c084fc; font-family:'SF Mono',monospace; font-weight:700; }
+  .obj-access-badge { font-size:0.45rem; color:#4ade80; background:#4ade8010; padding:1px 5px; border-radius:3px; border:1px solid #4ade8025; }
   .obj-card-count { margin-left:auto; font-size:0.5rem; color:#444; font-family:monospace; }
-  .obj-props     { padding:6px 8px; display:flex; flex-direction:column; gap:2px; }
-  .obj-prop      { display:flex; align-items:center; gap:6px; padding:4px 8px; border-radius:4px; background:#08080e; border:1px solid #1a1a2e; transition:all 0.3s; }
-  .prop-hl       { border-color:#c084fc44; background:#c084fc08; box-shadow:inset 3px 0 0 #c084fc; }
-  .prop-key      { font-size:0.7rem; color:#e0e0e0; font-family:'SF Mono',monospace; font-weight:600; }
-  .prop-sep      { font-size:0.6rem; color:#333; }
-  .prop-val      { font-size:0.72rem; font-weight:700; font-family:'SF Mono',monospace; flex:1; }
-  .prop-type     { font-size:0.42rem; padding:1px 4px; border-radius:2px; background:#ffffff08; font-family:monospace; margin-left:auto; }
-  .obj-empty     { font-size:0.6rem; color:#2a2a3e; padding:6px; font-family:monospace; }
+  .obj-props      { padding:6px 8px; display:flex; flex-direction:column; gap:2px; }
+  .obj-prop       { display:flex; align-items:center; gap:6px; padding:4px 8px; border-radius:4px; background:#08080e; border:1px solid #1a1a2e; transition:all 0.3s; }
+  .prop-hl        { border-color:#c084fc44; background:#c084fc08; box-shadow:inset 3px 0 0 #c084fc; }
+  .prop-key       { font-size:0.7rem; color:#e0e0e0; font-family:'SF Mono',monospace; font-weight:600; }
+  .prop-sep       { font-size:0.6rem; color:#333; }
+  .prop-val       { font-size:0.72rem; font-weight:700; font-family:'SF Mono',monospace; flex:1; }
+  .prop-type      { font-size:0.42rem; padding:1px 4px; border-radius:2px; background:#ffffff08; font-family:monospace; margin-left:auto; }
+  .obj-empty      { font-size:0.6rem; color:#2a2a3e; padding:6px; font-family:monospace; }
+
+  /* Hash map card */
+  .hash-card      { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .hash-hdr       { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
+  .hash-title     { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .hash-subtitle  { margin-left:auto; font-size:0.45rem; color:#333; font-family:monospace; }
+  .hash-svg       { width:100%; height:auto; display:block; padding:4px 0 6px; }
 
   /* Scalars */
   .scalars-card  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
@@ -177,7 +279,7 @@
   .sc-val        { font-size:0.85rem; font-weight:700; font-family:'SF Mono',monospace; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
-  .ph-svg  { width:200px; height:auto; opacity:0.5; }
+  .ph-svg  { width:220px; height:auto; opacity:0.5; }
   .ph-text { font-size:0.75rem; color:#333; text-align:center; }
 
   .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }

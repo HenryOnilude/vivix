@@ -23,9 +23,11 @@
    *   cpuStack(sd)      — SVG: optional stack-visual override inside CpuDash
    */
   import { onMount } from 'svelte';
-  import { interpret, parseCode, checkSupported } from './interpreter.js';
+  import { interpret, parseCode, checkSupported, friendlyError } from './interpreter.js';
   import { fv, tc, tb, COMPLEXITY_BARS, analyzeComplexity } from './utils.js';
   import { makeAnimateBox, makeAnimateVal, animateBar } from './animations.js';
+  import { createInterpreterWorker } from './useInterpreterWorker.js';
+  import { phColor as _phColor, phIcon, computeVarDiff, markerPct, fillPct as computeFillPct, complexityBadgeColor } from './shell-logic.js';
   import CodeEditor from './CodeEditor.svelte';
   import CpuDash from './CpuDash.svelte';
 
@@ -73,6 +75,7 @@
 
   // ── State ──────────────────────────────────────────────────────────────────
   let selEx    = $state(0);
+  // eslint-disable-next-line -- intentionally captures initial example code
   let codeText = $state(examples[0]?.code ?? '');
   let step     = $state(-1);
   let total    = $state(0);
@@ -81,9 +84,17 @@
   let timer    = $state(null);
   let hasRun   = $state(false);
   let err      = $state('');
+  /** @type {{ friendly:string, hint:string, raw:string }|null} */
+  let errFriendly = $state(null);
   let speed    = $state(1);   // 0.5 | 1 | 2 | 4
+  /** @type {'simple'|'advanced'} */
+  let explainMode = $state('simple');
   /** @type {CxData|null} */
   let dynamicCx = $state(null);
+  let running   = $state(false);
+
+  // ── Web Worker for off-main-thread interpretation ──
+  let interpWorker = null;
 
   // ── Derived ────────────────────────────────────────────────────────────────
   let lines  = $derived(codeText.split('\n'));
@@ -106,72 +117,56 @@
 
   let varDiff = $derived.by(() => {
     if (!sd) return {};
-    const c = sd.vars || {};
-    const p = prev ? (prev.vars || {}) : {};
-    const r = {};
-    for (const k of Object.keys(c)) {
-      if (!(k in p))                                                r[k] = 'new';
-      else if (JSON.stringify(p[k]) !== JSON.stringify(c[k]))       r[k] = 'changed';
-      else                                                           r[k] = 'same';
-    }
-    return r;
+    return computeVarDiff(sd.vars || {}, prev ? (prev.vars || {}) : {});
   });
 
   let varArr = $derived(sd ? Object.entries(sd.vars || {}) : []);
 
   /** Badge colour for the time complexity label */
-  let timeBadgeColor  = $derived(COMPLEXITY_BARS.find(b => cx.time.startsWith(b.label.slice(0, 3)))?.color ?? '#4ade80');
+  let timeBadgeColor  = $derived(complexityBadgeColor(cx.time));
   /** Badge colour for the space complexity label */
-  let spaceBadgeColor = $derived(COMPLEXITY_BARS.find(b => cx.space.startsWith(b.label.slice(0, 3)))?.color ?? '#4ade80');
+  let spaceBadgeColor = $derived(complexityBadgeColor(cx.space));
 
   // ── GSAP actions (accent-coloured) ─────────────────────────────────────────
-  const animateBox = makeAnimateBox(accent);
+  let animateBox = $derived(makeAnimateBox(accent));
   const animateVal = makeAnimateVal();
 
-  // ── Phase colour (covers all module phase names) ───────────────────────────
-  function phColor(ph) {
-    if (!ph) return '#555';
-    if (ph === 'declare')                         return '#4ade80';
-    if (ph === 'assign')                          return '#f59e0b';
-    if (ph === 'condition' || ph === 'else-enter') return '#a78bfa';
-    if (ph === 'skip')                            return '#6b7280';
-    if (ph === 'output')                          return '#38bdf8';
-    if (ph === 'done')                            return '#4ade80';
-    if (ph.startsWith('loop'))                    return accent;
-    if (ph.startsWith('fn-'))                     return accent;
-    return '#555';
-  }
-
-  // ── Phase icon for timeline markers ────────────────────────────────────────
-  function phIcon(ph) {
-    if (!ph) return '▶';
-    if (ph === 'done')                                    return '✓';
-    if (ph === 'condition' || ph === 'else-enter' || ph === 'skip') return '?';
-    if (ph.startsWith('loop'))                            return '↻';
-    if (ph.startsWith('fn-'))                             return 'ƒ';
-    return '▶';
-  }
+  // ── Phase helpers (delegated to shell-logic.js) ───────────────────────────
+  function phColor(ph) { return _phColor(ph, accent); }
 
   // ── Core execute ───────────────────────────────────────────────────────────
-  function _runCode() {
+  async function _runCode() {
     err = '';
+    errFriendly = null;
+    running = true;
     try {
       let rawSteps;
       if (typeof executeCode === 'function') {
         rawSteps = executeCode(codeText);
         dynamicCx = null;
       } else {
-        const { ast, error: parseErr } = parseCode(codeText);
-        if (parseErr) throw new Error(parseErr);
+        const parseResult = parseCode(codeText);
+        if (parseResult.error) {
+          errFriendly = parseResult.friendly || friendlyError(parseResult.error, codeText);
+          throw new Error(parseResult.error);
+        }
 
-        const check = checkSupported(ast);
-        if (!check.ok) throw new Error(check.message);
+        const check = checkSupported(parseResult.ast);
+        if (!check.ok) {
+          errFriendly = friendlyError(check.message, codeText);
+          throw new Error(check.message);
+        }
 
-        if (isCustomCode) dynamicCx = analyzeComplexity(ast);
+        if (isCustomCode) dynamicCx = analyzeComplexity(parseResult.ast);
         else              dynamicCx = null;
 
-        const result = interpret(codeText, interpreterOptions);
-        if (result.error) throw new Error(result.error);
+        // Use Web Worker for non-blocking execution
+        if (!interpWorker) interpWorker = createInterpreterWorker();
+        const result = await interpWorker.run(codeText, interpreterOptions);
+        if (result.error) {
+          errFriendly = result.friendly || friendlyError(result.error, codeText);
+          throw new Error(result.error);
+        }
         rawSteps = result.steps;
       }
 
@@ -182,7 +177,9 @@
       hasRun = true;
     } catch (e) {
       err = e.message;
+      if (!errFriendly) errFriendly = friendlyError(e.message, codeText);
     }
+    running = false;
   }
 
   // ── Controls ───────────────────────────────────────────────────────────────
@@ -226,7 +223,7 @@
   function editCode() { _reset(); }
 
   function _reset() {
-    hasRun = false; step = -1; steps = []; err = ''; dynamicCx = null;
+    hasRun = false; step = -1; steps = []; err = ''; errFriendly = null; dynamicCx = null;
     if (playing) { clearInterval(timer); timer = null; playing = false; }
   }
 
@@ -248,14 +245,9 @@
     }
   }
 
-  // ── Timeline helpers ───────────────────────────────────────────────────────
-  /** Marker position as a percentage (handles total=1 edge case) */
-  function markerPct(i) {
-    return total > 1 ? (i / (total - 1)) * 100 : 0;
-  }
-
+  // ── Timeline helpers (delegated to shell-logic.js) ────────────────────────
   /** Fill width percentage up to current step */
-  let fillPct = $derived(total > 1 ? (step / (total - 1)) * 100 : 0);
+  let fillPct = $derived(computeFillPct(step, total));
 
   /** Whether to show icons inside markers (too many = just dots) */
   let showIcons = $derived(total <= 35);
@@ -265,14 +257,15 @@
     return () => {
       window.removeEventListener('keydown', handleKey);
       if (timer) clearInterval(timer);
+      if (interpWorker) { interpWorker.terminate(); interpWorker = null; }
     };
   });
 </script>
 
-<div class="mod">
+<div class="mod" role="main" aria-label="{titlePrefix}{titleAccent} learning module">
   <!-- Header -->
   <header class="hdr">
-    <a href="#/" class="back">← modules</a>
+    <a href="#/" class="back" aria-label="Back to all modules">← modules</a>
     <div class="title-group">
       <h2>{titlePrefix}<span class="ac" style="color:{accent}">{titleAccent}</span>
         <span class="sub">{subtitle}</span></h2>
@@ -281,17 +274,19 @@
   </header>
 
   <!-- Example picker -->
-  <div class="ex-bar">
-    <span class="ex-lbl">Examples:</span>
+  <nav class="ex-bar" aria-label="Example programs">
+    <span class="ex-lbl" id="ex-label">Examples:</span>
     {#each examples as ex, i}
       <button
         class="ex-btn"
         class:act={selEx === i}
         style="--acc:{accent}"
         onclick={() => loadEx(i)}
+        aria-pressed={selEx === i}
+        aria-describedby="ex-label"
       >{ex.label}</button>
     {/each}
-  </div>
+  </nav>
 
   <!-- Main split layout -->
   <div class="main">
@@ -302,10 +297,11 @@
         <span class="pt">Source Code</span>
         <div class="pa">
           {#if hasRun}
-            <button class="eb" onclick={editCode}>✎ Edit</button>
+            <button class="eb" onclick={editCode} aria-label="Edit code">✎ Edit</button>
           {/if}
-          <button class="rb" style="background:{accent};color:#0a0a0f" onclick={_runCode}>
-            ▶ Visualize
+          <button class="rb" style="background:{accent};color:#0a0a0f" onclick={_runCode} disabled={running}
+            aria-label={running ? 'Running code' : 'Visualize code execution'}>
+            {running ? '⏳ Running…' : '▶ Visualize'}
           </button>
         </div>
       </div>
@@ -334,18 +330,32 @@
         </div>
       {/if}
 
-      {#if err}<div class="err">{err}</div>{/if}
+      {#if err}
+        <div class="err-card">
+          <div class="err-head">
+            <span class="err-icon">!</span>
+            <span class="err-friendly">{errFriendly?.friendly ?? err}</span>
+          </div>
+          {#if errFriendly?.hint}
+            <pre class="err-hint">{errFriendly.hint}</pre>
+          {/if}
+          <details class="err-details">
+            <summary class="err-toggle">Show technical error</summary>
+            <code class="err-raw">{err}</code>
+          </details>
+        </div>
+      {/if}
 
       {#if hasRun}
         <!-- Step controls row -->
-        <div class="ctrls">
-          <button class="cb" onclick={goFirst} disabled={step <= 0} title="First (Home)">⟪</button>
-          <button class="cb" onclick={goPrev}  disabled={step <= 0} title="Back (←)">‹</button>
+        <div class="ctrls" role="toolbar" aria-label="Step controls">
+          <button class="cb" onclick={goFirst} disabled={step <= 0} title="First (Home)" aria-label="First step">⟪</button>
+          <button class="cb" onclick={goPrev}  disabled={step <= 0} title="Back (←)" aria-label="Previous step">‹</button>
           <button class="cb abtn" style="color:{accent};border-color:{accent}33"
-            onclick={toggleAuto} title="Play/Pause (Space)">{playing ? '⏸' : '⏵'}</button>
-          <button class="cb" onclick={goNext}  disabled={step >= total - 1} title="Forward (→)">›</button>
-          <button class="cb" onclick={goLast}  disabled={step >= total - 1} title="Last (End)">⟫</button>
-          <span class="sc">{step + 1}/{total}</span>
+            onclick={toggleAuto} title="Play/Pause (Space)" aria-label={playing ? 'Pause auto-play' : 'Start auto-play'}>{playing ? '⏸' : '⏵'}</button>
+          <button class="cb" onclick={goNext}  disabled={step >= total - 1} title="Forward (→)" aria-label="Next step">›</button>
+          <button class="cb" onclick={goLast}  disabled={step >= total - 1} title="Last (End)" aria-label="Last step">⟫</button>
+          <span class="sc" role="status" aria-live="polite" aria-label="Step {step + 1} of {total}">{step + 1}/{total}</span>
           <!-- Speed selector -->
           <div class="speed-row">
             {#each [0.5, 1, 2, 4] as s}
@@ -360,8 +370,17 @@
           </div>
         </div>
 
+        <!-- Keyboard shortcut hints -->
+        <div class="kbd-hints" aria-hidden="true">
+          <span class="kbd-hint"><kbd>←</kbd> Prev</span>
+          <span class="kbd-hint"><kbd>→</kbd> Next</span>
+          <span class="kbd-hint"><kbd>Space</kbd> Play</span>
+          <span class="kbd-hint"><kbd>Home</kbd> First</span>
+          <span class="kbd-hint"><kbd>End</kbd> Last</span>
+        </div>
+
         <!-- Timeline scrubber -->
-        <div class="timeline" style="--acc:{accent}">
+        <div class="timeline" style="--acc:{accent}" role="slider" aria-label="Execution timeline" aria-valuemin="1" aria-valuemax={total} aria-valuenow={step + 1} aria-valuetext="Step {step + 1} of {total}: {sd?.phase ?? 'ready'}">
           <div class="tl-track">
             <!-- Progress fill -->
             <div class="tl-fill" style="width:{fillPct}%"></div>
@@ -373,7 +392,7 @@
                 class="tl-dot"
                 class:tl-active={isActive}
                 class:tl-past={isPast}
-                style="left:{markerPct(i)}%;--ph:{phColor(s.phase)}"
+                style="left:{markerPct(i, total)}%;--ph:{phColor(s.phase)}"
                 title="Step {i + 1}: {s.phase ?? 'exec'} — {s.brain ? s.brain.slice(0, 60) : ''}"
                 onclick={() => step = i}
                 aria-label="Go to step {i + 1}"
@@ -392,6 +411,8 @@
         {#key step}
           <CpuDash
             {sd} {step} {total} {accent} {phColor}
+            {explainMode}
+            onToggleMode={() => { explainMode = explainMode === 'simple' ? 'advanced' : 'simple'; }}
             registers={cpuRegisters}
             gauge={cpuGauge}
             stack={cpuStack}
@@ -404,7 +425,7 @@
         <!-- Default heap memory card -->
         {#if showHeap && varArr.length > 0}
           <div class="heap-card">
-            <div class="heap-hdr">
+            <div class="heap-hdr" role="heading" aria-level="3">
               <svg width="14" height="14" viewBox="0 0 14 14">
                 <rect x="1" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.5"/>
                 <rect x="8" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.3"/>
@@ -446,7 +467,7 @@
         <!-- STDOUT -->
         {#if sd.output && sd.output.length > 0}
           <div class="out-card">
-            <div class="out-hdr">
+            <div class="out-hdr" role="heading" aria-level="3">
               <svg width="12" height="12" viewBox="0 0 12 12">
                 <rect x="0" y="0" width="12" height="12" rx="2" fill="#111"/>
                 <text x="3" y="9" fill={accent} font-size="8" font-family="monospace">$</text>
@@ -478,15 +499,34 @@
           </div>
           <div class="cx-detail-grid">
             <div class="cx-row">
-              <div class="cx-label">Time Complexity</div>
+              <div class="cx-label">
+                <svg width="12" height="12" viewBox="0 0 12 12" style="vertical-align:-1px;margin-right:4px">
+                  <circle cx="6" cy="6" r="5" fill="none" stroke={timeBadgeColor} stroke-width="1" opacity="0.5"/>
+                  <line x1="6" y1="3" x2="6" y2="6" stroke={timeBadgeColor} stroke-width="1.2" stroke-linecap="round"/>
+                  <line x1="6" y1="6" x2="8" y2="7.5" stroke={timeBadgeColor} stroke-width="1" stroke-linecap="round"/>
+                </svg>
+                Time Complexity
+              </div>
               <div class="cx-badge" style="color:{timeBadgeColor};background:{timeBadgeColor}20">{cx.time}</div>
             </div>
-            <div class="cx-why">{cx.timeWhy}</div>
+            <details class="cx-explain-toggle">
+              <summary class="cx-explain-summary">Why {cx.time}?</summary>
+              <div class="cx-why">{cx.timeWhy}</div>
+            </details>
             <div class="cx-row">
-              <div class="cx-label">Space Complexity</div>
+              <div class="cx-label">
+                <svg width="12" height="12" viewBox="0 0 12 12" style="vertical-align:-1px;margin-right:4px">
+                  <rect x="2" y="3" width="8" height="7" rx="1" fill="none" stroke={spaceBadgeColor} stroke-width="1" opacity="0.5"/>
+                  <rect x="4" y="1" width="4" height="3" rx="1" fill="none" stroke={spaceBadgeColor} stroke-width="0.8" opacity="0.4"/>
+                </svg>
+                Space Complexity
+              </div>
               <div class="cx-badge" style="color:{spaceBadgeColor};background:{spaceBadgeColor}20">{cx.space}</div>
             </div>
-            <div class="cx-why">{cx.spaceWhy}</div>
+            <details class="cx-explain-toggle">
+              <summary class="cx-explain-summary">Why {cx.space}?</summary>
+              <div class="cx-why">{cx.spaceWhy}</div>
+            </details>
           </div>
           <div class="cx-stats">
             {#if liveStats}
@@ -569,13 +609,27 @@
   .cb:disabled { opacity:0.2; cursor:default; }
   .abtn   { /* colour set inline */ }
   .sc     { font-size:0.6rem; color:#333; margin-left:6px; font-family:monospace; }
-  .err    { background:#ef444412; border:1px solid #ef444433; border-radius:4px; color:#ef4444; font-size:0.72rem; padding:5px 10px; flex-shrink:0; }
+  /* ── Error card ──────────────────────────────────────────────────────── */
+  .err-card     { background:#ef444410; border:1px solid #ef444433; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .err-head     { display:flex; align-items:flex-start; gap:8px; padding:8px 12px; background:#ef44440a; border-bottom:1px solid #ef444418; }
+  .err-icon     { flex-shrink:0; width:20px; height:20px; display:flex; align-items:center; justify-content:center; background:#ef4444; color:#0a0a0f; font-size:0.7rem; font-weight:800; border-radius:50%; margin-top:1px; }
+  .err-friendly { font-size:0.78rem; color:#fca5a5; line-height:1.5; font-weight:600; }
+  .err-hint     { padding:8px 12px; font-size:0.7rem; color:#d4a0a0; line-height:1.65; white-space:pre-wrap; font-family:'SF Mono','Fira Code','Consolas',monospace; background:transparent; margin:0; border:none; }
+  .err-details  { border-top:1px solid #ef444418; }
+  .err-toggle   { padding:5px 12px; font-size:0.58rem; color:#ef444488; cursor:pointer; font-family:monospace; letter-spacing:0.3px; }
+  .err-toggle:hover { color:#ef4444cc; }
+  .err-raw      { display:block; padding:6px 12px; font-size:0.62rem; color:#ef4444aa; font-family:'SF Mono','Fira Code','Consolas',monospace; word-break:break-all; white-space:pre-wrap; }
 
   /* ── Speed selector ────────────────────────────────────────────────────── */
   .speed-row { display:flex; gap:2px; align-items:center; margin-left:auto; }
   .spd-btn   { background:#0a0a12; border:1px solid #1a1a2e; border-radius:3px; color:#444; font-size:0.52rem; padding:2px 6px; cursor:pointer; font-family:monospace; letter-spacing:0.3px; transition:all 0.15s; }
   .spd-btn:hover  { border-color:#333; color:#aaa; }
   .spd-btn.spd-act { border-color:color-mix(in srgb, var(--acc) 50%, transparent); color:var(--acc); background:color-mix(in srgb, var(--acc) 8%, transparent); }
+
+  /* ── Keyboard shortcut hints ──────────────────────────────────────────── */
+  .kbd-hints  { display:flex; gap:10px; justify-content:center; padding:3px 8px; flex-wrap:wrap; }
+  .kbd-hint   { font-size:0.48rem; color:#444; font-family:monospace; display:flex; align-items:center; gap:3px; }
+  .kbd-hint kbd { background:#0d0d18; border:1px solid #1a1a2e; border-radius:3px; padding:1px 5px; font-size:0.45rem; color:#666; font-family:monospace; }
 
   /* ── Timeline scrubber ─────────────────────────────────────────────────── */
   .timeline { flex-shrink:0; padding:6px 0 2px; }
@@ -657,7 +711,7 @@
   .tl-past .tl-icon { color:color-mix(in srgb, var(--acc) 60%, transparent); }
 
   /* ── Visual panel (right) ──────────────────────────────────────────────── */
-  .vis-panel { width:480px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; overflow-y:auto; overflow-x:hidden; padding-right:2px; }
+  .vis-panel { width:520px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; overflow-y:auto; overflow-x:hidden; padding-right:2px; }
 
   /* ── Heap memory card ──────────────────────────────────────────────────── */
   .heap-card  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
@@ -671,7 +725,7 @@
   .heap-head  { display:flex; justify-content:space-between; align-items:center; padding:6px 10px 2px; }
   .heap-name  { font-size:0.82rem; color:#e0e0e0; font-weight:700; font-family:'SF Mono',monospace; }
   .heap-type  { font-size:0.45rem; padding:1px 5px; border-radius:3px; border:1px solid; font-family:monospace; letter-spacing:0.5px; font-weight:600; }
-  .heap-val   { padding:4px 10px 8px; font-size:1.1rem; font-weight:800; font-family:'SF Mono',monospace; display:inline-block; }
+  .heap-val   { padding:4px 10px 8px; font-size:1.3rem; font-weight:800; font-family:'SF Mono',monospace; display:inline-block; }
   .heap-change { display:flex; align-items:center; gap:4px; padding:2px 10px 6px; }
   .heap-old   { font-size:0.55rem; color:#555; font-family:monospace; text-decoration:line-through; }
   .heap-arrow { font-size:0.5rem; color:#f59e0b; }
@@ -687,7 +741,7 @@
   .cx-hdr        { display:flex; align-items:center; justify-content:space-between; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .cx-title      { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .cx-live-badge { font-size:0.42rem; color:#4ade80; border:1px solid #4ade8044; border-radius:3px; padding:1px 5px; font-family:monospace; letter-spacing:0.5px; }
-  .cx-chart      { display:flex; align-items:flex-end; gap:4px; height:60px; padding:8px 10px 0; }
+  .cx-chart      { display:flex; align-items:flex-end; gap:4px; height:76px; padding:8px 10px 0; }
   .cx-col        { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; }
   .cx-bar        { width:100%; border-radius:3px 3px 0 0; min-height:2px; }
   .cx-lbl        { font-family:monospace; font-size:0.42rem; text-align:center; margin-top:2px; font-weight:600; }
@@ -695,6 +749,9 @@
   .cx-row        { display:flex; justify-content:space-between; align-items:center; }
   .cx-label      { font-size:0.68rem; color:#888; font-family:monospace; }
   .cx-badge      { font-size:0.65rem; font-family:monospace; font-weight:800; padding:2px 10px; border-radius:4px; }
+  .cx-explain-toggle  { margin-bottom:4px; }
+  .cx-explain-summary { font-size:0.58rem; color:#555; cursor:pointer; font-family:monospace; letter-spacing:0.3px; padding:2px 0; user-select:none; transition:color 0.15s; }
+  .cx-explain-summary:hover { color:#888; }
   .cx-why        { font-size:0.68rem; color:#999; line-height:1.5; margin-bottom:6px; }
   .cx-stats      { display:flex; gap:14px; padding:5px 10px; border-top:1px solid #1a1a2e; }
   .cx-s          { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
@@ -703,10 +760,88 @@
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-text         { font-size:0.75rem; color:#333; text-align:center; }
 
-  /* ── Responsive ────────────────────────────────────────────────────────── */
-  @media (max-width: 800px) {
-    .main       { flex-direction:column; overflow-y:auto; }
-    .vis-panel  { width:100%; }
-    .mod        { padding:10px; }
+  /* ── Responsive: tablet ≤768px ────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .mod        { padding:10px 12px; gap:8px; height:auto; min-height:100vh; min-height:100dvh; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
+    .hdr        { gap:10px; }
+    h2          { font-size:1.1rem; }
+    .sub        { font-size:0.75rem; }
+    .desc       { font-size:0.58rem; }
+    .ex-bar     { gap:4px; overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; }
+    .ex-bar::-webkit-scrollbar { display:none; }
+    .ex-btn     { font-size:0.62rem; padding:6px 12px; white-space:nowrap; flex-shrink:0; min-height:32px; }
+    .main       { flex-direction:column; overflow:visible; min-height:0; flex:none; gap:10px; }
+    .code-panel { min-height:auto; flex:none; }
+    .vis-panel  { width:100%; flex-shrink:initial; max-height:none; overflow:visible; }
+    .code-disp  { max-height:260px; min-height:180px; }
+    .ctrls      { flex-wrap:wrap; gap:4px; justify-content:center; }
+    .cb         { padding:6px 12px; font-size:0.75rem; min-height:36px; min-width:36px; display:flex; align-items:center; justify-content:center; }
+    .sc         { font-size:0.58rem; width:100%; text-align:center; order:10; margin:2px 0 0; }
+    .speed-row  { margin-left:0; gap:3px; }
+    .spd-btn    { padding:4px 8px; font-size:0.55rem; min-height:28px; }
+    .kbd-hints  { display:none; }
+    .timeline   { padding:4px 0 2px; }
+    .tl-track   { margin:0 6px; height:24px; }
+    .tl-dot     { width:10px; height:10px; }
+    .tl-dot.tl-active { width:16px; height:16px; }
+    .tl-icon    { font-size:0.35rem; }
+    .tl-active .tl-icon { font-size:0.5rem; }
+    .heap-grid  { grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:4px; padding:6px; }
+    .heap-val   { font-size:1rem; }
+    .cx-chart   { height:56px; }
+    .cx-why     { font-size:0.6rem; }
+    .cx-stats   { flex-wrap:wrap; gap:8px; }
+    .err-friendly { font-size:0.7rem; }
+    .err-hint     { font-size:0.62rem; padding:6px 10px; }
+    .err-raw      { font-size:0.55rem; }
+  }
+
+  /* ── Responsive: phone ≤480px ────────────────────────────────────────── */
+  @media (max-width: 480px) {
+    .mod        { padding:6px 8px; gap:6px; }
+    .hdr        { flex-direction:column; align-items:flex-start; gap:4px; }
+    h2          { font-size:0.95rem; }
+    .sub        { font-size:0.68rem; }
+    .ex-btn     { font-size:0.6rem; padding:5px 10px; min-height:34px; }
+    .code-disp  { max-height:200px; min-height:140px; font-size:0.75rem; line-height:1.6; }
+    .ln         { width:22px; font-size:0.62rem; }
+    .ac-col     { width:16px; }
+    .cb         { padding:6px 10px; font-size:0.7rem; min-height:40px; min-width:40px; }
+    .abtn       { min-width:48px; }
+    .heap-grid  { grid-template-columns:1fr 1fr; gap:4px; padding:4px; }
+    .heap-name  { font-size:0.72rem; }
+    .heap-val   { font-size:0.9rem; padding:3px 8px 6px; }
+    .heap-addr  { font-size:0.38rem; }
+    .cx-chart   { height:42px; }
+    .cx-lbl     { font-size:0.38rem; }
+    .cx-label   { font-size:0.6rem; }
+    .cx-badge   { font-size:0.58rem; padding:2px 8px; }
+    .cx-why     { font-size:0.55rem; }
+    .out-ln     { font-size:0.7rem; padding:3px 8px; }
+    .ph         { padding:4px 8px; }
+    .pt         { font-size:0.58rem; }
+    .rb         { font-size:0.62rem; padding:5px 14px; min-height:34px; }
+    .eb         { font-size:0.62rem; padding:5px 10px; min-height:34px; }
+    .err-head   { padding:6px 8px; gap:6px; }
+    .err-icon   { width:16px; height:16px; font-size:0.58rem; }
+    .err-friendly { font-size:0.65rem; }
+    .err-hint   { font-size:0.58rem; padding:5px 8px; }
+    .err-raw    { font-size:0.5rem; padding:4px 8px; }
+    .tl-track   { margin:0 4px; height:20px; }
+    .tl-dot     { width:8px; height:8px; }
+    .tl-dot.tl-active { width:14px; height:14px; }
+    .tl-icon    { font-size:0.3rem; }
+    .tl-active .tl-icon { font-size:0.42rem; }
+  }
+
+  /* ── Responsive: very small phone ≤360px ─────────────────────────────── */
+  @media (max-width: 360px) {
+    .mod        { padding:4px 6px; gap:4px; }
+    h2          { font-size:0.85rem; }
+    .code-disp  { max-height:160px; min-height:120px; font-size:0.7rem; }
+    .heap-grid  { grid-template-columns:1fr; }
+    .heap-val   { font-size:0.8rem; }
+    .cx-chart   { height:36px; }
+    .cb         { padding:5px 8px; font-size:0.65rem; min-height:36px; min-width:36px; }
   }
 </style>

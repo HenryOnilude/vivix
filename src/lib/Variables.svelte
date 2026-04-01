@@ -14,11 +14,6 @@
     { label: 'const vs let', code: 'const PI = 3.14159;\nconst APP_NAME = "VisualJS";\nlet counter = 0;\ncounter = counter + 1;\ncounter = counter + 1;',                 cx: { time: 'O(1)', space: 'O(1)', timeWhy: 'O(1) — const and let both take the same time to declare. The difference is semantic: const prevents reassignment (caught at parse time), let allows it. Neither affects runtime complexity. 2 consts + 1 let + 2 reassignments = 5 ops, constant.',                                                                                                                                                                          spaceWhy: 'O(1) — const does NOT use less memory than let. Both allocate the same space. The "const" keyword is a compile-time constraint, not a memory optimization. 3 variables = fixed space.' } },
   ];
 
-  /**
-   * Augment each raw step with Variables-specific fields:
-   *   bytes    — total heap bytes across all current variables
-   *   newBytes — bytes just allocated by this step (0 for reassignments)
-   */
   function mapStep(s) {
     const bytes   = totalBytes(s.vars || {});
     const hlVal   = s.highlight && s.vars ? s.vars[s.highlight] : null;
@@ -57,28 +52,71 @@
     <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">{sd.newBytes || 0}B NEW</text>
   {/snippet}
 
-  <!-- Below heap: byte map visualisation -->
+  <!-- Byte map — byte-square grid per variable -->
   {#snippet bottomPanel(sd)}
     {@const varArr = Object.entries(sd.vars || {})}
     {#if varArr.length > 0}
       {#key sd}
         <div class="bytemap-card">
           <div class="bytemap-hdr">
-            <span class="bytemap-title">BYTE MAP</span>
-            <span class="bytemap-total">~{sd.bytes ?? 0}B total</span>
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <rect x="1" y="1" width="4" height="4" rx="1" fill={ACCENT} opacity="0.7"/>
+              <rect x="7" y="1" width="4" height="4" rx="1" fill={ACCENT} opacity="0.5"/>
+              <rect x="1" y="7" width="4" height="4" rx="1" fill={ACCENT} opacity="0.5"/>
+              <rect x="7" y="7" width="4" height="4" rx="1" fill={ACCENT} opacity="0.3"/>
+            </svg>
+            <span class="bytemap-title">MEMORY MAP</span>
+            <span class="bytemap-total">~{sd.bytes ?? 0}B used</span>
           </div>
-          <svg viewBox="0 0 300 {Math.max(30, varArr.length * 24 + 10)}" class="bytemap-svg">
-            {#each varArr as [name, val], idx}
+
+          <div class="bytemap-body">
+            {#each varArr as [name, val]}
               {@const tp    = typeof val}
-              {@const bytes = tp === 'number' ? 8 : tp === 'boolean' ? 4 : tp === 'string' ? (String(val).length * 2) + 16 : 8}
-              {@const barW  = Math.min(250, (bytes / 40) * 250)}
+              {@const bytes = tp === 'number' ? 8 : tp === 'boolean' ? 4 : tp === 'string' ? Math.min((String(val).length * 2) + 16, 64) : 8}
+              {@const rawBytes = tp === 'number' ? 8 : tp === 'boolean' ? 4 : tp === 'string' ? (String(val).length * 2) + 16 : 8}
               {@const color = tc(val)}
-              <rect x="40" y={idx * 24 + 4} width={barW} height="16" rx="3" fill={color} opacity="0.2"/>
-              <rect x="40" y={idx * 24 + 4} width={barW} height="16" rx="3" fill="none" stroke={color} stroke-width="0.5" opacity="0.4"/>
-              <text x="36" y={idx * 24 + 15} text-anchor="end" fill="#555" font-size="7.5" font-family="monospace">{name}</text>
-              <text x={44 + barW} y={idx * 24 + 15} fill="#444" font-size="6.5" font-family="monospace">{bytes}B</text>
+              {@const isActive = sd.highlight === name}
+              <div class="byterow" class:byterow-active={isActive}>
+                <div class="byterow-meta">
+                  <span class="byterow-name" style="color:{isActive ? '#fbbf24' : '#888'}">{name}</span>
+                  <span class="byterow-type" style="color:{color}">{tp === 'object' && val === null ? 'null' : tp === 'undefined' ? 'undef' : tp}</span>
+                </div>
+                <div class="byte-squares">
+                  {#each Array(Math.min(bytes, 32)) as _, bi}
+                    <div
+                      class="byte-sq"
+                      class:byte-sq-active={isActive}
+                      style="background:{color}; opacity:{isActive ? (0.5 + (bi / Math.min(bytes, 32)) * 0.5) : (0.15 + (bi / Math.min(bytes, 32)) * 0.25)}"
+                    ></div>
+                  {/each}
+                  {#if bytes > 32}
+                    <span class="bytes-overflow">+{rawBytes - 32}B</span>
+                  {/if}
+                </div>
+                <span class="byterow-size" style="color:{isActive ? color : '#444'}">{rawBytes}B</span>
+              </div>
             {/each}
-          </svg>
+          </div>
+
+          <!-- Type legend -->
+          <div class="byte-legend">
+            <span class="leg-item">
+              <span class="leg-sq" style="background:#ffcc66"></span>
+              <span class="leg-label">number · 8B</span>
+            </span>
+            <span class="leg-item">
+              <span class="leg-sq" style="background:#ff8866"></span>
+              <span class="leg-label">string · 2n+16B</span>
+            </span>
+            <span class="leg-item">
+              <span class="leg-sq" style="background:#4ade80"></span>
+              <span class="leg-label">bool · 4B</span>
+            </span>
+            <span class="leg-item">
+              <span class="leg-sq" style="background:#94a3b8"></span>
+              <span class="leg-label">null/undef · 8B</span>
+            </span>
+          </div>
         </div>
       {/key}
     {/if}
@@ -114,11 +152,33 @@
 </ModuleShell>
 
 <style>
+  /* Byte map */
   .bytemap-card  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .bytemap-hdr   { display:flex; justify-content:space-between; align-items:center; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
+  .bytemap-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .bytemap-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
-  .bytemap-total { font-size:0.5rem; color:#38bdf8; font-family:monospace; }
-  .bytemap-svg   { width:100%; height:auto; display:block; padding:4px 0; }
+  .bytemap-total { margin-left:auto; font-size:0.5rem; color:#38bdf8; font-family:monospace; }
+
+  .bytemap-body  { padding:6px 8px; display:flex; flex-direction:column; gap:5px; }
+
+  .byterow       { display:flex; align-items:center; gap:8px; padding:4px 6px; border-radius:5px; transition:all 0.3s; }
+  .byterow-active { background:#38bdf808; box-shadow:inset 3px 0 0 #38bdf8; }
+
+  .byterow-meta  { display:flex; flex-direction:column; gap:1px; min-width:60px; }
+  .byterow-name  { font-size:0.7rem; font-weight:700; font-family:'SF Mono',monospace; }
+  .byterow-type  { font-size:0.42rem; font-family:monospace; letter-spacing:0.3px; }
+
+  .byte-squares  { display:flex; flex-wrap:wrap; gap:1.5px; flex:1; }
+  .byte-sq       { width:7px; height:12px; border-radius:1px; transition:all 0.3s; flex-shrink:0; }
+  .byte-sq-active { box-shadow:0 0 3px currentColor; }
+  .bytes-overflow { font-size:0.45rem; color:#444; font-family:monospace; align-self:center; margin-left:2px; }
+
+  .byterow-size  { font-size:0.55rem; font-family:monospace; font-weight:700; min-width:32px; text-align:right; }
+
+  /* Type legend */
+  .byte-legend   { display:flex; flex-wrap:wrap; gap:8px; padding:5px 10px 7px; background:#07070f; border-top:1px solid #1a1a2e; }
+  .leg-item      { display:flex; align-items:center; gap:4px; }
+  .leg-sq        { width:8px; height:8px; border-radius:1.5px; flex-shrink:0; opacity:0.7; }
+  .leg-label     { font-size:0.45rem; color:#444; font-family:monospace; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg { width:200px; height:auto; opacity:0.5; }

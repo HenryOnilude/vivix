@@ -401,3 +401,290 @@ describe('Try/catch', () => {
     expect(steps.some(s => s.phase === 'catch-enter')).toBe(true);
   });
 });
+
+// ═══════════════════════════════════════
+// Edge case & stress tests
+// ═══════════════════════════════════════
+describe('Edge cases — large programs', () => {
+  it('handles 100 sequential variable declarations', () => {
+    const lines = Array.from({ length: 100 }, (_, i) => `let v${i} = ${i};`);
+    const { vars } = run(lines.join('\n'));
+    expect(vars.v0).toBe(0);
+    expect(vars.v50).toBe(50);
+    expect(vars.v99).toBe(99);
+  });
+
+  it('handles a loop with 200 iterations', () => {
+    const { vars } = run('let sum = 0;\nfor (let i = 0; i < 200; i++) {\n  sum = sum + 1;\n}', { trackLoops: true });
+    expect(vars.sum).toBe(200);
+  });
+
+  it('handles deeply nested if statements (10 levels)', () => {
+    let code = 'let x = 0;\n';
+    for (let i = 0; i < 10; i++) code += `${'  '.repeat(i)}if (true) {\n`;
+    code += `${'  '.repeat(10)}x = 42;\n`;
+    for (let i = 9; i >= 0; i--) code += `${'  '.repeat(i)}}\n`;
+    const { vars } = run(code);
+    expect(vars.x).toBe(42);
+  });
+
+  it('handles deeply nested for loops (5 levels)', () => {
+    const code = `let count = 0;
+for (let a = 0; a < 3; a++) {
+  for (let b = 0; b < 3; b++) {
+    for (let c = 0; c < 3; c++) {
+      for (let d = 0; d < 3; d++) {
+        for (let e = 0; e < 3; e++) {
+          count = count + 1;
+        }
+      }
+    }
+  }
+}`;
+    const { vars } = run(code, { trackLoops: true });
+    expect(vars.count).toBe(243); // 3^5
+  });
+
+  it('handles many function calls in sequence', () => {
+    let code = 'function inc(n) { return n + 1; }\nlet x = 0;\n';
+    for (let i = 0; i < 50; i++) code += `x = inc(x);\n`;
+    const { vars } = run(code, { trackCalls: true });
+    expect(vars.x).toBe(50);
+  });
+
+  it('handles large array with many push operations', () => {
+    let code = 'let arr = [];\n';
+    for (let i = 0; i < 50; i++) code += `arr.push(${i});\n`;
+    code += 'let len = arr.length;';
+    const { vars } = run(code, { trackArrays: true });
+    expect(vars.len).toBe(50);
+    expect(vars.arr.length).toBe(50);
+  });
+});
+
+describe('Edge cases — boundary values', () => {
+  it('handles undefined variable value', () => {
+    const { vars } = run('let x;');
+    expect(vars.x).toBeUndefined();
+  });
+
+  it('handles null assignment', () => {
+    const { vars } = run('let x = null;');
+    expect(vars.x).toBeNull();
+  });
+
+  it('handles empty string', () => {
+    const { vars } = run('let s = "";');
+    expect(vars.s).toBe('');
+  });
+
+  it('handles zero and negative numbers', () => {
+    const { vars } = run('let zero = 0;\nlet neg = -42;\nlet negFloat = -3.14;');
+    expect(vars.zero).toBe(0);
+    expect(vars.neg).toBe(-42);
+    expect(vars.negFloat).toBeCloseTo(-3.14);
+  });
+
+  it('handles boolean coercion in conditions', () => {
+    const { vars } = run('let a = "";\nlet b = 0;\nlet c = null;\nlet ra = "truthy";\nlet rb = "truthy";\nlet rc = "truthy";\nif (a) { ra = "yes"; }\nif (b) { rb = "yes"; }\nif (c) { rc = "yes"; }');
+    expect(vars.ra).toBe('truthy');
+    expect(vars.rb).toBe('truthy');
+    expect(vars.rc).toBe('truthy');
+  });
+
+  it('handles empty array', () => {
+    const { vars } = run('let arr = [];\nlet len = arr.length;');
+    expect(vars.arr).toEqual([]);
+    expect(vars.len).toBe(0);
+  });
+
+  it('handles empty object', () => {
+    const { vars } = run('let obj = {};', { trackObjects: true });
+    expect(vars.obj).toEqual({});
+  });
+
+  it('handles template literals', () => {
+    const { vars } = run('let name = "World";\nlet msg = `Hello, ${name}!`;');
+    expect(vars.msg).toBe('Hello, World!');
+  });
+
+  it('handles ternary operator', () => {
+    const { vars } = run('let x = 5;\nlet result = x > 3 ? "big" : "small";');
+    expect(vars.result).toBe('big');
+  });
+
+  it('handles compound assignment operators', () => {
+    const { vars } = run('let x = 10;\nx += 5;\nx -= 3;\nx *= 2;\nx /= 4;\nx %= 3;');
+    expect(vars.x).toBe(0);
+  });
+
+  it('handles while loop that never executes', () => {
+    const { vars } = run('let x = 0;\nwhile (false) {\n  x = 999;\n}');
+    expect(vars.x).toBe(0);
+  });
+
+  it('handles chained string concatenation', () => {
+    const { vars } = run('let s = "a" + "b" + "c" + "d" + "e";');
+    expect(vars.s).toBe('abcde');
+  });
+});
+
+describe('Edge cases — error resilience', () => {
+  it('returns partial steps on runtime error', () => {
+    const code = 'let x = 1;\nlet y = x.nonExistent.deep;';
+    const result = interpret(code);
+    // Should have at least the start step and possibly partial steps
+    expect(result.steps.length).toBeGreaterThan(0);
+    expect(result.steps[0].phase).toBe('start');
+  });
+
+  it('handles syntax error gracefully', () => {
+    const result = interpret('let x = {{{');
+    expect(result.error).toBeTruthy();
+  });
+
+  it('handles empty input', () => {
+    const result = interpret('');
+    expect(result.error).toBeNull();
+    expect(result.steps.length).toBe(2);
+  });
+
+  it('handles whitespace-only input', () => {
+    const result = interpret('   \n\n   \n');
+    expect(result.error).toBeNull();
+    expect(result.steps.length).toBe(2);
+  });
+
+  it('handles comment-only input', () => {
+    const result = interpret('// just a comment\n// another comment');
+    expect(result.error).toBeNull();
+    expect(result.steps.length).toBe(2);
+  });
+});
+
+// ═══════════════════════════════════════
+// Split module unit tests
+// ═══════════════════════════════════════
+import { parseCode as parseCodeDirect, friendlyError, checkSupported } from './parser.js';
+import { evalNode, detectPhase, isConsoleLog } from './evaluator.js';
+import { buildDeclBrain, buildDoneBrain } from './brain-text.js';
+
+describe('parser.js — parseCode', () => {
+  it('parses valid code and returns AST', () => {
+    const { ast, error } = parseCodeDirect('let x = 1;');
+    expect(error).toBeNull();
+    expect(ast).toBeTruthy();
+    expect(ast.body.length).toBe(1);
+    expect(ast.body[0].type).toBe('VariableDeclaration');
+  });
+
+  it('returns error for invalid syntax', () => {
+    const { ast, error } = parseCodeDirect('let x = ;');
+    expect(ast).toBeNull();
+    expect(error).toContain('Syntax error');
+  });
+});
+
+describe('parser.js — friendlyError', () => {
+  it('handles "Unexpected token" errors', () => {
+    const fe = friendlyError('Unexpected token }', 'let x = }', 1);
+    expect(fe.friendly).toContain('character or symbol');
+    expect(fe.hint).toContain('bracket');
+    expect(fe.raw).toBe('Unexpected token }');
+  });
+
+  it('handles "is not defined" errors', () => {
+    const fe = friendlyError('foo is not defined', '', 1);
+    expect(fe.friendly).toContain('foo');
+    expect(fe.hint).toContain('let');
+  });
+
+  it('handles "is not a function" errors', () => {
+    const fe = friendlyError('x is not a function', '', 1);
+    expect(fe.friendly).toContain('function');
+  });
+
+  it('returns fallback for unknown errors', () => {
+    const fe = friendlyError('some random weird error');
+    expect(fe.friendly).toContain('Something went wrong');
+    expect(fe.raw).toBe('some random weird error');
+  });
+});
+
+describe('parser.js — checkSupported', () => {
+  it('returns ok for supported syntax', () => {
+    const { ast } = parseCodeDirect('let x = 1; if (x > 0) { x = 2; }');
+    expect(checkSupported(ast)).toEqual({ ok: true });
+  });
+
+  it('rejects async functions', () => {
+    const { ast } = parseCodeDirect('async function f() {}');
+    const result = checkSupported(ast);
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('async');
+  });
+});
+
+describe('evaluator.js — detectPhase', () => {
+  it('returns ds-create for arrays', () => {
+    expect(detectPhase([1, 2], {})).toBe('ds-create');
+  });
+
+  it('returns obj-create for objects', () => {
+    expect(detectPhase({ a: 1 }, {})).toBe('obj-create');
+  });
+
+  it('returns fn-declare for functions', () => {
+    expect(detectPhase(() => {}, {})).toBe('fn-declare');
+  });
+
+  it('returns declare for primitives', () => {
+    expect(detectPhase(42, {})).toBe('declare');
+    expect(detectPhase('hello', {})).toBe('declare');
+    expect(detectPhase(true, {})).toBe('declare');
+  });
+});
+
+describe('brain-text.js — buildDeclBrain', () => {
+  it('returns array brain text for arrays', () => {
+    const text = buildDeclBrain('arr', [1, 2, 3], 'let', { arr: [1, 2, 3] });
+    expect(text).toContain('ARRAY CREATED');
+    expect(text).toContain('PACKED_SMI');
+  });
+
+  it('returns object brain text for objects', () => {
+    const text = buildDeclBrain('obj', { x: 1 }, 'const', { obj: { x: 1 } });
+    expect(text).toContain('OBJECT CREATED');
+    expect(text).toContain('Hidden Class');
+  });
+
+  it('returns function brain text for functions', () => {
+    const text = buildDeclBrain('fn', () => {}, 'const', { fn: () => {} });
+    expect(text).toContain('FUNCTION DECLARATION');
+  });
+
+  it('returns SMI brain text for small integers', () => {
+    const text = buildDeclBrain('x', 42, 'let', { x: 42 });
+    expect(text).toContain('SMI');
+  });
+
+  it('returns string brain text for strings', () => {
+    const text = buildDeclBrain('s', 'hello', 'let', { s: 'hello' });
+    expect(text).toContain('String');
+  });
+});
+
+describe('brain-text.js — buildDoneBrain', () => {
+  it('returns completion summary', () => {
+    const text = buildDoneBrain({ x: 1, y: 2 }, ['hello'], { memOps: 3, comps: 1, extra: {} });
+    expect(text).toContain('PROGRAM COMPLETE');
+    expect(text).toContain('2 variables');
+    expect(text).toContain('3');
+    expect(text).toContain('GARBAGE COLLECTION');
+  });
+
+  it('includes loop iterations when present', () => {
+    const text = buildDoneBrain({}, [], { memOps: 0, comps: 5, extra: { loopIters: 10 } });
+    expect(text).toContain('Loop iterations: 10');
+  });
+});

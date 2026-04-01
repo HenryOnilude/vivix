@@ -43,6 +43,15 @@
       },
     },
     {
+      label: 'Accumulator',
+      code: 'function makeAccumulator(start) {\n  let running = start;\n  return function(items) {\n    for (let i = 0; i < items.length; i++) {\n      running = running + items[i];\n    }\n    return running;\n  };\n}\n\nlet acc = makeAccumulator(0);\nlet r1 = acc([1, 2, 3]);\nlet r2 = acc([10, 20]);',
+      complexity: {
+        time: 'O(n) per call', space: 'O(1)',
+        timeWhy: 'Each call to acc() loops over items — linear in items.length. The closure adds zero overhead. Two calls: O(n₁ + n₂) total.',
+        spaceWhy: 'The closure captures one variable (running). The loop uses one counter. Memory is constant — no new arrays created inside the closure.',
+      },
+    },
+    {
       label: 'Closure loop',
       code: 'let funcs = [];\n\nfor (let i = 0; i < 3; i++) {\n  funcs[i] = function() {\n    return i;\n  };\n}\n\nlet r0 = funcs[0]();\nlet r1 = funcs[1]();\nlet r2 = funcs[2]();',
       complexity: {
@@ -68,7 +77,6 @@
   }
 
   // ── GSAP actions ──────────────────────────────────────────────────────────
-  /** Slide-in animation for newly created closure scope boxes */
   function animateScopeCreate(node, { phase }) {
     function run(p) {
       if (p === 'closure-create') {
@@ -79,7 +87,6 @@
     return { update({ phase: p }) { run(p); } };
   }
 
-  /** Border flash for closure-call */
   function animateScopeCall(node, { phase, accent }) {
     function run(p) {
       if (p === 'closure-call') {
@@ -92,6 +99,38 @@
     run(phase);
     return { update({ phase: p }) { run(p); } };
   }
+
+  /** Animate the capture bridge: slide-down on closure-create, pulse on closure-call */
+  function animateCaptureRef(node, { phase }) {
+    function run(p) {
+      if (p === 'closure-create') {
+        gsap.from(node, { opacity: 0, y: -6, duration: 0.55, ease: 'power2.out' });
+      } else if (p === 'closure-call') {
+        gsap.fromTo(node,
+          { backgroundColor: `${ACCENT}18` },
+          { backgroundColor: 'transparent', duration: 0.9, ease: 'power2.out' }
+        );
+      }
+    }
+    run(phase);
+    return { update({ phase: p }) { run(p); } };
+  }
+
+  /** Flash a captured-variable row when the closure reads/writes it */
+  function animateCaptureFlash(node, { active, accent }) {
+    if (active) {
+      gsap.fromTo(node,
+        { backgroundColor: `${accent}30`, x: 2 },
+        { backgroundColor: 'transparent', x: 0, duration: 0.7, ease: 'power2.out' }
+      );
+    }
+    return { update({ active: a, accent: ac }) {
+      if (a) gsap.fromTo(node,
+        { backgroundColor: `${ac}30`, x: 2 },
+        { backgroundColor: 'transparent', x: 0, duration: 0.7, ease: 'power2.out' }
+      );
+    }};
+  }
 </script>
 
 <!-- ── Closures module ─────────────────────────────────────────────────────── -->
@@ -101,7 +140,7 @@
   titlePrefix="closure"
   titleAccent="Scope"
   subtitle="— Closures & Scope"
-  desc="Watch scope boxes nest and persist — see exactly which variables a closure captures"
+  desc="Watch scope boxes nest inside each other — see which variables are captured and why they persist"
   interpreterOptions={{ trackCalls: true, trackClosures: true }}
   {mapStep}
   showHeap={false}
@@ -130,7 +169,7 @@
     <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">CAPTURED {sd.capturedCount}</text>
   {/snippet}
 
-  <!-- Scope diagram + scalar vars card -->
+  <!-- Nested scope diagram -->
   {#snippet topPanel(sd)}
     {@const chain = sd.scopeChain || []}
     {@const phase = sd.phase || ''}
@@ -141,63 +180,127 @@
           <rect x="1" y="1" width="12" height="12" rx="3" fill="none" stroke={ACCENT} stroke-width="1" opacity="0.5"/>
           <rect x="4" y="4" width="6" height="6" rx="2" fill={ACCENT} opacity="0.35"/>
         </svg>
-        <span class="scope-card-title">SCOPE CHAIN</span>
+        <span class="scope-card-title">SCOPE CHAIN — nested enclosures</span>
         <span class="scope-card-depth">depth: {chain.length}</span>
       </div>
 
-      <div class="scope-diagram">
+      <!-- Scope tree: each scope is physically indented to show containment -->
+      <div class="scope-tree">
         {#each chain as frame, fi}
           {@const isClosure = frame.isClosure}
-          {@const isActive = fi === chain.length - 1}
+          {@const isActive  = fi === chain.length - 1}
           {@const varEntries = Object.entries(frame.vars || {})}
           {@const closureVarNames = new Set(Object.keys(sd.closureVars || {}))}
+          {@const indent = fi * 14}
 
-          <div
-            class="scope-box"
-            class:closure={isClosure}
-            class:active={isActive}
-            use:animateScopeCreate={{ phase: isClosure ? phase : '' }}
-            use:animateScopeCall={{ phase: isActive ? phase : '', accent: ACCENT }}
-            style="--acc:{ACCENT}"
-          >
-            <div class="scope-header">
-              <span class="scope-name">
-                {isClosure ? '⊃ ' : ''}{frame.name}
-              </span>
-              {#if isClosure}
-                <span class="closure-badge">
-                  {phase === 'closure-create' && isActive ? '← created now' : 'persists in memory'}
-                </span>
-              {/if}
-              {#if isActive && !isClosure}
-                <span class="scope-active-badge">active</span>
+          <div class="scope-row" style="padding-left:{indent}px">
+            <!-- Connector line for nested scopes -->
+            {#if fi > 0}
+              <div class="scope-connector" style="left:{indent - 8}px"></div>
+            {/if}
+
+            <div
+              class="scope-box"
+              class:closure={isClosure}
+              class:active={isActive}
+              use:animateScopeCreate={{ phase: isClosure ? phase : '' }}
+              use:animateScopeCall={{ phase: isActive ? phase : '', accent: ACCENT }}
+              style="--acc:{ACCENT}"
+            >
+              <div class="scope-header">
+                <!-- Scope type icon -->
+                {#if isClosure}
+                  <svg width="12" height="12" viewBox="0 0 12 12" class="scope-icon">
+                    <rect x="1" y="3" width="10" height="8" rx="2" fill="none" stroke={ACCENT} stroke-width="1.2"/>
+                    <path d="M4 3 V2 a2 2 0 0 1 4 0 V3" fill="none" stroke={ACCENT} stroke-width="1.2"/>
+                    <circle cx="6" cy="7" r="1.5" fill={ACCENT} opacity="0.8"/>
+                  </svg>
+                {:else}
+                  <svg width="12" height="12" viewBox="0 0 12 12" class="scope-icon">
+                    <rect x="1" y="1" width="10" height="10" rx="2" fill="none" stroke="#555" stroke-width="1"/>
+                  </svg>
+                {/if}
+
+                <span class="scope-name">{frame.name}</span>
+
+                {#if isClosure}
+                  <span class="closure-badge">
+                    {phase === 'closure-create' && isActive ? 'created' : 'persists in memory'}
+                  </span>
+                {/if}
+                {#if isActive && !isClosure}
+                  <span class="scope-active-badge">active</span>
+                {/if}
+              </div>
+
+              {#if varEntries.length > 0}
+                <div class="scope-vars">
+                  {#each varEntries as [vname, vval]}
+                    {@const isCaptured = closureVarNames.has(vname)}
+                    {@const color = tc(vval)}
+                    <div class="scope-var" class:captured={isCaptured} style="--acc:{ACCENT}"
+                      use:animateCaptureFlash={{ active: isCaptured && sd.highlight === vname, accent: ACCENT }}
+                    >
+                      {#if isCaptured}
+                        <!-- Captured variable — show the backpack/link icon -->
+                        <svg width="8" height="8" viewBox="0 0 8 8" class="capture-icon">
+                          <path d="M2 4 L6 4 M4 2 L4 6" stroke={ACCENT} stroke-width="1.2" stroke-linecap="round"/>
+                          <circle cx="4" cy="4" r="3" fill="none" stroke={ACCENT} stroke-width="0.8" opacity="0.5"/>
+                        </svg>
+                      {:else}
+                        <div class="var-dot" style="background:{color}"></div>
+                      {/if}
+                      <span class="var-name">{vname}</span>
+                      <span class="var-type" style="color:{color};border-color:{color}33">{tb(vval)}</span>
+                      <span class="var-value" style="color:{color}">{fv(vval)}</span>
+                      {#if isCaptured}
+                        <span class="captured-tag">captured</span>
+                      {/if}
+                    </div>
+                  {/each}
+                </div>
+              {:else}
+                <div class="scope-empty">— empty scope —</div>
               {/if}
             </div>
-
-            {#if varEntries.length > 0}
-              <div class="scope-vars">
-                {#each varEntries as [vname, vval]}
-                  {@const isCaptured = closureVarNames.has(vname)}
-                  {@const color = tc(vval)}
-                  <div class="scope-var" class:captured={isCaptured} style="--acc:{ACCENT}">
-                    <span class="var-name">{vname}</span>
-                    <span class="var-type" style="color:{color};border-color:{color}33">{tb(vval)}</span>
-                    <span class="var-value" style="color:{color}">{fv(vval)}</span>
-                    {#if isCaptured}
-                      <span class="closure-badge">⊃ captured</span>
-                    {/if}
-                  </div>
-                {/each}
-              </div>
-            {:else}
-              <div class="scope-empty">— empty —</div>
-            {/if}
           </div>
+
+          <!-- Capture bridge: visible arrow between outer scope and inner closure -->
+          {#if !isClosure && fi + 1 < chain.length && chain[fi + 1]?.isClosure}
+            {@const capturedFromThis = Object.keys(frame.vars || {}).filter(v => closureVarNames.has(v))}
+            {#if capturedFromThis.length > 0}
+              <div class="capture-bridge" style="padding-left:{indent + 22}px"
+                use:animateCaptureRef={{ phase }}
+              >
+                <div class="bridge-rail"><div class="bridge-line-v"></div></div>
+                <div class="bridge-content">
+                  <span class="bridge-label">captured ↓</span>
+                  <div class="bridge-vars">
+                    {#each capturedFromThis as bvname}
+                      <code class="bridge-var">{bvname}</code>
+                    {/each}
+                  </div>
+                  <span class="bridge-note">live ref · mutations shared</span>
+                </div>
+              </div>
+            {/if}
+          {/if}
         {/each}
+
+        <!-- Closure memory explanation when closures are present -->
+        {#if chain.some(f => f.isClosure)}
+          <div class="closure-explain">
+            <svg width="10" height="10" viewBox="0 0 10 10">
+              <circle cx="5" cy="5" r="4" fill="none" stroke={ACCENT} stroke-width="1" opacity="0.6"/>
+              <text x="5" y="8" text-anchor="middle" fill={ACCENT} font-size="7" font-family="monospace">!</text>
+            </svg>
+            <span>Closure scopes (🔒) stay in memory even after their outer function returns — because an inner function holds a reference to their variables.</span>
+          </div>
+        {/if}
       </div>
     </div>
 
-    <!-- Scalar vars (top-level non-function, non-object variables) -->
+    <!-- Result vars -->
     {@const scalars = Object.entries(sd.vars || {}).filter(([,v]) => typeof v !== 'function' && !(v && typeof v === 'object'))}
     {#if scalars.length > 0}
       <div class="scalar-card">
@@ -213,6 +316,7 @@
             {@const color = tc(vval)}
             <div class="scalar-item">
               <span class="scalar-name">{vname}</span>
+              <span class="scalar-sep">=</span>
               <span class="scalar-val" style="color:{color}">{fv(vval)}</span>
             </div>
           {/each}
@@ -240,18 +344,19 @@
   <!-- Placeholder -->
   {#snippet placeholder()}
     <div class="vis-placeholder">
-      <svg viewBox="0 0 200 160" class="ph-svg">
-        <!-- Global scope box -->
-        <rect x="20" y="10" width="160" height="130" rx="6" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="30" y="26" fill="#1a1a2e" font-size="8" font-family="monospace">Global</text>
-        <!-- Outer function scope box -->
-        <rect x="35" y="34" width="130" height="90" rx="5" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="44" y="48" fill="#1a1a2e" font-size="8" font-family="monospace">makeCounter()</text>
-        <!-- Closure scope box (dashed) -->
-        <rect x="50" y="56" width="100" height="60" rx="4" fill="none" stroke="#00d4aa" stroke-width="1" stroke-dasharray="4 3" opacity="0.3"/>
-        <text x="58" y="70" fill="#00d4aa" font-size="7" font-family="monospace" opacity="0.4">⊃ closure scope</text>
-        <text x="58" y="84" fill="#00d4aa" font-size="7" font-family="monospace" opacity="0.4">count: 0</text>
-        <text x="58" y="100" fill="#1a1a2e" font-size="6" font-family="monospace">persists in memory</text>
+      <svg viewBox="0 0 200 170" class="ph-svg">
+        <!-- Global scope (outer) -->
+        <rect x="10" y="10" width="180" height="145" rx="6" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
+        <text x="20" y="26" fill="#1a1a2e" font-size="8" font-family="monospace">Global</text>
+        <!-- Function scope (middle) -->
+        <rect x="26" y="34" width="148" height="105" rx="5" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
+        <text x="36" y="49" fill="#1a1a2e" font-size="8" font-family="monospace">makeCounter()</text>
+        <!-- Closure scope (inner, dashed) -->
+        <rect x="42" y="58" width="116" height="68" rx="4" fill="none" stroke="#00d4aa" stroke-width="1" stroke-dasharray="4 3" opacity="0.35"/>
+        <text x="52" y="72" fill="#00d4aa" font-size="7" font-family="monospace" opacity="0.5">🔒 closure scope</text>
+        <text x="52" y="86" fill="#00d4aa" font-size="7" font-family="monospace" opacity="0.4">count: 0  ← captured</text>
+        <text x="52" y="102" fill="#1a1a2e" font-size="6" font-family="monospace">persists after outer fn returns</text>
+        <text x="52" y="116" fill="#1a1a2e" font-size="6" font-family="monospace">inner fn holds a reference</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see closure scopes</p>
     </div>
@@ -263,16 +368,29 @@
   /* ── Scope chain card ──────────────────────────────────────────────────── */
   .scope-card       { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scope-card-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .scope-card-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .scope-card-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1px; font-weight:700; }
   .scope-card-depth { margin-left:auto; font-size:0.5rem; color:#00d4aa; font-family:monospace; }
 
-  .scope-diagram { display:flex; flex-direction:column; gap:6px; padding:8px; }
+  /* ── Scope tree ─────────────────────────────────────────────────────────── */
+  .scope-tree  { padding:8px; display:flex; flex-direction:column; gap:4px; }
+
+  .scope-row   { position:relative; }
+
+  /* Vertical connector line from parent to child */
+  .scope-connector {
+    position:absolute;
+    top:-4px;
+    width:1px;
+    height:calc(100% + 4px);
+    background:linear-gradient(to bottom, #1a1a2e, #00d4aa33);
+    pointer-events:none;
+  }
 
   /* ── Individual scope boxes ────────────────────────────────────────────── */
   .scope-box {
     background:#08080e;
     border:1px solid #1a1a2e;
-    border-radius:8px;
+    border-radius:7px;
     overflow:hidden;
     transition:border-color 0.3s, background 0.3s;
   }
@@ -301,9 +419,10 @@
     color:#555;
     font-family:monospace;
   }
-  .scope-name { color:#888; font-weight:700; }
+  .scope-icon    { flex-shrink:0; }
+  .scope-name    { color:#888; font-weight:700; }
   .scope-box.closure .scope-name { color:#00d4aa; }
-  .scope-box.active .scope-name { color:#e0e0e0; }
+  .scope-box.active .scope-name  { color:#e0e0e0; }
 
   .scope-active-badge  { margin-left:auto; font-size:0.42rem; color:#00d4aa; letter-spacing:0.5px; }
   .closure-badge       { margin-left:auto; font-size:0.42rem; color:#00d4aa; letter-spacing:0.3px; }
@@ -314,7 +433,7 @@
   .scope-var {
     display:flex;
     align-items:center;
-    gap:6px;
+    gap:5px;
     padding:3px 6px;
     border-radius:4px;
     transition:background 0.2s;
@@ -324,17 +443,96 @@
     box-shadow:inset 3px 0 0 var(--acc);
   }
 
-  .var-name  { font-size:0.72rem; color:#88aaff; font-family:'SF Mono',monospace; font-weight:600; min-width:60px; }
-  .var-type  { font-size:0.42rem; padding:1px 4px; border-radius:2px; border:1px solid; font-family:monospace; letter-spacing:0.3px; }
-  .var-value { font-size:0.72rem; font-weight:700; font-family:'SF Mono',monospace; margin-left:auto; min-width:40px; text-align:right; }
+  .var-dot       { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+  .capture-icon  { flex-shrink:0; }
+  .var-name      { font-size:0.72rem; color:#88aaff; font-family:'SF Mono',monospace; font-weight:600; min-width:55px; }
+  .var-type      { font-size:0.42rem; padding:1px 4px; border-radius:2px; border:1px solid; font-family:monospace; letter-spacing:0.3px; }
+  .var-value     { font-size:0.72rem; font-weight:700; font-family:'SF Mono',monospace; margin-left:auto; min-width:40px; text-align:right; }
+  .captured-tag  { font-size:0.4rem; color:#00d4aa; background:#00d4aa15; padding:1px 4px; border-radius:2px; border:1px solid #00d4aa33; white-space:nowrap; }
+
+  /* Capture bridge: shows captured vars flowing down from outer scope into closure */
+  .capture-bridge {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    padding: 2px 0 3px;
+  }
+  .bridge-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 12px;
+    padding-top: 4px;
+  }
+  .bridge-line-v {
+    width: 1px;
+    height: 20px;
+    background: linear-gradient(to bottom, #00d4aa55, #00d4aa15);
+  }
+  .bridge-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #00d4aa08;
+    border: 1px dashed #00d4aa25;
+    border-radius: 4px;
+    padding: 3px 8px;
+    flex: 1;
+  }
+  .bridge-label {
+    font-size: 0.42rem;
+    color: #00d4aa55;
+    font-family: monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .bridge-vars  { display: flex; gap: 4px; flex-wrap: wrap; }
+  .bridge-var {
+    font-size: 0.55rem;
+    color: #00d4aa;
+    background: #00d4aa15;
+    border: 1px solid #00d4aa33;
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-family: 'SF Mono', monospace;
+    font-weight: 600;
+    font-style: normal;
+  }
+  .bridge-note {
+    font-size: 0.38rem;
+    color: #00d4aa33;
+    font-family: monospace;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+
+  /* Closure explanation banner */
+  .closure-explain {
+    display:flex;
+    align-items:flex-start;
+    gap:6px;
+    padding:5px 8px;
+    background:#00d4aa08;
+    border:1px dashed #00d4aa22;
+    border-radius:5px;
+    margin-top:2px;
+  }
+  .closure-explain span {
+    font-size:0.48rem;
+    color:#00d4aa66;
+    font-family:monospace;
+    line-height:1.5;
+  }
 
   /* ── Scalar result vars card ───────────────────────────────────────────── */
   .scalar-card  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scalar-hdr   { display:flex; align-items:center; gap:6px; padding:4px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .scalar-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .scalar-grid  { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; }
-  .scalar-item  { display:flex; align-items:center; gap:5px; background:#08080e; border:1px solid #1a1a2e; border-radius:5px; padding:3px 8px; }
+  .scalar-item  { display:flex; align-items:center; gap:4px; background:#08080e; border:1px solid #1a1a2e; border-radius:5px; padding:3px 8px; }
   .scalar-name  { font-size:0.65rem; color:#88aaff; font-family:'SF Mono',monospace; font-weight:600; }
+  .scalar-sep   { font-size:0.55rem; color:#333; }
   .scalar-val   { font-size:0.65rem; font-weight:700; font-family:'SF Mono',monospace; }
 
   /* ── Complexity live stats ─────────────────────────────────────────────── */

@@ -161,6 +161,11 @@ body {
   #app { height:auto; min-height:100vh; }
 }
 
+@media (max-width: 768px) {
+  body { overflow:auto; -webkit-overflow-scrolling:touch; }
+  #app { height:auto; min-height:100vh; }
+}
+
 @media (max-width: 480px) {
   .module { padding:6px; gap:6px; }
   .module h2 { font-size:0.95rem; }

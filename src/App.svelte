@@ -1,22 +1,60 @@
 <script>
   import { onMount } from 'svelte';
   import Home from './lib/Home.svelte';
-  import Variables from './lib/Variables.svelte';
-  import IfGate from './lib/IfGate.svelte';
-  import ForLoop from './lib/ForLoop.svelte';
-  import FnCall from './lib/FnCall.svelte';
-  import ArrayFlow from './lib/ArrayFlow.svelte';
-  import ObjExplorer from './lib/ObjExplorer.svelte';
-  import DataStructures from './lib/DataStructures.svelte';
-  import AsyncAwait from './lib/AsyncAwait.svelte';
-  import Closures from './lib/Closures.svelte';
+  import ErrorBoundary from './lib/ErrorBoundary.svelte';
+
+  // ── Lazy-loaded route map ──────────────────────────────────────────────────
+  // Each module is loaded on-demand via dynamic import() to reduce initial bundle.
+  const ROUTE_LOADERS = {
+    'variables':       () => import('./lib/Variables.svelte'),
+    'if-gate':         () => import('./lib/IfGate.svelte'),
+    'for-loop':        () => import('./lib/ForLoop.svelte'),
+    'function':        () => import('./lib/FnCall.svelte'),
+    'array':           () => import('./lib/ArrayFlow.svelte'),
+    'objects':         () => import('./lib/ObjExplorer.svelte'),
+    'data-structures': () => import('./lib/DataStructures.svelte'),
+    'async':           () => import('./lib/AsyncAwait.svelte'),
+    'closures':        () => import('./lib/Closures.svelte'),
+  };
 
   let route = $state(getRoute());
+  let LazyComponent = $state(null);
+  let loadError = $state('');
+  let loading = $state(false);
 
   function getRoute() {
     const hash = window.location.hash.slice(2) || '';
     return hash || 'home';
   }
+
+  async function loadRoute(r) {
+    if (r === 'home' || r === '') {
+      LazyComponent = null;
+      loadError = '';
+      loading = false;
+      return;
+    }
+    const loader = ROUTE_LOADERS[r];
+    if (!loader) {
+      LazyComponent = null;
+      loadError = 'not-found';
+      loading = false;
+      return;
+    }
+    loading = true;
+    loadError = '';
+    try {
+      const mod = await loader();
+      LazyComponent = mod.default;
+    } catch (err) {
+      loadError = err.message || 'Failed to load module';
+      LazyComponent = null;
+    }
+    loading = false;
+  }
+
+  // Load on initial render and route changes
+  $effect(() => { loadRoute(route); });
 
   onMount(() => {
     const handler = () => { route = getRoute(); };
@@ -25,40 +63,51 @@
   });
 </script>
 
-<div class="app">
-  {#if route === 'home' || route === ''}
-    <Home />
-  {:else if route === 'variables'}
-    <Variables />
-  {:else if route === 'if-gate'}
-    <IfGate />
-  {:else if route === 'for-loop'}
-    <ForLoop />
-  {:else if route === 'function'}
-    <FnCall />
-  {:else if route === 'array'}
-    <ArrayFlow />
-  {:else if route === 'objects'}
-    <ObjExplorer />
-  {:else if route === 'data-structures'}
-    <DataStructures />
-  {:else if route === 'async'}
-    <AsyncAwait />
-  {:else if route === 'closures'}
-    <Closures />
-  {:else}
-    <div class="not-found">
-      <p>Module not found</p>
-      <a href="#/">← back to modules</a>
-    </div>
-  {/if}
-</div>
+<ErrorBoundary>
+  <div class="app">
+    {#if route === 'home' || route === ''}
+      <Home />
+    {:else if loading}
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Loading module…</p>
+      </div>
+    {:else if loadError === 'not-found'}
+      <div class="not-found">
+        <p>Module not found</p>
+        <a href="#/">← back to modules</a>
+      </div>
+    {:else if loadError}
+      <div class="not-found">
+        <p>Failed to load module</p>
+        <p class="error-detail">{loadError}</p>
+        <a href="#/">← back to modules</a>
+      </div>
+    {:else if LazyComponent}
+      <LazyComponent />
+    {:else}
+      <div class="not-found">
+        <p>Module not found</p>
+        <a href="#/">← back to modules</a>
+      </div>
+    {/if}
+  </div>
+</ErrorBoundary>
 
 <style>
   .app {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+  }
+
+  @media (max-width: 768px) {
+    .app {
+      height: auto;
+      min-height: 100vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
   }
 
   .not-found {
@@ -83,5 +132,38 @@
 
   .not-found a:hover {
     text-decoration: underline;
+  }
+
+  .not-found .error-detail {
+    color: #f87171;
+    font-size: 0.75rem;
+    font-family: monospace;
+  }
+
+  .loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+  }
+
+  .loading-spinner p {
+    color: #555;
+    font-size: 0.85rem;
+  }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid #1a1a2e;
+    border-top-color: #00ff88;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 </style>

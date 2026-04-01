@@ -76,7 +76,7 @@
       { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightActiveLine, drawSelection },
       { EditorState },
       { javascript },
-      { syntaxHighlighting, defaultHighlightStyle, bracketMatching, indentOnInput },
+      { syntaxHighlighting, HighlightStyle, bracketMatching, indentOnInput },
       { defaultKeymap, indentWithTab, history, historyKeymap },
       { closeBrackets, closeBracketsKeymap },
       { highlightSelectionMatches },
@@ -90,7 +90,7 @@
       import('@codemirror/search'),
     ]);
 
-    const syntaxColors = syntaxHighlighting(defaultHighlightStyle.define([
+    const syntaxColors = syntaxHighlighting(HighlightStyle.define([
       { tag: ['keyword'], color: '#c084fc' },
       { tag: ['string', 'special(string)'], color: '#4ade80' },
       { tag: ['number', 'integer', 'float'], color: '#fb923c' },

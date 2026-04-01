@@ -47,10 +47,10 @@ test.describe('varStore module', () => {
     await expect(counter).toContainText('1/');
 
     // Step forward
-    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: 'Next step' }).click();
     await expect(counter).toContainText('2/');
 
-    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: 'Next step' }).click();
     await expect(counter).toContainText('3/');
   });
 
@@ -67,7 +67,7 @@ test.describe('varStore module', () => {
     await page.getByRole('button', { name: /Visualize/ }).click();
 
     // Step to step 2 so at least one variable is declared
-    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: 'Next step' }).click();
 
     // The heap-card should contain at least one .heap-box
     await expect(page.locator('.heap-box').first()).toBeVisible({ timeout: 3000 });
@@ -83,7 +83,7 @@ test.describe('varStore module', () => {
     expect(total).toBeGreaterThan(1);
 
     // Click Last ⟫
-    await page.getByRole('button', { name: '⟫' }).click();
+    await page.getByRole('button', { name: 'Last step' }).click();
 
     await expect(page.locator('.sc')).toContainText(`${total}/${total}`);
   });

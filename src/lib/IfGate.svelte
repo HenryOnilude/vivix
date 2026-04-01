@@ -1,7 +1,7 @@
 <script>
   import ModuleShell from './ModuleShell.svelte';
   import { fv } from './utils.js';
-  import { animatePath, animateBall, animateArrow } from './animations.js';
+  import { animatePath, animateBall } from './animations.js';
 
   const ACCENT = '#ff8866';
 
@@ -13,12 +13,18 @@
     { label: 'if / else',    code: 'let score = 45;\nlet result = "";\n\nif (score >= 50) {\n  result = "pass";\n} else {\n  result = "fail";\n}',                                                     cx: { time: 'O(1)', space: 'O(1)', timeWhy: 'O(1) — exactly one branch executes, never both. Whether the if-path or the else-path runs, each contains just 1 assignment. The CPU evaluates the condition (1 comparison), then jumps to one branch. The skipped branch costs zero time — those instructions are never fetched. This is why if/else doesn\'t double the time: it\'s always "check + one path".',                                                                                                                           spaceWhy: 'O(1) — 2 variables regardless of which branch runs. Both branches write to the same variable (result), so no extra memory is needed for else. The string "pass" or "fail" is the same size. Memory usage is identical whether score is 0 or 100.' } },
   ];
 
-  /**
-   * Augment each raw step with IfGate-specific fields:
-   *   condRaw — raw condition expression string (e.g. "age >= 21")
-   *   condSub — condition with variable values substituted (e.g. "22 >= 21")
-   */
+  // Persist condition state across all steps
+  let _lastCond = null;
+  let _lastRaw  = '';
+  let _lastSub  = '';
+
   function mapStep(s, codeLines) {
+    if (s.phase === 'start') {
+      _lastCond = null;
+      _lastRaw  = '';
+      _lastSub  = '';
+    }
+
     let condRaw = '', condSub = '';
     if (s.phase === 'condition' && s.lineIndex >= 0 && s.lineIndex < codeLines.length) {
       const srcLine = codeLines[s.lineIndex].trim();
@@ -29,13 +35,23 @@
         for (const [k, v] of Object.entries(s.vars || {})) {
           condSub = condSub.replace(new RegExp(`\\b${k}\\b`, 'g'), fv(v));
         }
+        _lastCond = s.cond;
+        _lastRaw  = condRaw;
+        _lastSub  = condSub;
       }
+    } else if (s.cond !== undefined) {
+      _lastCond = s.cond;
     }
-    return { ...s, condRaw, condSub };
+
+    return {
+      ...s,
+      condRaw:  condRaw  || _lastRaw,
+      condSub:  condSub  || _lastSub,
+      lastCond: _lastCond,
+    };
   }
 </script>
 
-<!-- ── IfGate module ──────────────────────────────────────────────────────── -->
 <ModuleShell
   {examples}
   accent={ACCENT}
@@ -45,7 +61,6 @@
   {mapStep}
 >
 
-  <!-- CPU right-column registers: TARGET + RESULT -->
   {#snippet cpuRegisters(sd)}
     <rect x="210" y="14" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
     <text x="216" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">TARGET</text>
@@ -53,9 +68,12 @@
 
     <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
     <text x="216" y="48" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">RESULT</text>
-    {#if sd.phase === 'condition'}
-      <circle cx="338" cy="51" r="5" fill={sd.cond ? '#4ade80' : '#f87171'}/>
-      <text x="330" y="55" text-anchor="end" fill={sd.cond ? '#4ade80' : '#f87171'} font-size="9" font-weight="700" font-family="monospace">{sd.cond ? 'TRUE' : 'FALSE'}</text>
+    {#if sd.lastCond === true}
+      <circle cx="338" cy="51" r="5" fill="#4ade80"/>
+      <text x="330" y="55" text-anchor="end" fill="#4ade80" font-size="9" font-weight="700" font-family="monospace">TRUE</text>
+    {:else if sd.lastCond === false}
+      <circle cx="338" cy="51" r="5" fill="#f87171"/>
+      <text x="330" y="55" text-anchor="end" fill="#f87171" font-size="9" font-weight="700" font-family="monospace">FALSE</text>
     {:else if sd.changed}
       <text x="344" y="55" text-anchor="end" fill="#f59e0b" font-size="9" font-weight="600" font-family="monospace">{fv(sd.changed.to)}</text>
     {:else}
@@ -63,85 +81,106 @@
     {/if}
   {/snippet}
 
-  <!-- CPU right gauge: comparisons -->
   {#snippet cpuGauge(sd)}
     <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
     <rect x="247" y="69" width={Math.min(102, (sd.comps || 0) * 25)} height="14" rx="2" fill="#a78bfa" opacity="0.2"/>
     <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">{sd.comps || 0} COMPARES</text>
   {/snippet}
 
-  <!-- Branch flowchart — shown only on condition steps -->
   {#snippet topPanel(sd)}
-    {#if sd.phase === 'condition'}
+    {#if sd.lastCond !== null && sd.condRaw}
+      {@const cond    = sd.lastCond}
+      {@const isLive  = sd.phase === 'condition'}
       {#key sd}
         <div class="branch-card">
+          <!-- condition expression row -->
+          <div class="cond-row">
+            <span class="cond-expr">{sd.condRaw}</span>
+            <span class="cond-arrow">→</span>
+            <span class="cond-sub">{sd.condSub}</span>
+            <span class="cond-badge" class:badge-true={cond} class:badge-false={!cond}>
+              {cond ? '✓ TRUE' : '✗ FALSE'}
+            </span>
+          </div>
+
           <svg viewBox="0 0 300 170" class="branch-svg">
             <defs>
-              <filter id="gl" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="4" result="b"/>
-                <feComposite in="SourceGraphic" in2="b" operator="over"/>
-              </filter>
               <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stop-color="#4ade80" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="#4ade80" stop-opacity="0.05"/>
+                <stop offset="100%" stop-color="#4ade80" stop-opacity="0.04"/>
               </linearGradient>
               <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stop-color="#f87171" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="#f87171" stop-opacity="0.05"/>
+                <stop offset="100%" stop-color="#f87171" stop-opacity="0.04"/>
               </linearGradient>
             </defs>
 
-            <!-- Diamond -->
-            <polygon points="150,8 195,40 150,72 105,40" fill="#0d0d18"
-              stroke={sd.cond ? '#4ade80' : '#f87171'} stroke-width="2.5"/>
-            <text x="150" y="38" text-anchor="middle" fill="#e0e0e0" font-size="9" font-weight="600" font-family="monospace">
-              {sd.condRaw.length > 20 ? sd.condRaw.slice(0, 18) + '…' : sd.condRaw}
+            <!-- decision diamond -->
+            <polygon points="150,8 198,42 150,76 102,42" fill="#0d0d18"
+              stroke={cond ? '#4ade80' : '#f87171'} stroke-width="2.5"/>
+            <text x="150" y="40" text-anchor="middle" fill="#e0e0e0" font-size="9" font-weight="600" font-family="monospace">
+              {sd.condRaw.length > 22 ? sd.condRaw.slice(0, 20) + '...' : sd.condRaw}
             </text>
-            <text x="150" y="50" text-anchor="middle" fill="#666" font-size="7" font-family="monospace">{sd.condSub}</text>
+            <text x="150" y="53" text-anchor="middle" fill="#555" font-size="7" font-family="monospace">{sd.condSub}</text>
 
-            <!-- TRUE path -->
-            <path use:animatePath={sd} d="M 127 62 C 100 85, 65 95, 60 120" fill="none"
-              stroke={sd.cond ? '#4ade80' : '#1a1a2e'} stroke-width={sd.cond ? 2.5 : 1} stroke-linecap="round"/>
-            <!-- FALSE path -->
-            <path use:animatePath={sd} d="M 173 62 C 200 85, 235 95, 240 120" fill="none"
-              stroke={!sd.cond ? '#f87171' : '#1a1a2e'} stroke-width={!sd.cond ? 2.5 : 1} stroke-linecap="round"/>
+            <!-- TRUE path (left) -->
+            <path use:animatePath={sd}
+              d="M 126 64 C 96 88, 62 100, 56 128" fill="none"
+              stroke={cond ? '#4ade80' : '#1c1c30'}
+              stroke-width={cond ? 2.5 : 1} stroke-linecap="round"/>
 
-            <!-- T/F labels -->
-            <text x="88"  y="78" fill={sd.cond  ? '#4ade80' : '#333'} font-size="10" font-weight="800" font-family="monospace">T</text>
-            <text x="206" y="78" fill={!sd.cond ? '#f87171' : '#333'} font-size="10" font-weight="800" font-family="monospace">F</text>
+            <!-- FALSE path (right) -->
+            <path use:animatePath={sd}
+              d="M 174 64 C 204 88, 238 100, 244 128" fill="none"
+              stroke={!cond ? '#f87171' : '#1c1c30'}
+              stroke-width={!cond ? 2.5 : 1} stroke-linecap="round"/>
 
-            <!-- IF block -->
-            <rect x="15" y="120" width="90" height="38" rx="6"
-              fill={sd.cond ? 'url(#tg)' : '#0a0a12'}
-              stroke={sd.cond ? '#4ade80' : '#1a1a2e'} stroke-width={sd.cond ? 2 : 1}/>
-            <text x="60" y="140" text-anchor="middle" fill={sd.cond ? '#4ade80' : '#333'} font-size="11" font-weight="700" font-family="monospace">if {'{'} {'}'}</text>
-            {#if sd.cond}<text x="60" y="153" text-anchor="middle" fill="#4ade8088" font-size="7" font-family="monospace">EXECUTE</text>{/if}
+            <!-- T / F labels -->
+            <text x="84"  y="80" fill={cond  ? '#4ade80' : '#2a2a42'} font-size="11" font-weight="900" font-family="monospace">T</text>
+            <text x="210" y="80" fill={!cond ? '#f87171' : '#2a2a42'} font-size="11" font-weight="900" font-family="monospace">F</text>
 
-            <!-- ELSE block -->
-            <rect x="195" y="120" width="90" height="38" rx="6"
-              fill={!sd.cond ? 'url(#fg)' : '#0a0a12'}
-              stroke={!sd.cond ? '#f87171' : '#1a1a2e'} stroke-width={!sd.cond ? 2 : 1}/>
-            <text x="240" y="140" text-anchor="middle" fill={!sd.cond ? '#f87171' : '#333'} font-size="11" font-weight="700" font-family="monospace">else {'{'} {'}'}</text>
-            {#if !sd.cond}<text x="240" y="153" text-anchor="middle" fill="#f8717188" font-size="7" font-family="monospace">EXECUTE</text>{/if}
+            <!-- if block -->
+            <rect x="12" y="128" width="90" height="36" rx="6"
+              fill={cond ? 'url(#tg)' : '#090910'}
+              stroke={cond ? '#4ade80' : '#1a1a2e'} stroke-width={cond ? 2 : 1}/>
+            <text x="57" y="148" text-anchor="middle"
+              fill={cond ? '#4ade80' : '#252535'} font-size="12" font-weight="700" font-family="monospace">if {'{'} {'}'}</text>
+            {#if cond}
+              <text x="57" y="160" text-anchor="middle" fill="#4ade8066" font-size="7" font-family="monospace">EXECUTED</text>
+            {/if}
 
-            <!-- Result badge -->
-            <rect x={sd.cond ? 30 : 210} y="105" width="50" height="16" rx="8"
-              fill={sd.cond ? '#4ade8030' : '#f8717130'}/>
-            <text x={sd.cond ? 55 : 235} y="116" text-anchor="middle"
-              fill={sd.cond ? '#4ade80' : '#f87171'} font-size="8" font-weight="700" font-family="monospace">
-              {sd.cond ? '✓ TRUE' : '✗ FALSE'}
+            <!-- else block -->
+            <rect x="198" y="128" width="90" height="36" rx="6"
+              fill={!cond ? 'url(#fg)' : '#090910'}
+              stroke={!cond ? '#f87171' : '#1a1a2e'} stroke-width={!cond ? 2 : 1}/>
+            <text x="243" y="148" text-anchor="middle"
+              fill={!cond ? '#f87171' : '#252535'} font-size="12" font-weight="700" font-family="monospace">else {'{'} {'}'}</text>
+            {#if !cond}
+              <text x="243" y="160" text-anchor="middle" fill="#f8717166" font-size="7" font-family="monospace">EXECUTED</text>
+            {/if}
+
+            <!-- result badge -->
+            <rect x={cond ? 24 : 210} y="110" width="54" height="16" rx="8"
+              fill={cond ? '#4ade8028' : '#f8717128'}/>
+            <text x={cond ? 51 : 237} y="121" text-anchor="middle"
+              fill={cond ? '#4ade80' : '#f87171'} font-size="8" font-weight="700" font-family="monospace">
+              {cond ? '✓ TRUE' : '✗ FALSE'}
             </text>
 
-            <!-- Animated ball along branch path -->
-            <circle r="6" fill={sd.cond ? '#4ade80' : '#f87171'} filter="url(#gl)"
-              use:animateBall={{ taken: sd.cond, step: sd }}/>
+            <!-- animated ball during condition evaluation, static after -->
+            {#if isLive}
+              <circle r="6" fill={cond ? '#4ade80' : '#f87171'} opacity="0.9"
+                use:animateBall={{ taken: cond, step: sd }}/>
+            {:else}
+              <circle cx={cond ? 57 : 243} cy="140" r="5"
+                fill={cond ? '#4ade80' : '#f87171'} opacity="0.45"/>
+            {/if}
           </svg>
         </div>
       {/key}
     {/if}
   {/snippet}
 
-  <!-- Complexity live stats -->
   {#snippet liveStats(sd)}
     <span class="cx-s">
       <svg width="8" height="8"><circle cx="4" cy="4" r="3" fill="#a78bfa"/></svg>
@@ -153,7 +192,6 @@
     </span>
   {/snippet}
 
-  <!-- Placeholder -->
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 200 160" class="ph-svg">
@@ -173,8 +211,16 @@
 </ModuleShell>
 
 <style>
-  .branch-card { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; padding:6px; flex-shrink:0; }
+  .branch-card { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .branch-svg  { width:100%; height:auto; display:block; }
+
+  .cond-row    { display:flex; align-items:center; gap:6px; padding:7px 12px; background:#0d0d16; border-bottom:1px solid #1a1a2e; flex-wrap:wrap; }
+  .cond-expr   { font-size:0.72rem; color:#ccc; font-family:'SF Mono',monospace; font-weight:600; }
+  .cond-arrow  { font-size:0.6rem; color:#333; }
+  .cond-sub    { font-size:0.65rem; color:#888; font-family:'SF Mono',monospace; background:#ffffff06; padding:1px 5px; border-radius:3px; }
+  .cond-badge  { margin-left:auto; font-size:0.6rem; font-family:monospace; font-weight:700; padding:2px 8px; border-radius:4px; }
+  .badge-true  { color:#4ade80; background:#4ade8018; border:1px solid #4ade8033; }
+  .badge-false { color:#f87171; background:#f8717118; border:1px solid #f8717133; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg  { width:200px; height:auto; opacity:0.5; }

@@ -4,8 +4,20 @@
  */
 
 // ── Deep clone ──
+// Handles functions (by reference), arrays, plain objects, and all primitives.
+// Uses structuredClone for non-function values where possible.
 export function dc(o) {
-  return JSON.parse(JSON.stringify(o));
+  if (o === null || typeof o !== 'object') return o;
+  if (Array.isArray(o)) return o.map(dc);
+  const out = {};
+  for (const k of Object.keys(o)) {
+    const v = o[k];
+    if (typeof v === 'function') out[k] = v;        // functions: keep by reference
+    else if (v === null || typeof v !== 'object') out[k] = v;  // primitives
+    else if (Array.isArray(v)) out[k] = v.map(dc);  // arrays
+    else out[k] = dc(v);                             // nested objects
+  }
+  return out;
 }
 
 // ── Format value for display ──
