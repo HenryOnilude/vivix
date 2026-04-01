@@ -1,7 +1,8 @@
 <script>
   import ModuleShell from './ModuleShell.svelte';
   import { fv } from './utils.js';
-  import { animatePath, animateBall } from './animations.js';
+  import { animatePathSequenced, animateBall, animateDiamondFlash, animateBlockReveal, animateSubExpr } from './animations.js';
+  import { splitCondition, substituteVars, extractBodies } from './condition-utils.js';
 
   const ACCENT = '#ff8866';
 
@@ -17,12 +18,21 @@
   let _lastCond = null;
   let _lastRaw  = '';
   let _lastSub  = '';
+  let _subExprs = [];
+  let _hasElse  = false;
+  let _ifBody   = [];
+  let _elseBody = [];
 
   function mapStep(s, codeLines) {
     if (s.phase === 'start') {
       _lastCond = null;
       _lastRaw  = '';
       _lastSub  = '';
+      _subExprs = [];
+      const bodies = extractBodies(codeLines);
+      _hasElse  = bodies.hasElse;
+      _ifBody   = bodies.ifBody;
+      _elseBody = bodies.elseBody;
     }
 
     let condRaw = '', condSub = '';
@@ -38,6 +48,17 @@
         _lastCond = s.cond;
         _lastRaw  = condRaw;
         _lastSub  = condSub;
+        // Build sub-expression evaluation steps
+        const parts = splitCondition(condRaw);
+        _subExprs = parts.map((part, idx) => {
+          const isOp = part === '&&' || part === '||';
+          return {
+            raw: part,
+            substituted: isOp ? part : substituteVars(part, s.vars),
+            isOperator: isOp,
+            index: idx,
+          };
+        });
       }
     } else if (s.cond !== undefined) {
       _lastCond = s.cond;
@@ -48,6 +69,10 @@
       condRaw:  condRaw  || _lastRaw,
       condSub:  condSub  || _lastSub,
       lastCond: _lastCond,
+      subExprs: _subExprs,
+      hasElse:  _hasElse,
+      ifBody:   _ifBody,
+      elseBody: _elseBody,
     };
   }
 </script>
@@ -91,9 +116,37 @@
     {#if sd.lastCond !== null && sd.condRaw}
       {@const cond    = sd.lastCond}
       {@const isLive  = sd.phase === 'condition'}
+      {@const isBranch = sd.phase === 'branch' || sd.phase === 'assign' || sd.phase === 'done'}
+      {@const takenColor = cond ? '#4ade80' : '#f87171'}
+      {@const ifBodyLines  = sd.ifBody || []}
+      {@const elseBodyLines = sd.elseBody || []}
+      {@const hasElse = sd.hasElse}
+      {@const maxBodyLines = Math.max(ifBodyLines.length, elseBodyLines.length, 0)}
+      {@const svgH = 185 + maxBodyLines * 12}
       {#key sd}
         <div class="branch-card">
-          <!-- condition expression row -->
+
+          <!-- ── Step-by-step sub-expression evaluation ─────────────── -->
+          {#if sd.subExprs && sd.subExprs.length > 0}
+            <div class="eval-row" aria-live="polite" aria-label="Condition evaluation">
+              <span class="eval-label">Evaluated:</span>
+              <div class="eval-chips">
+                {#each sd.subExprs as expr, idx}
+                  {#if expr.isOperator}
+                    <span class="eval-op" use:animateSubExpr={{ active: isLive, delay: idx * 0.15 }}>{expr.raw}</span>
+                  {:else}
+                    <span class="eval-chip" use:animateSubExpr={{ active: isLive, delay: idx * 0.15 }}>
+                      <span class="eval-chip-raw">{expr.raw}</span>
+                      <span class="eval-chip-arrow">→</span>
+                      <span class="eval-chip-val">{expr.substituted}</span>
+                    </span>
+                  {/if}
+                {/each}
+              </div>
+            </div>
+          {/if}
+
+          <!-- ── Condition expression row ───────────────────────────── -->
           <div class="cond-row">
             <span class="cond-expr">{sd.condRaw}</span>
             <span class="cond-arrow">→</span>
@@ -103,7 +156,8 @@
             </span>
           </div>
 
-          <svg viewBox="0 0 300 185" class="branch-svg">
+          <!-- ── Enhanced SVG flowchart ─────────────────────────────── -->
+          <svg viewBox="0 0 300 {svgH}" class="branch-svg">
             <defs>
               <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stop-color="#4ade80" stop-opacity="0.3"/>
@@ -113,67 +167,134 @@
                 <stop offset="0%"   stop-color="#f87171" stop-opacity="0.3"/>
                 <stop offset="100%" stop-color="#f87171" stop-opacity="0.04"/>
               </linearGradient>
+              <filter id="glow-t" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feFlood flood-color="#4ade80" flood-opacity="0.4" result="color"/>
+                <feComposite in="color" in2="blur" operator="in" result="shadow"/>
+                <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="glow-f" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feFlood flood-color="#f87171" flood-opacity="0.4" result="color"/>
+                <feComposite in="color" in2="blur" operator="in" result="shadow"/>
+                <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
             </defs>
 
-            <!-- decision diamond -->
+            <!-- ── Decision diamond with flash animation ──────────── -->
             <polygon points="150,8 198,42 150,76 102,42" fill="#0d0d18"
-              stroke={cond ? '#4ade80' : '#f87171'} stroke-width="2.5"/>
-            <text x="150" y="40" text-anchor="middle" fill="#e0e0e0" font-size="9" font-weight="600" font-family="monospace">
+              stroke={takenColor} stroke-width="2.5"
+              use:animateDiamondFlash={{ active: isLive, color: takenColor }}/>
+
+            <!-- Diamond text: raw condition (truncated) -->
+            <text x="150" y="37" text-anchor="middle" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="monospace">
               {sd.condRaw.length > 22 ? sd.condRaw.slice(0, 20) + '...' : sd.condRaw}
             </text>
-            <text x="150" y="53" text-anchor="middle" fill="#555" font-size="7" font-family="monospace">{sd.condSub}</text>
+            <!-- Diamond text: substituted values -->
+            <text x="150" y="50" text-anchor="middle" fill="#777" font-size="6.5" font-family="monospace">
+              {sd.condSub.length > 28 ? sd.condSub.slice(0, 26) + '...' : sd.condSub}
+            </text>
 
-            <!-- TRUE path (left) -->
-            <path use:animatePath={sd}
+            <!-- ── TRUE path (left) with glow — sequenced 0.3s after diamond ── -->
+            <path use:animatePathSequenced={{ delay: 0.3 }}
               d="M 126 64 C 96 88, 62 100, 56 128" fill="none"
               stroke={cond ? '#4ade80' : '#1c1c30'}
-              stroke-width={cond ? 2.5 : 1} stroke-linecap="round"/>
+              stroke-width={cond ? 2.5 : 1} stroke-linecap="round"
+              filter={cond && isBranch ? 'url(#glow-t)' : 'none'}/>
 
-            <!-- FALSE path (right) -->
-            <path use:animatePath={sd}
+            <!-- ── FALSE path (right) with glow — sequenced 0.3s after diamond ── -->
+            <path use:animatePathSequenced={{ delay: 0.3 }}
               d="M 174 64 C 204 88, 238 100, 244 128" fill="none"
               stroke={!cond ? '#f87171' : '#1c1c30'}
-              stroke-width={!cond ? 2.5 : 1} stroke-linecap="round"/>
+              stroke-width={!cond ? 2.5 : 1} stroke-linecap="round"
+              filter={!cond && isBranch ? 'url(#glow-f)' : 'none'}/>
 
             <!-- T / F labels -->
-            <text x="84"  y="80" fill={cond  ? '#4ade80' : '#2a2a42'} font-size="11" font-weight="900" font-family="monospace">T</text>
-            <text x="210" y="80" fill={!cond ? '#f87171' : '#2a2a42'} font-size="11" font-weight="900" font-family="monospace">F</text>
+            <text x="84"  y="82" fill={cond  ? '#4ade80' : '#2a2a42'} font-size="11" font-weight="900" font-family="monospace">T</text>
+            <text x="210" y="82" fill={!cond ? '#f87171' : '#2a2a42'} font-size="11" font-weight="900" font-family="monospace">F</text>
 
-            <!-- if block -->
-            <rect x="12" y="128" width="90" height="48" rx="6"
-              fill={cond ? 'url(#tg)' : '#090910'}
-              stroke={cond ? '#4ade80' : '#1a1a2e'} stroke-width={cond ? 2 : 1}/>
-            <text x="57" y="146" text-anchor="middle"
-              fill={cond ? '#4ade80' : '#252535'} font-size="12" font-weight="700" font-family="monospace">if {'{'} {'}'}</text>
-            {#if cond}
-              <text x="57" y="170" text-anchor="middle" fill="#4ade8066" font-size="7" font-family="monospace">EXECUTED</text>
+            <!-- ── IF block with reveal animation ────────────────── -->
+            <g use:animateBlockReveal={{ taken: cond, delay: 0.6 }}>
+              <rect x="6" y="128" width="102" height={46 + ifBodyLines.length * 12} rx="6"
+                fill={cond ? 'url(#tg)' : '#090910'}
+                stroke={cond ? '#4ade80' : '#1a1a2e'} stroke-width={cond ? 2 : 1}/>
+              <text x="57" y="143" text-anchor="middle"
+                fill={cond ? '#4ade80' : '#252535'} font-size="11" font-weight="700" font-family="monospace">if {'{'}</text>
+
+              <!-- Show actual code lines inside the block -->
+              {#each ifBodyLines as line, li}
+                <text x="57" y={156 + li * 12} text-anchor="middle"
+                  fill={cond ? '#4ade80aa' : '#252535'} font-size="7" font-family="monospace">
+                  {line.length > 18 ? line.slice(0, 16) + '…' : line}
+                </text>
+              {/each}
+
+              <text x="57" y={156 + ifBodyLines.length * 12} text-anchor="middle"
+                fill={cond ? '#4ade80' : '#252535'} font-size="11" font-weight="700" font-family="monospace">{'}'}</text>
+
+              {#if cond}
+                <text x="57" y={170 + ifBodyLines.length * 12} text-anchor="middle"
+                  fill="#4ade8088" font-size="7" font-weight="700" font-family="monospace" letter-spacing="1">EXECUTED</text>
+              {:else}
+                <text x="57" y={170 + ifBodyLines.length * 12} text-anchor="middle"
+                  fill="#f8717155" font-size="6.5" font-family="monospace" letter-spacing="0.5">SKIPPED</text>
+              {/if}
+            </g>
+
+            <!-- ── ELSE block with reveal animation ──────────────── -->
+            {#if hasElse}
+              <g use:animateBlockReveal={{ taken: !cond, delay: 0.6 }}>
+                <rect x="192" y="128" width="102" height={46 + elseBodyLines.length * 12} rx="6"
+                  fill={!cond ? 'url(#fg)' : '#090910'}
+                  stroke={!cond ? '#f87171' : '#1a1a2e'} stroke-width={!cond ? 2 : 1}/>
+                <text x="243" y="143" text-anchor="middle"
+                  fill={!cond ? '#f87171' : '#252535'} font-size="11" font-weight="700" font-family="monospace">else {'{'}</text>
+
+                {#each elseBodyLines as line, li}
+                  <text x="243" y={156 + li * 12} text-anchor="middle"
+                    fill={!cond ? '#f87171aa' : '#252535'} font-size="7" font-family="monospace">
+                    {line.length > 18 ? line.slice(0, 16) + '…' : line}
+                  </text>
+                {/each}
+
+                <text x="243" y={156 + elseBodyLines.length * 12} text-anchor="middle"
+                  fill={!cond ? '#f87171' : '#252535'} font-size="11" font-weight="700" font-family="monospace">{'}'}</text>
+
+                {#if !cond}
+                  <text x="243" y={170 + elseBodyLines.length * 12} text-anchor="middle"
+                    fill="#f8717188" font-size="7" font-weight="700" font-family="monospace" letter-spacing="1">EXECUTED</text>
+                {:else}
+                  <text x="243" y={170 + elseBodyLines.length * 12} text-anchor="middle"
+                    fill="#4ade8055" font-size="6.5" font-family="monospace" letter-spacing="0.5">SKIPPED</text>
+                {/if}
+              </g>
+            {:else}
+              <!-- No else — just show a ghost else block -->
+              <g opacity="0.15">
+                <rect x="192" y="128" width="102" height="46" rx="6"
+                  fill="none" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="4 2"/>
+                <text x="243" y="155" text-anchor="middle"
+                  fill="#1a1a2e" font-size="9" font-family="monospace">no else</text>
+              </g>
             {/if}
 
-            <!-- else block -->
-            <rect x="198" y="128" width="90" height="48" rx="6"
-              fill={!cond ? 'url(#fg)' : '#090910'}
-              stroke={!cond ? '#f87171' : '#1a1a2e'} stroke-width={!cond ? 2 : 1}/>
-            <text x="243" y="146" text-anchor="middle"
-              fill={!cond ? '#f87171' : '#252535'} font-size="12" font-weight="700" font-family="monospace">else {'{'} {'}'}</text>
-            {#if !cond}
-              <text x="243" y="170" text-anchor="middle" fill="#f8717166" font-size="7" font-family="monospace">EXECUTED</text>
-            {/if}
-
-            <!-- result badge -->
-            <rect x={cond ? 24 : 210} y="110" width="54" height="16" rx="8"
-              fill={cond ? '#4ade8028' : '#f8717128'}/>
-            <text x={cond ? 51 : 237} y="121" text-anchor="middle"
-              fill={cond ? '#4ade80' : '#f87171'} font-size="8" font-weight="700" font-family="monospace">
+            <!-- ── Result badge ──────────────────────────────────── -->
+            <rect x={cond ? 18 : 204} y="110" width="64" height="16" rx="8"
+              fill={cond ? '#4ade8028' : '#f8717128'}
+              filter={isBranch ? (cond ? 'url(#glow-t)' : 'url(#glow-f)') : 'none'}/>
+            <text x={cond ? 50 : 236} y="121" text-anchor="middle"
+              fill={takenColor} font-size="8" font-weight="700" font-family="monospace">
               {cond ? '✓ TRUE' : '✗ FALSE'}
             </text>
 
-            <!-- animated ball during condition evaluation, static after -->
+            <!-- ── Animated ball ──────────────────────────────────── -->
             {#if isLive}
-              <circle r="6" fill={cond ? '#4ade80' : '#f87171'} opacity="0.9"
+              <circle r="6" fill={takenColor} opacity="0.9"
+                filter={cond ? 'url(#glow-t)' : 'url(#glow-f)'}
                 use:animateBall={{ taken: cond, step: sd }}/>
             {:else}
               <circle cx={cond ? 57 : 243} cy="157" r="4"
-                fill={cond ? '#4ade80' : '#f87171'} opacity="0.45"/>
+                fill={takenColor} opacity="0.45"/>
             {/if}
           </svg>
         </div>
@@ -214,6 +335,17 @@
   .branch-card { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .branch-svg  { width:100%; height:auto; display:block; }
 
+  /* ── Sub-expression evaluation row ─────────────────────── */
+  .eval-row    { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#08080e; border-bottom:1px solid #1a1a2e; flex-wrap:wrap; }
+  .eval-label  { font-size:0.6rem; color:#555; font-family:monospace; text-transform:uppercase; letter-spacing:0.5px; flex-shrink:0; }
+  .eval-chips  { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .eval-chip   { display:inline-flex; align-items:center; gap:4px; background:#ffffff08; border:1px solid #ffffff10; border-radius:4px; padding:3px 8px; }
+  .eval-chip-raw   { font-size:0.62rem; color:#bbb; font-family:'SF Mono',monospace; font-weight:600; }
+  .eval-chip-arrow { font-size:0.5rem; color:#444; }
+  .eval-chip-val   { font-size:0.62rem; color:#ff8866; font-family:'SF Mono',monospace; font-weight:700; }
+  .eval-op     { font-size:0.62rem; color:#a78bfa; font-family:monospace; font-weight:800; padding:2px 4px; }
+
+  /* ── Condition expression row ───────────────────────────── */
   .cond-row    { display:flex; align-items:center; gap:6px; padding:7px 12px; background:#0d0d16; border-bottom:1px solid #1a1a2e; flex-wrap:wrap; }
   .cond-expr   { font-size:0.72rem; color:#ccc; font-family:'SF Mono',monospace; font-weight:600; }
   .cond-arrow  { font-size:0.6rem; color:#333; }
@@ -227,4 +359,14 @@
   .ph-text { font-size:0.75rem; color:#333; text-align:center; }
 
   .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
+
+  /* ── Responsive ─────────────────────────────────────────── */
+  @media (max-width: 480px) {
+    .eval-row   { padding:6px 8px; gap:5px; }
+    .eval-chip  { padding:2px 5px; }
+    .eval-chip-raw, .eval-chip-val { font-size:0.55rem; }
+    .cond-row   { padding:5px 8px; gap:4px; }
+    .cond-expr  { font-size:0.62rem; }
+    .cond-sub   { font-size:0.58rem; }
+  }
 </style>

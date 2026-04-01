@@ -1,7 +1,7 @@
 <script>
   import ModuleShell from './ModuleShell.svelte';
   import { dc, fv, tc, tb } from './utils.js';
-  import { animateFrame, animateVar } from './animations.js';
+  import { animateFrame, animateVar, animateStackPush, animateValueFlow, animateReturnValue } from './animations.js';
 
   const ACCENT = '#ff8866';
 
@@ -108,7 +108,8 @@
             </div>
             <div class="ret-arrow-track">
               <div class="ret-arrow-line"></div>
-              <div class="ret-value-pill" style="color:{color};border-color:{color}44;background:{color}10">
+              <div class="ret-value-pill" style="color:{color};border-color:{color}44;background:{color}10"
+                use:animateReturnValue={{ active: true, color }}>
                 {fv(ret.val)}
               </div>
               <div class="ret-arrow-head">↑</div>
@@ -142,6 +143,7 @@
               class:stk-active={i === 0}
               class:stk-global={frame === 'Global'}
               use:animateFrame={{ isNew: sd.phase === 'fn-call' && i === 0, step: sd }}
+              use:animateStackPush={{ action: sd.phase === 'fn-call' && i === 0 ? 'push' : sd.phase === 'fn-return' && i === 0 ? 'pop' : null }}
             >
               <!-- Frame depth indicator -->
               <div class="stk-depth-bar" style="width:{Math.max(2, (sd.stack.length - i) * 6)}px; background:{i === 0 ? ACCENT : '#4ade80'}; opacity:0.4;"></div>
@@ -155,7 +157,9 @@
                 {#if sd.frames[frame]}
                   <div class="stk-vars">
                     {#each Object.entries(sd.frames[frame]) as [key, val]}
-                      <div class="stk-var" class:stk-flash={sd.highlight === key}>
+                      <div class="stk-var" class:stk-flash={sd.highlight === key}
+                        use:animateValueFlow={{ active: sd.phase === 'fn-call' && i === 0 }}
+                      >
                         <span class="stk-vname">{key}</span>
                         <span class="stk-vtype" style="color:{tc(val)}">{tb(val)}</span>
                         <span class="stk-vval" style="color:{tc(val)}"

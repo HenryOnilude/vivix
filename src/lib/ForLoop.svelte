@@ -1,6 +1,8 @@
 <script>
   import ModuleShell from './ModuleShell.svelte';
   import { fv, tc } from './utils.js';
+  import { animateLoopPulse, animateBlockReveal } from './animations.js';
+  import { extractLoopBody } from './condition-utils.js';
 
   const ACCENT = '#ffcc66';
 
@@ -14,9 +16,23 @@
 
   // Track iteration snapshots for sparkline + history
   let _snapshots = [];
+  let _loopBody = [];
+  let _loopPhase = 'idle'; // idle | init | condition | body | update | done
 
-  function mapStep(s) {
-    if (s.phase === 'start') _snapshots = [];
+  function mapStep(s, codeLines) {
+    if (s.phase === 'start') {
+      _snapshots = [];
+      _loopBody = extractLoopBody(codeLines || []);
+      _loopPhase = 'idle';
+    }
+
+    // Track loop phase for the phase indicator
+    if (s.phase === 'loop-init')      _loopPhase = 'init';
+    else if (s.phase === 'condition') _loopPhase = 'condition';
+    else if (s.phase === 'loop-body') _loopPhase = 'body';
+    else if (s.phase === 'loop-update') _loopPhase = 'update';
+    else if (s.cond === false && s.phase !== 'start') _loopPhase = 'done';
+
     if (s.phase === 'loop-update' || (s.phase === 'loop-body' && s.loopIters > (_snapshots.length))) {
       _snapshots = [..._snapshots, { iter: _snapshots.length + 1, vars: { ...s.vars } }];
     }
@@ -25,6 +41,8 @@
       loopIterations:  s.loopIters || 0,
       conditionResult: s.cond,
       iterHistory:     _snapshots.slice(),
+      loopBody:        _loopBody,
+      loopPhase:       _loopPhase,
     };
   }
 </script>
@@ -76,6 +94,9 @@
         {@const cx = 74}
         {@const cy = 80}
         {@const circ = 2 * Math.PI * r}
+        {@const phase = sd.loopPhase || 'idle'}
+        {@const bodyLines = sd.loopBody || []}
+        {@const phases = ['init', 'condition', 'body', 'update']}
         <div class="loop-vis">
           <div class="loop-vis-hdr">
             <svg width="14" height="14" viewBox="0 0 14 14">
@@ -83,7 +104,27 @@
               <path d="M 9 4 L 11 7 L 9 10" fill="none" stroke={ACCENT} stroke-width="1.2" stroke-linecap="round"/>
             </svg>
             <span class="loop-title">LOOP TRACKER</span>
-            <span class="loop-count">{iters} iteration{iters !== 1 ? 's' : ''}</span>
+            <span class="loop-count" aria-live="polite">{iters} iteration{iters !== 1 ? 's' : ''}</span>
+          </div>
+
+          <!-- ── Phase indicator row ──────────────────────────── -->
+          <div class="phase-row" aria-label="Loop execution phase">
+            {#each phases as p, pi}
+              <div class="phase-step" class:phase-active={phase === p} class:phase-done={phases.indexOf(phase) > pi || phase === 'done'}>
+                <span class="phase-dot" style={phase === p ? `background:${ACCENT};box-shadow:0 0 6px ${ACCENT}` : ''}></span>
+                <span class="phase-name">{p}</span>
+              </div>
+              {#if pi < 3}
+                <span class="phase-arrow" class:phase-arrow-active={phases.indexOf(phase) > pi}>→</span>
+              {/if}
+            {/each}
+            {#if phase === 'done'}
+              <span class="phase-arrow phase-arrow-active">→</span>
+              <div class="phase-step phase-active">
+                <span class="phase-dot" style="background:#f87171;box-shadow:0 0 6px #f87171"></span>
+                <span class="phase-name" style="color:#f87171">exit</span>
+              </div>
+            {/if}
           </div>
 
           <svg viewBox="0 0 300 162" class="loop-svg">
@@ -116,9 +157,11 @@
               />
             {/each}
 
-            <!-- hero iteration number -->
-            <text x={cx} y={cy - 8} text-anchor="middle" fill={ACCENT}
-              font-size="38" font-weight="900" font-family="monospace">{iters}</text>
+            <!-- hero iteration number with pulse -->
+            <g use:animateLoopPulse={{ active: phase === 'body' || phase === 'update' }}>
+              <text x={cx} y={cy - 8} text-anchor="middle" fill={ACCENT}
+                font-size="38" font-weight="900" font-family="monospace">{iters}</text>
+            </g>
             <text x={cx} y={cy + 12} text-anchor="middle" fill="#3a3a55"
               font-size="7" font-family="monospace" letter-spacing="2">ITERATIONS</text>
 
@@ -149,6 +192,26 @@
             {/each}
 
           </svg>
+
+          <!-- ── Loop body code card ──────────────────────────── -->
+          {#if bodyLines.length > 0}
+            <div class="body-card" use:animateBlockReveal={{ taken: phase === 'body', delay: 0 }}>
+              <div class="body-hdr">
+                <span class="body-label">LOOP BODY</span>
+                <span class="body-phase" style="color:{phase === 'body' ? '#4ade80' : phase === 'done' ? '#f87171' : '#555'}">
+                  {phase === 'body' ? '▶ executing' : phase === 'done' ? '■ finished' : '⏸ waiting'}
+                </span>
+              </div>
+              <div class="body-lines">
+                {#each bodyLines as line, li}
+                  <div class="body-line" class:body-line-active={phase === 'body'}>
+                    <span class="body-ln">{li + 1}</span>
+                    <code class="body-code">{line}</code>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {/if}
 
           <!-- sparkline: numeric var over iterations -->
           {#if sd.iterHistory && sd.iterHistory.length > 1}
@@ -232,9 +295,38 @@
   .spark-label    { font-size:0.45rem; color:#333; font-family:monospace; letter-spacing:0.5px; text-transform:uppercase; display:block; margin-bottom:2px; }
   .sparkline-svg  { width:100%; height:auto; display:block; }
 
+  /* ── Phase indicator row ─────────────────────────────── */
+  .phase-row        { display:flex; align-items:center; gap:4px; padding:6px 10px; background:#08080e; border-bottom:1px solid #1a1a2e; flex-wrap:wrap; }
+  .phase-step       { display:flex; align-items:center; gap:3px; opacity:0.35; transition:opacity 0.3s; }
+  .phase-active     { opacity:1; }
+  .phase-done       { opacity:0.6; }
+  .phase-dot        { width:6px; height:6px; border-radius:50%; background:#333; flex-shrink:0; }
+  .phase-name       { font-size:0.5rem; color:#888; font-family:monospace; text-transform:uppercase; letter-spacing:0.5px; }
+  .phase-active .phase-name { color:#ffcc66; font-weight:700; }
+  .phase-arrow      { font-size:0.45rem; color:#222; }
+  .phase-arrow-active { color:#555; }
+
+  /* ── Loop body code card ───────────────────────────── */
+  .body-card  { margin:0; border-top:1px solid #1a1a2e; overflow:hidden; }
+  .body-hdr   { display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#0a0a12; }
+  .body-label { font-size:0.5rem; color:#555; font-family:monospace; letter-spacing:1px; font-weight:700; }
+  .body-phase { font-size:0.45rem; font-family:monospace; }
+  .body-lines { padding:4px 8px 6px; background:#08080e; }
+  .body-line  { display:flex; align-items:center; gap:8px; padding:2px 4px; border-radius:3px; opacity:0.4; transition:opacity 0.3s, background 0.3s; }
+  .body-line-active { opacity:1; background:#ffcc6608; }
+  .body-ln    { font-size:0.5rem; color:#333; font-family:monospace; min-width:12px; text-align:right; }
+  .body-code  { font-size:0.65rem; color:#bbb; font-family:'SF Mono',monospace; }
+  .body-line-active .body-code { color:#ffcc66; }
+
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg  { width:200px; height:auto; opacity:0.5; }
   .ph-text { font-size:0.75rem; color:#333; text-align:center; }
 
   .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
+
+  @media (max-width: 480px) {
+    .phase-row  { padding:4px 6px; gap:2px; }
+    .phase-name { font-size:0.42rem; }
+    .body-code  { font-size:0.55rem; }
+  }
 </style>
