@@ -103,7 +103,7 @@
             </span>
           </div>
 
-          <svg viewBox="0 0 300 170" class="branch-svg">
+          <svg viewBox="0 0 300 185" class="branch-svg">
             <defs>
               <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stop-color="#4ade80" stop-opacity="0.3"/>
@@ -140,23 +140,23 @@
             <text x="210" y="80" fill={!cond ? '#f87171' : '#2a2a42'} font-size="11" font-weight="900" font-family="monospace">F</text>
 
             <!-- if block -->
-            <rect x="12" y="128" width="90" height="36" rx="6"
+            <rect x="12" y="128" width="90" height="48" rx="6"
               fill={cond ? 'url(#tg)' : '#090910'}
               stroke={cond ? '#4ade80' : '#1a1a2e'} stroke-width={cond ? 2 : 1}/>
-            <text x="57" y="148" text-anchor="middle"
+            <text x="57" y="146" text-anchor="middle"
               fill={cond ? '#4ade80' : '#252535'} font-size="12" font-weight="700" font-family="monospace">if {'{'} {'}'}</text>
             {#if cond}
-              <text x="57" y="160" text-anchor="middle" fill="#4ade8066" font-size="7" font-family="monospace">EXECUTED</text>
+              <text x="57" y="170" text-anchor="middle" fill="#4ade8066" font-size="7" font-family="monospace">EXECUTED</text>
             {/if}
 
             <!-- else block -->
-            <rect x="198" y="128" width="90" height="36" rx="6"
+            <rect x="198" y="128" width="90" height="48" rx="6"
               fill={!cond ? 'url(#fg)' : '#090910'}
               stroke={!cond ? '#f87171' : '#1a1a2e'} stroke-width={!cond ? 2 : 1}/>
-            <text x="243" y="148" text-anchor="middle"
+            <text x="243" y="146" text-anchor="middle"
               fill={!cond ? '#f87171' : '#252535'} font-size="12" font-weight="700" font-family="monospace">else {'{'} {'}'}</text>
             {#if !cond}
-              <text x="243" y="160" text-anchor="middle" fill="#f8717166" font-size="7" font-family="monospace">EXECUTED</text>
+              <text x="243" y="170" text-anchor="middle" fill="#f8717166" font-size="7" font-family="monospace">EXECUTED</text>
             {/if}
 
             <!-- result badge -->
@@ -172,7 +172,7 @@
               <circle r="6" fill={cond ? '#4ade80' : '#f87171'} opacity="0.9"
                 use:animateBall={{ taken: cond, step: sd }}/>
             {:else}
-              <circle cx={cond ? 57 : 243} cy="140" r="5"
+              <circle cx={cond ? 57 : 243} cy="157" r="4"
                 fill={cond ? '#4ade80' : '#f87171'} opacity="0.45"/>
             {/if}
           </svg>

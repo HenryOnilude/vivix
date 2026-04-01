@@ -112,9 +112,9 @@ export function animatePath(node, _p) {
 export function animateBall(node, p) {
   function run(taken) {
     if (taken) {
-      gsap.fromTo(node, { attr: { cx: 150, cy: 30 } }, { attr: { cx: 60, cy: 145 }, duration: 1.2, ease: 'power2.inOut' });
+      gsap.fromTo(node, { attr: { cx: 150, cy: 30 } }, { attr: { cx: 57, cy: 157 }, duration: 1.2, ease: 'power2.inOut' });
     } else {
-      gsap.fromTo(node, { attr: { cx: 150, cy: 30 } }, { attr: { cx: 240, cy: 145 }, duration: 1.2, ease: 'power2.inOut' });
+      gsap.fromTo(node, { attr: { cx: 150, cy: 30 } }, { attr: { cx: 243, cy: 157 }, duration: 1.2, ease: 'power2.inOut' });
     }
   }
   run(p.taken);
