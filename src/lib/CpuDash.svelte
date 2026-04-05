@@ -143,74 +143,98 @@
 <div class="cpu-dash" role="region" aria-label="CPU execution dashboard">
   <svg viewBox="0 0 360 130" class="cpu-svg" role="img" aria-label="CPU state: step {step + 1} of {total}, phase {sd.phase}, {sd.lineIndex >= 0 ? 'line ' + (sd.lineIndex + 1) : sd.phase === 'start' ? 'ready' : 'done'}">
     <title>CPU Dashboard — Step {step + 1}/{total}: {sd.phase}</title>
-    <!-- Background -->
-    <rect x="0" y="0" width="360" height="130" rx="8" fill="#0a0a12" stroke="#1a1a2e" stroke-width="1"/>
+    <defs>
+      <!-- Glow filter for chip & ring -->
+      <filter id="chip-glow" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="3" in="SourceGraphic" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <!-- Subtle ambient glow for progress ring -->
+      <filter id="ring-glow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="2" in="SourceGraphic" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- Background — slight accent tint at top-right corner -->
+    <rect x="0" y="0" width="360" height="130" rx="8" fill="#0a0a12" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+    <!-- Accent atmosphere inside the SVG -->
+    <radialGradient id="cpu-atm" cx="90%" cy="10%" r="60%">
+      <stop offset="0%" stop-color={phColor(sd.phase)} stop-opacity="0.08"/>
+      <stop offset="100%" stop-color={phColor(sd.phase)} stop-opacity="0"/>
+    </radialGradient>
+    <rect x="0" y="0" width="360" height="130" rx="8" fill="url(#cpu-atm)"/>
+    <!-- Top accent stripe -->
+    <rect x="8" y="0" width="344" height="1.5" rx="1" fill={phColor(sd.phase)} opacity="0.35"/>
 
     <!-- Progress ring (top-left) -->
-    <circle cx="36" cy="40" r="22" fill="none" stroke="#1a1a2e" stroke-width="3"/>
+    <circle cx="36" cy="40" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
     <circle cx="36" cy="40" r="22" fill="none" stroke={phColor(sd.phase)} stroke-width="3"
       stroke-dasharray={2 * Math.PI * 22}
       stroke-dashoffset={2 * Math.PI * 22 * (1 - (total > 1 ? step / (total - 1) : 0))}
-      stroke-linecap="round" transform="rotate(-90 36 40)"/>
-    <text x="36" y="37" text-anchor="middle" fill="#e0e0e0" font-size="11" font-weight="800" font-family="monospace">{step + 1}</text>
-    <text x="36" y="47" text-anchor="middle" fill="#333" font-size="7" font-family="monospace">/{total}</text>
+      stroke-linecap="round" transform="rotate(-90 36 40)"
+      filter="url(#ring-glow)"/>
+    <text x="36" y="37" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="11" font-weight="800" font-family="monospace">{step + 1}</text>
+    <text x="36" y="47" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="7" font-family="monospace">/{total}</text>
 
-    <!-- CPU chip -->
-    <rect x="72" y="18" width="44" height="44" rx="6" fill="#0d0d18" stroke={phColor(sd.phase)} stroke-width="1.5"/>
-    <rect x="80" y="26" width="28" height="28" rx="3" fill={phColor(sd.phase)} opacity="0.1"/>
+    <!-- CPU chip — with glow filter -->
+    <rect x="72" y="18" width="44" height="44" rx="6"
+      fill="#0d0d18" stroke={phColor(sd.phase)} stroke-width="1.5"
+      filter="url(#chip-glow)"/>
+    <rect x="80" y="26" width="28" height="28" rx="3" fill={phColor(sd.phase)} opacity="0.15"/>
     {#each [0, 1, 2] as p}
-      <rect x={83 + p * 9} y="13"  width="4" height="5" rx="1" fill={phColor(sd.phase)} opacity="0.4"/>
-      <rect x={83 + p * 9} y="62"  width="4" height="5" rx="1" fill={phColor(sd.phase)} opacity="0.4"/>
-      <rect x="67"  y={29 + p * 9} width="5" height="4" rx="1" fill={phColor(sd.phase)} opacity="0.4"/>
-      <rect x="116" y={29 + p * 9} width="5" height="4" rx="1" fill={phColor(sd.phase)} opacity="0.4"/>
+      <rect x={83 + p * 9} y="13"  width="4" height="5" rx="1" fill={phColor(sd.phase)} opacity="0.6"/>
+      <rect x={83 + p * 9} y="62"  width="4" height="5" rx="1" fill={phColor(sd.phase)} opacity="0.6"/>
+      <rect x="67"  y={29 + p * 9} width="5" height="4" rx="1" fill={phColor(sd.phase)} opacity="0.6"/>
+      <rect x="116" y={29 + p * 9} width="5" height="4" rx="1" fill={phColor(sd.phase)} opacity="0.6"/>
     {/each}
     <!-- Operation symbol -->
     <text x="94" y="46" text-anchor="middle" fill={phColor(sd.phase)} font-size="16" font-weight="800" font-family="monospace">
       {phSymbol(sd.phase)}
     </text>
 
-    <!-- PC register -->
-    <rect x="132" y="14" width="68" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="138" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">PC</text>
+    <!-- PC register — accent-tinted border -->
+    <rect x="132" y="14" width="68" height="22" rx="4" fill="#08080e" stroke={phColor(sd.phase)} stroke-width="0.6" stroke-opacity="0.35"/>
+    <text x="138" y="22" fill="rgba(255,255,255,0.25)" font-size="6" font-family="monospace" letter-spacing="0.5">PC</text>
     <text x="194" y="29" text-anchor="end" fill={phColor(sd.phase)} font-size="10" font-weight="700" font-family="monospace">
       {sd.lineIndex >= 0 ? 'LINE ' + (sd.lineIndex + 1) : sd.phase === 'start' ? 'READY' : 'END'}
     </text>
 
-    <!-- OP register -->
-    <rect x="132" y="40" width="68" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="138" y="48" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">OP</text>
+    <!-- OP register — accent-tinted border -->
+    <rect x="132" y="40" width="68" height="22" rx="4" fill="#08080e" stroke={phColor(sd.phase)} stroke-width="0.6" stroke-opacity="0.35"/>
+    <text x="138" y="48" fill="rgba(255,255,255,0.25)" font-size="6" font-family="monospace" letter-spacing="0.5">OP</text>
     <text x="194" y="55" text-anchor="end" fill={phColor(sd.phase)} font-size="9" font-weight="700" font-family="monospace">{sd.phase.toUpperCase()}</text>
 
     <!-- Module-specific right-column registers (x ≥ 210) -->
     {#if registers}{@render registers(sd)}{/if}
 
     <!-- WRITES gauge (left, always shown) -->
-    <rect x="132" y="68" width="108" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-    <rect x="133" y="69" width={Math.min(106, (sd.memOps || 0) * 14)} height="14" rx="2" fill="#f59e0b" opacity="0.2"/>
-    <text x="138" y="79" fill="#666" font-size="6.5" font-family="monospace">{sd.memOps || 0} WRITES</text>
+    <rect x="132" y="68" width="108" height="16" rx="3" fill="#08080e" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+    <rect x="133" y="69" width={Math.min(106, (sd.memOps || 0) * 14)} height="14" rx="2" fill="#f59e0b" opacity="0.3"/>
+    <text x="138" y="79" fill="rgba(255,255,255,0.3)" font-size="6.5" font-family="monospace">{sd.memOps || 0} WRITES</text>
 
     <!-- Module-specific right gauge -->
     {#if gauge}
       {@render gauge(sd)}
     {:else}
-      <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
+      <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
     {/if}
 
     <!-- Stack visual (bottom-left) -->
-    <text x="10" y="78" fill="#333" font-size="6" font-family="monospace" letter-spacing="1">STACK</text>
+    <text x="10" y="78" fill="rgba(255,255,255,0.2)" font-size="6" font-family="monospace" letter-spacing="1">STACK</text>
     {#if stackSnippet}
       {@render stackSnippet(sd)}
     {:else if !sd.done}
-      <rect x="10" y="82" width="108" height="16" rx="3" fill="#0d0d18" stroke="#4ade8044" stroke-width="1"/>
+      <rect x="10" y="82" width="108" height="16" rx="3" fill="#0d0d18" stroke="#4ade8055" stroke-width="1"/>
       <text x="16" y="93" fill="#4ade80" font-size="7.5" font-weight="600" font-family="monospace">Global</text>
-      <text x="112" y="93" text-anchor="end" fill="#333" font-size="6.5" font-family="monospace">{Object.keys(sd.vars || {}).length} vars</text>
+      <text x="112" y="93" text-anchor="end" fill="rgba(255,255,255,0.2)" font-size="6.5" font-family="monospace">{Object.keys(sd.vars || {}).length} vars</text>
     {:else}
-      <rect x="10" y="82" width="108" height="16" rx="3" fill="#0d0d18" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2"/>
-      <text x="64" y="93" text-anchor="middle" fill="#222" font-size="7" font-family="monospace">empty</text>
+      <rect x="10" y="82" width="108" height="16" rx="3" fill="#0d0d18" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="3 2"/>
+      <text x="64" y="93" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-size="7" font-family="monospace">empty</text>
     {/if}
 
     <!-- Hint text -->
-    <text x="10" y="122" fill="#444" font-size="8" font-family="system-ui, sans-serif">{sd.memLabel || ''}</text>
+    <text x="10" y="122" fill="rgba(255,255,255,0.40)" font-size="8" font-family="system-ui, sans-serif">{sd.memLabel || ''}</text>
   </svg>
 
   {#if sd.brain && parsed}
@@ -421,24 +445,30 @@
 </div>
 
 <style>
-  .cpu-dash { flex-shrink:0; background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; }
+  .cpu-dash {
+    flex-shrink:0;
+    background: color-mix(in srgb, var(--acc, #6366f1) 4%, #0a0a12);
+    border: 1px solid color-mix(in srgb, var(--acc, #6366f1) 16%, rgba(255,255,255,0.06));
+    border-radius:10px; overflow:hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 20px rgba(0,0,0,0.4);
+  }
   .cpu-svg  { width:100%; height:auto; display:block; }
 
   /* ── Visual explanation panel ──────────────────────────────────────────── */
-  .cpu-explain-panel { border-top:1px solid #1a1a2e; display:flex; flex-direction:column; gap:0; }
+  .cpu-explain-panel { border-top:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; gap:0; }
 
   /* Phase badge row */
-  .phase-row      { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#0d0d16; }
+  .phase-row      { display:flex; align-items:center; gap:8px; padding:8px 12px; background:rgba(255,255,255,0.02); }
   .phase-icon     { font-size:1rem; line-height:1; }
   .phase-label    { font-size:0.78rem; font-weight:700; letter-spacing:0.3px; }
-  .phase-tag      { margin-left:auto; font-size:0.48rem; padding:2px 7px; border-radius:3px; border:1px solid; font-family:monospace; letter-spacing:1px; font-weight:600; }
+  .phase-tag      { margin-left:auto; font-size:0.5rem; padding:2px 8px; border-radius:3px; border:1px solid; font-family:monospace; letter-spacing:1px; font-weight:600; }
 
   /* Mode toggle button */
-  .mode-toggle    { background:transparent; border:1px solid #333; border-radius:4px; padding:2px 8px; font-size:0.5rem; color:#888; cursor:pointer; font-family:monospace; letter-spacing:0.3px; transition:all 0.15s; flex-shrink:0; }
+  .mode-toggle    { background:transparent; border:1px solid rgba(255,255,255,0.12); border-radius:4px; padding:2px 8px; font-size:0.52rem; color:rgba(255,255,255,0.50); cursor:pointer; font-family:monospace; letter-spacing:0.3px; transition:all 0.15s; flex-shrink:0; }
   .mode-toggle:hover { border-color:var(--mode-color, #888); color:var(--mode-color, #ccc); }
 
   /* Simple mode explanation */
-  .explain-simple { padding:8px 12px 10px; font-size:0.72rem; color:#c0c0c0; line-height:1.6; font-family:'Inter','SF Pro',system-ui,sans-serif; }
+  .explain-simple { padding:8px 12px 10px; font-size:0.73rem; color:rgba(255,255,255,0.72); line-height:1.65; font-family:'Inter','SF Pro',system-ui,sans-serif; }
 
   /* Pipeline SVG (start phase) */
   .pipeline       { padding:6px 12px 2px; }
@@ -451,25 +481,25 @@
   /* Loop iteration meter */
   .loop-meter       { display:flex; align-items:center; gap:8px; padding:0 12px; }
   .loop-meter-label { font-size:0.6rem; font-family:monospace; font-weight:600; flex-shrink:0; }
-  .loop-meter-track { flex:1; height:6px; background:#1a1a2e; border-radius:3px; overflow:hidden; }
+  .loop-meter-track { flex:1; height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden; }
   .loop-meter-fill  { height:100%; border-radius:3px; transition:width 0.3s ease; }
   .loop-meter-val   { font-size:0.7rem; font-family:monospace; font-weight:800; min-width:20px; text-align:right; }
 
   /* Summary line */
-  .explain-summary  { padding:6px 12px 2px; font-size:0.72rem; color:#e0e0e0; font-weight:600; line-height:1.5; font-family:'Inter','SF Pro',system-ui,sans-serif; }
+  .explain-summary  { padding:6px 12px 2px; font-size:0.73rem; color:rgba(255,255,255,0.88); font-weight:600; line-height:1.5; font-family:'Inter','SF Pro',system-ui,sans-serif; }
 
   /* Main explanation body */
-  .explain-body     { padding:4px 12px 8px; font-size:0.68rem; color:#999; line-height:1.65; white-space:pre-wrap; font-family:'Inter','SF Pro',system-ui,sans-serif; max-height:120px; overflow-y:auto; }
+  .explain-body     { padding:4px 12px 8px; font-size:0.68rem; color:rgba(255,255,255,0.55); line-height:1.65; white-space:pre-wrap; font-family:'Inter','SF Pro',system-ui,sans-serif; max-height:120px; overflow-y:auto; }
 
   /* ── Screen reader only utility ─────────────────────────────────────── */
   .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
   /* V8 Internals (collapsible) */
-  .v8-details       { border-top:1px solid #1a1a2e; }
-  .v8-toggle        { padding:6px 12px; font-size:0.58rem; color:#555; cursor:pointer; font-family:monospace; letter-spacing:0.3px; display:flex; align-items:center; gap:6px; user-select:none; transition:color 0.15s; }
-  .v8-toggle:hover  { color:#888; }
+  .v8-details       { border-top:1px solid rgba(255,255,255,0.06); }
+  .v8-toggle        { padding:6px 12px; font-size:0.58rem; color:rgba(255,255,255,0.38); cursor:pointer; font-family:monospace; letter-spacing:0.3px; display:flex; align-items:center; gap:6px; user-select:none; transition:color 0.15s; }
+  .v8-toggle:hover  { color:rgba(255,255,255,0.70); }
   .v8-chip-icon     { flex-shrink:0; }
-  .v8-body          { padding:6px 12px 10px; font-size:0.62rem; color:#777; line-height:1.6; white-space:pre-wrap; font-family:'SF Mono','Fira Code','Consolas',monospace; margin:0; border:none; background:transparent; max-height:160px; overflow-y:auto; }
+  .v8-body          { padding:6px 12px 10px; font-size:0.62rem; color:rgba(255,255,255,0.50); line-height:1.6; white-space:pre-wrap; font-family:'SF Mono','Fira Code','Consolas',monospace; margin:0; border:none; background:transparent; max-height:160px; overflow-y:auto; }
 
   /* ── Responsive: tablet ≤768px ───────────────────────────────────────── */
   @media (max-width: 768px) {

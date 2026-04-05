@@ -2,6 +2,10 @@
   import { onMount } from 'svelte';
   import Home from './lib/Home.svelte';
   import ErrorBoundary from './lib/ErrorBoundary.svelte';
+  import { initTheme } from './lib/a11y-theme.js';
+
+  // Initialize accessibility theme from localStorage on load
+  initTheme();
 
   // ── Lazy-loaded route map ──────────────────────────────────────────────────
   // Each module is loaded on-demand via dynamic import() to reduce initial bundle.

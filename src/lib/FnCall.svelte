@@ -61,24 +61,24 @@
   <!-- CPU right-column registers: DEPTH + CALLS + FRAME -->
   {#snippet cpuRegisters(sd)}
     <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
-      stroke={sd.stack.length > 1 ? '#ff886633' : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">DEPTH</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.stack.length > 1 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="monospace">{sd.stack.length}</text>
+      stroke={sd.stack.length > 1 ? 'rgba(255,136,102,0.4)' : 'rgba(255,255,255,0.08)'} stroke-width="1"/>
+    <text x="216" y="22" fill="rgba(255,255,255,0.35)" font-size="6" font-family="monospace" letter-spacing="0.5">DEPTH</text>
+    <text x="272" y="29" text-anchor="end" fill={sd.stack.length > 1 ? ACCENT : 'rgba(255,255,255,0.30)'} font-size="12" font-weight="800" font-family="monospace">{sd.stack.length}</text>
 
-    <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="290" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">CALLS</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.calls > 0 ? '#a78bfa' : '#222'} font-size="12" font-weight="800" font-family="monospace">{sd.calls}</text>
+    <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <text x="290" y="22" fill="rgba(255,255,255,0.35)" font-size="6" font-family="monospace" letter-spacing="0.5">CALLS</text>
+    <text x="344" y="29" text-anchor="end" fill={sd.calls > 0 ? '#a78bfa' : 'rgba(255,255,255,0.30)'} font-size="12" font-weight="800" font-family="monospace">{sd.calls}</text>
 
-    <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">FRAME</text>
+    <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <text x="216" y="48" fill="rgba(255,255,255,0.35)" font-size="6" font-family="monospace" letter-spacing="0.5">FRAME</text>
     <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="10" font-weight="700" font-family="monospace">{sd.stack[sd.stack.length - 1]}</text>
   {/snippet}
 
   <!-- CPU right gauge: max stack depth -->
   {#snippet cpuGauge(sd)}
-    <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-    <rect x="247" y="69" width={Math.min(102, (sd.maxDepth || 1) * 25)} height="14" rx="2" fill={ACCENT} opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">MAX {sd.maxDepth || 1}</text>
+    <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
+    <rect x="247" y="69" width={Math.min(102, (sd.maxDepth || 1) * 25)} height="14" rx="2" fill={ACCENT} opacity="0.3"/>
+    <text x="252" y="79" fill="rgba(255,255,255,0.45)" font-size="6.5" font-family="monospace">MAX {sd.maxDepth || 1}</text>
   {/snippet}
 
   <!-- CPU stack visual override — shows actual frames -->
@@ -88,7 +88,7 @@
         <rect x="10" y={82 + i * 14} width="108" height="12" rx="3" fill="#0d0d18"
           stroke={i === 0 ? '#ff886644' : '#1a1a2e'} stroke-width="1"/>
         <text x="16" y={91 + i * 14} fill={i === 0 ? ACCENT : '#4ade80'} font-size="7" font-weight="600" font-family="monospace">{frame}</text>
-        {#if i === 0}<text x="112" y={91 + i * 14} text-anchor="end" fill="#333" font-size="5" font-family="monospace">active</text>{/if}
+        {#if i === 0}<text x="112" y={91 + i * 14} text-anchor="end" fill="rgba(255,255,255,0.35)" font-size="5.5" font-family="monospace">active</text>{/if}
       {/if}
     {/each}
   {/snippet}
@@ -225,7 +225,7 @@
   .return-banner-row  { display:flex; align-items:center; gap:10px; padding:8px 12px; }
   .ret-from           { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
   .ret-fn-name        { font-size:0.75rem; color:#ff8866; font-weight:700; font-family:'SF Mono',monospace; }
-  .ret-label          { font-size:0.42rem; color:#555; font-family:monospace; text-transform:uppercase; letter-spacing:0.5px; }
+  .ret-label          { font-size:0.48rem; color:rgba(255,255,255,0.42); font-family:monospace; text-transform:uppercase; letter-spacing:0.5px; }
   .ret-arrow-track    { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; }
   .ret-arrow-line     { width:1px; height:10px; background:linear-gradient(to top, #ff8866, transparent); }
   .ret-value-pill     { font-size:0.7rem; font-weight:800; font-family:'SF Mono',monospace; padding:3px 10px; border-radius:4px; border:1px solid; }
@@ -234,18 +234,32 @@
   .ret-var-name       { font-size:0.75rem; font-weight:700; font-family:'SF Mono',monospace; }
   .ret-type-row       { display:flex; justify-content:space-between; padding:3px 12px 6px; }
   .ret-type-tag       { font-size:0.45rem; font-family:monospace; }
-  .ret-cost           { font-size:0.45rem; color:#444; font-family:monospace; }
+  .ret-cost           { font-size:0.5rem; color:rgba(255,255,255,0.38); font-family:monospace; }
 
   /* Call stack card */
-  .stack-card     { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .stack-hdr      { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .stack-title    { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
-  .stack-depth    { margin-left:auto; font-size:0.5rem; color:#ff8866; font-family:monospace; }
+  .stack-card     {
+    background: color-mix(in srgb, #ff8866 3%, #0a0a12);
+    border: 1px solid color-mix(in srgb, #ff8866 18%, rgba(255,255,255,0.05));
+    border-radius:10px; overflow:hidden; flex-shrink:0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .stack-hdr      {
+    display:flex; align-items:center; gap:6px; padding:7px 10px;
+    background: color-mix(in srgb, #ff8866 5%, #0d0d16);
+    border-bottom: 1px solid color-mix(in srgb, #ff8866 12%, rgba(255,255,255,0.04));
+    position:relative;
+  }
+  .stack-hdr::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1.5px;
+    background: linear-gradient(90deg, transparent, rgba(255,136,102,0.6), transparent);
+  }
+  .stack-title    { font-size:0.58rem; color:rgba(255,255,255,0.55); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .stack-depth    { margin-left:auto; font-size:0.52rem; color:#ff8866; font-family:monospace; font-weight:600; }
   .stack-frames   { padding:6px; display:flex; flex-direction:column; gap:4px; }
 
-  .stk-frame      { display:flex; align-items:stretch; border-radius:6px; overflow:hidden; border:1px solid #1a1a2e; transition:all 0.3s; }
-  .stk-active     { border-color:#ff886644; background:#ff886606; }
-  .stk-global     { border-color:#4ade8022; }
+  .stk-frame      { display:flex; align-items:stretch; border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.07); transition:all 0.3s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+  .stk-active     { border-color:#ff886655; background:rgba(255,136,102,0.05); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 12px rgba(255,136,102,0.08); }
+  .stk-global     { border-color:rgba(74,222,128,0.2); }
   .stk-depth-bar  { flex-shrink:0; min-width:2px; }
   .stk-body       { flex:1; padding:5px 8px; }
   .stk-top        { display:flex; justify-content:space-between; align-items:center; }
@@ -259,12 +273,12 @@
   .stk-vtype      { font-size:0.45rem; padding:1px 4px; border-radius:2px; background:#ffffff08; font-family:monospace; }
   .stk-vval       { margin-left:auto; font-size:0.72rem; font-weight:600; font-family:'SF Mono',monospace; }
 
-  .stack-footer   { padding:4px 10px 6px; background:#07070f; border-top:1px solid #1a1a2e; }
-  .stack-note     { font-size:0.45rem; color:#333; font-family:monospace; }
+  .stack-footer   { padding:5px 12px 7px; background:rgba(0,0,0,0.2); border-top:1px solid rgba(255,255,255,0.05); }
+  .stack-note     { font-size:0.6rem; color:rgba(255,255,255,0.40); font-family:monospace; font-style:italic; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg  { width:200px; height:auto; opacity:0.5; }
-  .ph-text { font-size:0.75rem; color:#333; text-align:center; }
+  .ph-text { font-size:0.8rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.58rem; color:rgba(255,255,255,0.45); font-family:monospace; }
 </style>
