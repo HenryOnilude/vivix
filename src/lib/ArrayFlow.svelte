@@ -258,29 +258,29 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 260 140" class="ph-svg">
         <!-- Left O(n) label -->
-        <text x="12" y="60" fill="#1a1a2e" font-size="7" font-family="monospace" font-weight="700">O(n)</text>
-        <text x="8"  y="70" fill="#1a1a2e" font-size="5.5" font-family="monospace">shift</text>
-        <text x="4"  y="80" fill="#1a1a2e" font-size="5.5" font-family="monospace">unshift</text>
+        <text x="12" y="60" fill="rgba(255,255,255,0.55)" font-size="7" font-family="monospace" font-weight="700">O(n)</text>
+        <text x="8"  y="70" fill="rgba(255,255,255,0.40)" font-size="5.5" font-family="monospace">shift</text>
+        <text x="4"  y="80" fill="rgba(255,255,255,0.40)" font-size="5.5" font-family="monospace">unshift</text>
         <!-- Array cells -->
-        <rect x="38" y="45" width="32" height="30" rx="3" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="54" y="62" text-anchor="middle" fill="#1a1a2e" font-size="8" font-family="monospace">[0]</text>
-        <rect x="74" y="45" width="32" height="30" rx="3" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="90" y="62" text-anchor="middle" fill="#1a1a2e" font-size="8" font-family="monospace">[1]</text>
-        <rect x="110" y="45" width="32" height="30" rx="3" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="126" y="62" text-anchor="middle" fill="#1a1a2e" font-size="8" font-family="monospace">[2]</text>
-        <rect x="146" y="45" width="32" height="30" rx="3" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="162" y="62" text-anchor="middle" fill="#1a1a2e" font-size="8" font-family="monospace">[3]</text>
+        <rect x="38" y="45" width="32" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="54" y="62" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">[0]</text>
+        <rect x="74" y="45" width="32" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="90" y="62" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">[1]</text>
+        <rect x="110" y="45" width="32" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="126" y="62" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">[2]</text>
+        <rect x="146" y="45" width="32" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="162" y="62" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">[3]</text>
         <!-- Right O(1) label -->
-        <text x="186" y="56" fill="#1a1a2e" font-size="7" font-family="monospace" font-weight="700">O(1)</text>
-        <text x="186" y="66" fill="#1a1a2e" font-size="5.5" font-family="monospace">push</text>
-        <text x="186" y="76" fill="#1a1a2e" font-size="5.5" font-family="monospace">pop</text>
+        <text x="186" y="56" fill="rgba(255,255,255,0.55)" font-size="7" font-family="monospace" font-weight="700">O(1)</text>
+        <text x="186" y="66" fill="rgba(255,255,255,0.40)" font-size="5.5" font-family="monospace">push</text>
+        <text x="186" y="76" fill="rgba(255,255,255,0.40)" font-size="5.5" font-family="monospace">pop</text>
         <!-- Contiguous memory label -->
-        <text x="105" y="100" text-anchor="middle" fill="#222" font-size="7.5" font-family="monospace">contiguous memory layout</text>
+        <text x="105" y="100" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="7.5" font-family="monospace">contiguous memory layout</text>
         <!-- Address hints -->
-        <text x="54"  y="90" text-anchor="middle" fill="#1a1a2e" font-size="5" font-family="monospace">0x00</text>
-        <text x="90"  y="90" text-anchor="middle" fill="#1a1a2e" font-size="5" font-family="monospace">0x08</text>
-        <text x="126" y="90" text-anchor="middle" fill="#1a1a2e" font-size="5" font-family="monospace">0x10</text>
-        <text x="162" y="90" text-anchor="middle" fill="#1a1a2e" font-size="5" font-family="monospace">0x18</text>
+        <text x="54"  y="90" text-anchor="middle" fill="rgba(255,255,255,0.30)" font-size="5" font-family="monospace">0x00</text>
+        <text x="90"  y="90" text-anchor="middle" fill="rgba(255,255,255,0.30)" font-size="5" font-family="monospace">0x08</text>
+        <text x="126" y="90" text-anchor="middle" fill="rgba(255,255,255,0.30)" font-size="5" font-family="monospace">0x10</text>
+        <text x="162" y="90" text-anchor="middle" fill="rgba(255,255,255,0.30)" font-size="5" font-family="monospace">0x18</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see arrays in action</p>
     </div>

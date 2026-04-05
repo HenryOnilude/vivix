@@ -138,12 +138,12 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 200 140" class="ph-svg">
-        <rect x="30"  y="20" width="60" height="40" rx="4" fill="none" stroke="#1a1a2e" stroke-width="2" stroke-dasharray="4 2"/>
-        <text x="60"  y="44" text-anchor="middle" fill="#1a1a2e" font-size="8" font-family="monospace">x = 42</text>
-        <rect x="110" y="20" width="60" height="40" rx="4" fill="none" stroke="#1a1a2e" stroke-width="2" stroke-dasharray="4 2"/>
-        <text x="140" y="44" text-anchor="middle" fill="#1a1a2e" font-size="8" font-family="monospace">y = "hi"</text>
-        <rect x="70"  y="80" width="60" height="40" rx="4" fill="none" stroke="#1a1a2e" stroke-width="2" stroke-dasharray="4 2"/>
-        <text x="100" y="104" text-anchor="middle" fill="#1a1a2e" font-size="8" font-family="monospace">z = true</text>
+        <rect x="30"  y="20" width="60" height="40" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="4 2"/>
+        <text x="60"  y="44" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">x = 42</text>
+        <rect x="110" y="20" width="60" height="40" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="4 2"/>
+        <text x="140" y="44" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">y = "hi"</text>
+        <rect x="70"  y="80" width="60" height="40" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="4 2"/>
+        <text x="100" y="104" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">z = true</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see variables in memory</p>
     </div>
@@ -153,8 +153,8 @@
 
 <style>
   /* Byte map */
-  .bytemap-card  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .bytemap-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
+  .bytemap-card  { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .bytemap-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
   .bytemap-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .bytemap-total { margin-left:auto; font-size:0.5rem; color:#38bdf8; font-family:monospace; }
 

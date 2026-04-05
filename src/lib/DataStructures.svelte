@@ -264,15 +264,15 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 200 140" class="ph-svg">
-        <rect x="65" y="20" width="70" height="16" rx="3" fill="none" stroke="#1a1a2e" stroke-width="2"/>
-        <text x="100" y="31" text-anchor="middle" fill="#1a1a2e" font-size="7" font-family="monospace">push → top</text>
-        <rect x="65" y="40" width="70" height="16" rx="3" fill="none" stroke="#1a1a2e" stroke-width="2"/>
-        <text x="100" y="51" text-anchor="middle" fill="#1a1a2e" font-size="7" font-family="monospace">item 2</text>
-        <rect x="65" y="60" width="70" height="16" rx="3" fill="none" stroke="#1a1a2e" stroke-width="2"/>
-        <text x="100" y="71" text-anchor="middle" fill="#1a1a2e" font-size="7" font-family="monospace">item 1</text>
-        <rect x="65" y="80" width="70" height="16" rx="3" fill="none" stroke="#1a1a2e" stroke-width="2"/>
-        <text x="100" y="91" text-anchor="middle" fill="#1a1a2e" font-size="7" font-family="monospace">bottom</text>
-        <text x="100" y="120" text-anchor="middle" fill="#222" font-size="8" font-family="monospace">stack • queue • map • set</text>
+        <rect x="65" y="20" width="70" height="16" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <text x="100" y="31" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="7" font-family="monospace">push → top</text>
+        <rect x="65" y="40" width="70" height="16" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <text x="100" y="51" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="7" font-family="monospace">item 2</text>
+        <rect x="65" y="60" width="70" height="16" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <text x="100" y="71" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="7" font-family="monospace">item 1</text>
+        <rect x="65" y="80" width="70" height="16" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <text x="100" y="91" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="7" font-family="monospace">bottom</text>
+        <text x="100" y="120" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="8" font-family="monospace">stack • queue • map • set</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see data structures in action</p>
     </div>

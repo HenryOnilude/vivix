@@ -585,26 +585,26 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 220 170" class="ph-svg">
         <!-- Sequential stack -->
-        <text x="14" y="22" fill="#1a1a2e" font-size="7" font-family="monospace">sequential:</text>
-        <rect x="14" y="28" width="44" height="14" rx="2" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="36" y="39" text-anchor="middle" fill="#1a1a2e" font-size="6" font-family="monospace">task 1</text>
-        <rect x="62" y="28" width="44" height="14" rx="2" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="84" y="39" text-anchor="middle" fill="#1a1a2e" font-size="6" font-family="monospace">task 2</text>
-        <rect x="110" y="28" width="44" height="14" rx="2" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="132" y="39" text-anchor="middle" fill="#1a1a2e" font-size="6" font-family="monospace">task 3</text>
-        <text x="162" y="38" fill="#1a1a2e" font-size="6.5" font-family="monospace">T=t₁+t₂+t₃</text>
+        <text x="14" y="22" fill="rgba(255,255,255,0.50)" font-size="7" font-family="monospace">sequential:</text>
+        <rect x="14" y="28" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="36" y="39" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="6" font-family="monospace">task 1</text>
+        <rect x="62" y="28" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="84" y="39" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="6" font-family="monospace">task 2</text>
+        <rect x="110" y="28" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="132" y="39" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="6" font-family="monospace">task 3</text>
+        <text x="162" y="38" fill="rgba(255,255,255,0.40)" font-size="6.5" font-family="monospace">T=t₁+t₂+t₃</text>
         <!-- Parallel layout -->
-        <text x="14" y="60" fill="#1a1a2e" font-size="7" font-family="monospace">parallel:</text>
-        <rect x="14" y="66" width="44" height="14" rx="2" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="36" y="77" text-anchor="middle" fill="#1a1a2e" font-size="6" font-family="monospace">task 1</text>
-        <rect x="14" y="82" width="44" height="14" rx="2" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="36" y="93" text-anchor="middle" fill="#1a1a2e" font-size="6" font-family="monospace">task 2</text>
-        <rect x="14" y="98" width="44" height="14" rx="2" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="36" y="109" text-anchor="middle" fill="#1a1a2e" font-size="6" font-family="monospace">task 3</text>
-        <text x="66" y="93" fill="#1a1a2e" font-size="6.5" font-family="monospace">T=max(t₁,t₂,t₃)</text>
+        <text x="14" y="60" fill="rgba(255,255,255,0.50)" font-size="7" font-family="monospace">parallel:</text>
+        <rect x="14" y="66" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="36" y="77" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="6" font-family="monospace">task 1</text>
+        <rect x="14" y="82" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="36" y="93" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="6" font-family="monospace">task 2</text>
+        <rect x="14" y="98" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="36" y="109" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="6" font-family="monospace">task 3</text>
+        <text x="66" y="93" fill="rgba(255,255,255,0.40)" font-size="6.5" font-family="monospace">T=max(t₁,t₂,t₃)</text>
         <!-- Call Stack visual -->
-        <rect x="14" y="130" width="192" height="30" rx="3" fill="none" stroke="#1a1a2e" stroke-width="1"/>
-        <text x="30" y="144" fill="#1a1a2e" font-size="7" font-family="monospace">call stack → event loop → microtasks</text>
+        <rect x="14" y="130" width="192" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
+        <text x="30" y="144" fill="rgba(255,255,255,0.42)" font-size="7" font-family="monospace">call stack → event loop → microtasks</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to trace async execution</p>
     </div>
@@ -614,8 +614,8 @@
 
 <style>
   /* Brain panel */
-  .brain-panel  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .brain-hdr    { display:flex; align-items:center; justify-content:space-between; padding:5px 10px; background:#12121f; border-bottom:1px solid #1a1a2e; }
+  .brain-panel  { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .brain-hdr    { display:flex; align-items:center; justify-content:space-between; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
   .brain-title  { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .async-badge  { font-size:0.55rem; padding:1px 6px; border-radius:3px; }
   .suspended    { color:#ffcc66; background:#ffcc6615; }

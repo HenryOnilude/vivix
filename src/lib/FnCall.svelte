@@ -202,16 +202,16 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 200 150" class="ph-svg">
-        <rect x="60" y="10" width="80" height="28" rx="4" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="100" y="28" text-anchor="middle" fill="#1a1a2e" font-size="8" font-family="monospace">ƒ double(x)</text>
-        <line x1="100" y1="38" x2="100" y2="52" stroke="#1a1a2e" stroke-width="1.5" stroke-dasharray="3 2"/>
-        <rect x="60" y="52" width="80" height="28" rx="4" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
-        <text x="100" y="70" text-anchor="middle" fill="#1a1a2e" font-size="8" font-family="monospace">result = x * 2</text>
+        <rect x="60" y="10" width="80" height="28" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="100" y="28" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">ƒ double(x)</text>
+        <line x1="100" y1="38" x2="100" y2="52" stroke="rgba(255,255,255,0.20)" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <rect x="60" y="52" width="80" height="28" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <text x="100" y="70" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">result = x * 2</text>
         <!-- Return arrow -->
-        <line x1="100" y1="80" x2="100" y2="94" stroke="#1a1a2e" stroke-width="1.5" stroke-dasharray="3 2"/>
-        <polygon points="96,90 104,90 100,98" fill="#1a1a2e" opacity="0.5"/>
-        <text x="100" y="115" text-anchor="middle" fill="#222" font-size="8" font-family="monospace">return 42</text>
-        <text x="100" y="133" text-anchor="middle" fill="#1a1a2e" font-size="7" font-family="monospace">value travels back ↑</text>
+        <line x1="100" y1="80" x2="100" y2="94" stroke="rgba(255,255,255,0.20)" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <polygon points="96,90 104,90 100,98" fill="rgba(255,255,255,0.30)"/>
+        <text x="100" y="115" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="8" font-family="monospace">return 42</text>
+        <text x="100" y="133" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="7" font-family="monospace">value travels back ↑</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see function calls in action</p>
     </div>

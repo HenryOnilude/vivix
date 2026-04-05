@@ -271,12 +271,12 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 200 140" class="ph-svg">
-        <circle cx="100" cy="60" r="40" fill="none" stroke="#1a1a2e" stroke-width="3" stroke-dasharray="6 3"/>
+        <circle cx="100" cy="60" r="40" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="3" stroke-dasharray="6 3"/>
         <circle cx="100" cy="60" r="40" fill="none" stroke="#ffcc6622" stroke-width="8"/>
-        <path d="M 120 40 L 132 60 L 120 80" fill="none" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/>
-        <text x="100" y="57" text-anchor="middle" fill="#1a1a2e" font-size="18" font-weight="900" font-family="monospace">0</text>
-        <text x="100" y="70" text-anchor="middle" fill="#1a1a2e" font-size="7" font-family="monospace">ITERS</text>
-        <text x="100" y="115" text-anchor="middle" fill="#222" font-size="8" font-family="monospace">iteration loop</text>
+        <path d="M 120 40 L 132 60 L 120 80" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+        <text x="100" y="57" text-anchor="middle" fill="rgba(255,255,255,0.50)" font-size="18" font-weight="900" font-family="monospace">0</text>
+        <text x="100" y="70" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="7" font-family="monospace">ITERS</text>
+        <text x="100" y="115" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="8" font-family="monospace">iteration loop</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see loops execute step by step</p>
     </div>
@@ -285,9 +285,9 @@
 </ModuleShell>
 
 <style>
-  .loop-vis     { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .loop-vis-hdr { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .loop-title   { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .loop-vis     { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .loop-vis-hdr { display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
+  .loop-title   { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .loop-count   { margin-left:auto; font-size:0.5rem; color:#ffcc66; font-family:monospace; }
   .loop-svg     { width:100%; height:auto; display:block; }
 

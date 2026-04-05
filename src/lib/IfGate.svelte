@@ -316,14 +316,14 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 200 160" class="ph-svg">
-        <polygon points="100,20 140,50 100,80 60,50" fill="none" stroke="#1a1a2e" stroke-width="2" stroke-dasharray="4 2"/>
-        <text x="100" y="55" text-anchor="middle" fill="#1a1a2e" font-size="10" font-family="monospace">condition?</text>
-        <path d="M 80 70 Q 50 100 40 130"  fill="none" stroke="#1a1a2e" stroke-width="1.5" stroke-dasharray="4 2"/>
-        <path d="M 120 70 Q 150 100 160 130" fill="none" stroke="#1a1a2e" stroke-width="1.5" stroke-dasharray="4 2"/>
-        <rect x="10"  y="130" width="60" height="22" rx="4" fill="none" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="4 2"/>
-        <rect x="130" y="130" width="60" height="22" rx="4" fill="none" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="4 2"/>
-        <text x="40"  y="145" text-anchor="middle" fill="#1a1a2e" font-size="8">if {'{'} {'}'}</text>
-        <text x="160" y="145" text-anchor="middle" fill="#1a1a2e" font-size="8">else {'{'} {'}'}</text>
+        <polygon points="100,20 140,50 100,80 60,50" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="4 2"/>
+        <text x="100" y="55" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="10" font-family="monospace">condition?</text>
+        <path d="M 80 70 Q 50 100 40 130"  fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <path d="M 120 70 Q 150 100 160 130" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <rect x="10"  y="130" width="60" height="22" rx="4" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1" stroke-dasharray="4 2"/>
+        <rect x="130" y="130" width="60" height="22" rx="4" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1" stroke-dasharray="4 2"/>
+        <text x="40"  y="145" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="8">if {'{'} {'}'}</text>
+        <text x="160" y="145" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="8">else {'{'} {'}'}</text>
       </svg>
       <p class="ph-text">Click <strong style="color:{ACCENT}">▶ Visualize</strong> to see the execution flow</p>
     </div>
@@ -332,17 +332,17 @@
 </ModuleShell>
 
 <style>
-  .branch-card { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .branch-card { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
   .branch-svg  { width:100%; height:auto; display:block; }
 
   /* ── Sub-expression evaluation row ─────────────────────── */
-  .eval-row    { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#08080e; border-bottom:1px solid #1a1a2e; flex-wrap:wrap; }
-  .eval-label  { font-size:0.6rem; color:#555; font-family:monospace; text-transform:uppercase; letter-spacing:0.5px; flex-shrink:0; }
+  .eval-row    { display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); flex-wrap:wrap; }
+  .eval-label  { font-size:0.6rem; color:rgba(255,255,255,0.42); font-family:monospace; text-transform:uppercase; letter-spacing:0.5px; flex-shrink:0; }
   .eval-chips  { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .eval-chip   { display:inline-flex; align-items:center; gap:4px; background:#ffffff08; border:1px solid #ffffff10; border-radius:4px; padding:3px 8px; }
-  .eval-chip-raw   { font-size:0.62rem; color:#bbb; font-family:'SF Mono',monospace; font-weight:600; }
-  .eval-chip-arrow { font-size:0.5rem; color:#444; }
-  .eval-chip-val   { font-size:0.62rem; color:#ff8866; font-family:'SF Mono',monospace; font-weight:700; }
+  .eval-chip   { display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10); border-radius:4px; padding:3px 8px; }
+  .eval-chip-raw   { font-size:0.62rem; color:rgba(255,255,255,0.75); font-family:'Geist Mono','SF Mono',monospace; font-weight:600; }
+  .eval-chip-arrow { font-size:0.5rem; color:rgba(255,255,255,0.35); }
+  .eval-chip-val   { font-size:0.62rem; color:#ff8866; font-family:'Geist Mono','SF Mono',monospace; font-weight:700; }
   .eval-op     { font-size:0.62rem; color:#a78bfa; font-family:monospace; font-weight:800; padding:2px 4px; }
 
   /* ── Condition expression row ───────────────────────────── */
