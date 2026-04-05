@@ -83,7 +83,7 @@ export function setTheme(name) {
   } catch { /* storage unavailable */ }
 }
 
-/** Initialize theme on app load */
+/** Initialize theme on app load — always defaults to dark theme */
 export function initTheme() {
-  setTheme(getTheme());
+  setTheme('default');
 }
