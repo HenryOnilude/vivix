@@ -68,7 +68,7 @@
 </script>
 
 <ErrorBoundary>
-  <div class="app">
+  <div class="app" class:is-home={route === 'home' || route === ''}>
     {#if route === 'home' || route === ''}
       <Home />
     {:else if loading}
@@ -103,6 +103,13 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+  }
+
+  /* Home page needs to scroll — modules stay viewport-locked */
+  .app.is-home {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
   }
 
   @media (max-width: 768px) {
