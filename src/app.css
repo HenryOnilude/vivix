@@ -165,6 +165,9 @@ body {
   .cx-chart { height:50px; }
   .cx-detail-why { font-size:0.6rem; }
   .cx-live-stats { flex-wrap:wrap; gap:6px; }
+  .vis-placeholder { padding:16px; gap:14px; }
+  .ph-svg { max-width:100%; }
+  .ph-text { font-size:0.78rem; }
 }
 
 @media (max-width: 800px) {
@@ -190,7 +193,7 @@ body {
   .code-display { min-height:140px; font-size:0.72rem; line-height:1.6; }
   .ln { width:22px; font-size:0.62rem; }
   .arrow-col { width:16px; }
-  .heap-grid { grid-template-columns:1fr; gap:4px; padding:6px; }
+  .heap-grid { grid-template-columns:1fr 1fr; gap:4px; padding:6px; }
   .heap-box { padding:6px; }
   .heap-name { font-size:0.72rem; }
   .heap-val { font-size:0.78rem; }
@@ -199,4 +202,7 @@ body {
   .panel-head { padding:4px 8px; font-size:0.58rem; }
   .controls { gap:3px; }
   .cb { padding:5px 8px; font-size:0.6rem; min-height:44px; min-width:44px; }
+  .vis-placeholder { padding:12px 10px; gap:10px; min-height:200px; }
+  .ph-svg { max-width:100%; }
+  .ph-text { font-size:0.72rem; padding:0 8px; }
 }

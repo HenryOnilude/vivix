@@ -546,4 +546,17 @@
     .card-sub { margin: 3px 0 6px; font-size: 0.56rem; }
     .card-text p { font-size: 0.72rem; }
   }
+
+  @media (max-width: 360px) {
+    .home { padding: 12px 8px; gap: 12px; }
+    .hero-section { gap: 6px; }
+    h1 { font-size: clamp(1.6rem, 8vw, 2.2rem); }
+    .tagline { font-size: 0.82rem; }
+    .card-hero { width: 72px; padding: 12px; }
+    .hero-svg { max-width: 52px; }
+    .card-text { padding: 10px 12px 10px 0; }
+    .card-text h3 { font-size: 0.82rem; }
+    .card-text p { font-size: 0.65rem; }
+    .footer-bar { font-size: 0.48rem; }
+  }
 </style>

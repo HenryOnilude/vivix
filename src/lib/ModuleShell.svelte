@@ -889,6 +889,8 @@
     .err-friendly { font-size:0.7rem; }
     .err-hint     { font-size:0.62rem; padding:6px 10px; }
     .err-raw      { font-size:0.55rem; }
+    .vis-placeholder { padding:16px 12px; gap:14px; }
+    .ph-text    { font-size:0.75rem; }
   }
 
   /* ── Responsive: phone ≤480px ────────────────────────────────────────── */
@@ -927,6 +929,8 @@
     .tl-dot.tl-active { width:14px; height:14px; }
     .tl-icon    { font-size:0.3rem; }
     .tl-active .tl-icon { font-size:0.42rem; }
+    .vis-placeholder { padding:10px 8px; gap:8px; min-height:180px; }
+    .ph-text    { font-size:0.68rem; padding:0 6px; }
   }
 
   /* ── Responsive: very small phone ≤360px ─────────────────────────────── */
@@ -938,5 +942,7 @@
     .heap-val   { font-size:0.8rem; }
     .cx-chart   { height:36px; }
     .cb         { padding:5px 8px; font-size:0.65rem; min-height:36px; min-width:36px; }
+    .vis-placeholder { padding:8px 6px; gap:6px; }
+    .ph-text    { font-size:0.62rem; }
   }
 </style>
