@@ -1,5 +1,29 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
+
+  // ── Demo simulation ───────────────────────────────────────────────────────
+  const DEMO_LINES = [
+    [{ k: 'kw', v: 'let ' }, { k: 'id', v: 'name' }, { k: 'op', v: ' = ' }, { k: 'str', v: '"Alex"' }, { k: 'op', v: ';' }],
+    [{ k: 'kw', v: 'let ' }, { k: 'id', v: 'age' },  { k: 'op', v: ' = ' }, { k: 'num', v: '25' },     { k: 'op', v: ';' }],
+    [{ k: 'kw', v: 'let ' }, { k: 'id', v: 'adult' },{ k: 'op', v: ' = ' }, { k: 'id', v: 'age' }, { k: 'op', v: ' >= ' }, { k: 'num', v: '18' }, { k: 'op', v: ';' }],
+    [{ k: 'fn', v: 'console' }, { k: 'op', v: '.' }, { k: 'fn', v: 'log' }, { k: 'op', v: '(' }, { k: 'str', v: '"Hello, "' }, { k: 'op', v: ' + ' }, { k: 'id', v: 'name' }, { k: 'op', v: ');' }],
+  ];
+
+  const DEMO_STEPS = [
+    { line: 0, vars: [],                                                                                                                                     out: null  },
+    { line: 0, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }],                                                                             out: null  },
+    { line: 1, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }],                                                                             out: null  },
+    { line: 1, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }],                    out: null  },
+    { line: 2, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }],                    out: null  },
+    { line: 2, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: null  },
+    { line: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: null  },
+    { line: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: '"Hello, Alex"' },
+  ];
+
+  let demoStep = $state(0);
+  let demoTimer;
+
+  const currentStep = $derived(DEMO_STEPS[demoStep]);
 
   onMount(() => {
     const cards = document.querySelectorAll('.module-card');
@@ -13,7 +37,16 @@
     };
 
     window.addEventListener('mousemove', onMove, { passive: true });
-    return () => window.removeEventListener('mousemove', onMove);
+
+    // Auto-advance demo — pause at end before looping
+    demoTimer = setInterval(() => {
+      demoStep = (demoStep + 1) % DEMO_STEPS.length;
+    }, 1600);
+
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      clearInterval(demoTimer);
+    };
   });
 
   const modules = [
@@ -84,10 +117,98 @@
 </script>
 
 <div class="home" role="main" aria-label="VisualJS home page">
-  <header>
-    <h1>visual<span class="accent">JS</span></h1>
-    <p class="tagline">See how JavaScript thinks.</p>
-  </header>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+
+    <!-- Left: copy + CTA -->
+    <div class="hero-copy">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Interactive JavaScript Visualiser
+      </div>
+
+      <h1>visual<span class="accent">JS</span></h1>
+
+      <p class="hero-sub">
+        Write JavaScript and watch it execute step by step —
+        see the CPU, memory, and call stack working in real time.
+      </p>
+
+      <div class="hero-ctas">
+        <a href="#/variables" class="cta-primary">Try it now →</a>
+        <a href="#/if-gate"   class="cta-ghost">See conditionals</a>
+      </div>
+
+      <p class="hero-hint">No sign-up. Runs in your browser.</p>
+    </div>
+
+    <!-- Right: live simulation panel -->
+    <div class="demo-shell" aria-hidden="true">
+
+      <!-- Panel header -->
+      <div class="demo-bar">
+        <span class="demo-dot" style="background:#ff5f57"></span>
+        <span class="demo-dot" style="background:#febc2e"></span>
+        <span class="demo-dot" style="background:#28c840"></span>
+        <span class="demo-title">script.js</span>
+        <span class="demo-badge">● EXECUTING</span>
+      </div>
+
+      <!-- Code panel -->
+      <div class="demo-body">
+        <div class="demo-code">
+          {#each DEMO_LINES as tokens, i}
+            <div class="demo-line" class:demo-line-active={currentStep.line === i}>
+              <span class="demo-ln">{i + 1}</span>
+              <span class="demo-arrow">{currentStep.line === i ? '▶' : ' '}</span>
+              <span class="demo-tokens">
+                {#each tokens as tok}
+                  <span class="tok-{tok.k}">{tok.v}</span>
+                {/each}
+              </span>
+            </div>
+          {/each}
+        </div>
+
+        <!-- Memory panel -->
+        <div class="demo-mem">
+          <div class="demo-mem-hdr">MEMORY</div>
+          <div class="demo-mem-vars">
+            {#each currentStep.vars as v (v.n)}
+              <div class="demo-var" style="--vc: {v.c}">
+                <span class="demo-var-name">{v.n}</span>
+                <span class="demo-var-type">{v.t}</span>
+                <span class="demo-var-val" style="color:{v.c}">{v.v}</span>
+              </div>
+            {/each}
+            {#if currentStep.vars.length === 0}
+              <span class="demo-mem-empty">waiting…</span>
+            {/if}
+          </div>
+          {#if currentStep.out}
+            <div class="demo-stdout">
+              <span class="demo-stdout-label">› console</span>
+              <span class="demo-stdout-val">{currentStep.out}</span>
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      <!-- Step indicator dots -->
+      <div class="demo-steps">
+        {#each DEMO_STEPS as _, i}
+          <span class="demo-step-dot" class:demo-step-dot-active={demoStep === i}></span>
+        {/each}
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Section divider ── -->
+  <div class="section-divider">
+    <span class="divider-label">Pick a concept to explore</span>
+  </div>
 
   <ul class="modules-grid" aria-label="Learning modules">
     {#each modules as mod}
@@ -239,15 +360,59 @@
   /* Keep all direct children above the noise layer */
   .home > * { position: relative; z-index: 1; }
 
-  /* ─── Header ─────────────────────────────────────────────────────────────── */
-  header {
-    text-align: center;
-    max-width: 560px;
+  /* ─── Hero ───────────────────────────────────────────────────────────────── */
+  .hero {
+    width: 100%;
+    max-width: 1040px;
+    display: flex;
+    align-items: center;
+    gap: 48px;
+  }
+
+  /* ── Left: copy ── */
+  .hero-copy {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.52);
+    letter-spacing: 0.3px;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 100px;
+    padding: 5px 14px 5px 10px;
+    width: fit-content;
+    margin-bottom: 22px;
+    background: rgba(255,255,255,0.03);
+  }
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 8px #4ade80;
+    animation: badge-pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes badge-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
   }
 
   h1 {
     font-family: 'Geist Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    font-size: clamp(2.4rem, 5.5vw, 3.6rem);
+    font-size: clamp(2.8rem, 5.5vw, 4.2rem);
     font-weight: 800;
     letter-spacing: -0.04em;
     margin: 0;
@@ -255,7 +420,6 @@
     color: #ffffff;
   }
 
-  /* "JS" — vivid green-cyan-indigo pop */
   .accent {
     background: linear-gradient(135deg, #4ade80 0%, #22d3ee 45%, #818cf8 100%);
     -webkit-background-clip: text;
@@ -263,14 +427,327 @@
     background-clip: text;
   }
 
-  .tagline {
-    font-family: 'Geist', 'Inter', system-ui, sans-serif;
+  .hero-sub {
+    font-family: 'Geist', system-ui, sans-serif;
     font-size: 1.05rem;
-    color: rgba(255,255,255,0.62);
-    margin: 14px 0 0 0;
+    color: rgba(255,255,255,0.58);
+    margin: 20px 0 0 0;
     font-weight: 400;
+    line-height: 1.65;
+    max-width: 420px;
+  }
+
+  .hero-ctas {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+
+  .cta-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #4ade80, #22d3ee);
+    color: #080810;
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    padding: 11px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    letter-spacing: -0.1px;
+    transition: filter 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 0 24px rgba(74,222,128,0.25), 0 4px 14px rgba(0,0,0,0.4);
+  }
+
+  .cta-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+
+  .cta-ghost {
+    display: inline-flex;
+    align-items: center;
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.58);
+    text-decoration: none;
+    padding: 11px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.12);
+    transition: all 0.2s ease;
+    background: rgba(255,255,255,0.03);
+  }
+
+  .cta-ghost:hover {
+    color: rgba(255,255,255,0.88);
+    border-color: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .hero-hint {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.28);
+    margin: 14px 0 0 0;
     letter-spacing: 0.1px;
+  }
+
+  /* ── Right: demo shell ── */
+  .demo-shell {
+    flex: 0 0 480px;
+    background: #0c0c18;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 24px 64px rgba(0,0,0,0.6),
+      0 8px 24px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  .demo-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: #111120;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .demo-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    opacity: 0.85;
+  }
+
+  .demo-title {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.35);
+    margin-left: 8px;
+    flex: 1;
+  }
+
+  .demo-badge {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.58rem;
+    color: #4ade80;
+    letter-spacing: 0.5px;
+    animation: badge-pulse 1.4s ease-in-out infinite;
+  }
+
+  .demo-body {
+    display: flex;
+    min-height: 180px;
+  }
+
+  /* Code side */
+  .demo-code {
+    flex: 1;
+    padding: 14px 0;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .demo-line {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 3px 14px 3px 0;
+    min-height: 28px;
+    transition: background 0.3s ease;
+    border-left: 2px solid transparent;
+  }
+
+  .demo-line-active {
+    background: rgba(74,222,128,0.07);
+    border-left-color: #4ade80;
+  }
+
+  .demo-ln {
+    width: 32px;
+    text-align: right;
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.18);
+    padding-right: 8px;
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  .demo-arrow {
+    width: 16px;
+    font-size: 0.6rem;
+    color: #4ade80;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+  }
+
+  .demo-tokens {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.78rem;
+    white-space: pre;
     line-height: 1.5;
+  }
+
+  /* Token colours */
+  .tok-kw  { color: #c084fc; }
+  .tok-id  { color: #e2e8f0; }
+  .tok-str { color: #4ade80; }
+  .tok-num { color: #38bdf8; }
+  .tok-op  { color: rgba(255,255,255,0.35); }
+  .tok-fn  { color: #fbbf24; }
+
+  /* Memory side */
+  .demo-mem {
+    width: 160px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: #0a0a15;
+  }
+
+  .demo-mem-hdr {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.52rem;
+    color: rgba(255,255,255,0.28);
+    letter-spacing: 1.5px;
+    padding: 10px 12px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .demo-mem-vars {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+    overflow: hidden;
+  }
+
+  .demo-mem-empty {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.62rem;
+    color: rgba(255,255,255,0.15);
+    padding: 4px;
+    font-style: italic;
+  }
+
+  .demo-var {
+    background: color-mix(in srgb, var(--vc) 8%, #0d0d1a);
+    border: 1px solid color-mix(in srgb, var(--vc) 25%, rgba(255,255,255,0.05));
+    border-radius: 6px;
+    padding: 5px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    animation: var-appear 0.25s ease;
+  }
+
+  @keyframes var-appear {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .demo-var-name {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.85);
+    font-weight: 600;
+  }
+
+  .demo-var-type {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.48rem;
+    color: rgba(255,255,255,0.28);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .demo-var-val {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .demo-stdout {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 7px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(74,222,128,0.04);
+  }
+
+  .demo-stdout-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.48rem;
+    color: rgba(74,222,128,0.5);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  .demo-stdout-val {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.72rem;
+    color: #4ade80;
+    font-weight: 600;
+    animation: var-appear 0.25s ease;
+  }
+
+  /* Step dots */
+  .demo-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .demo-step-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: background 0.3s ease, transform 0.3s ease;
+  }
+
+  .demo-step-dot-active {
+    background: #4ade80;
+    transform: scale(1.4);
+  }
+
+  /* ── Section divider ── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 920px;
+  }
+
+  .section-divider::before,
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.07);
+  }
+
+  .divider-label {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.28);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
   }
 
   /* ─── Grid ───────────────────────────────────────────────────────────────── */
@@ -509,6 +986,11 @@
   }
 
   /* ─── Responsive ─────────────────────────────────────────────────────────── */
+  @media (max-width: 960px) {
+    .hero { gap: 32px; }
+    .demo-shell { flex: 0 0 400px; }
+  }
+
   @media (max-width: 860px) {
     .home {
       padding: 24px 14px;
@@ -517,6 +999,15 @@
       height: auto;
       min-height: 100vh;
     }
+
+    .hero {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 28px;
+    }
+
+    .demo-shell { flex: none; width: 100%; }
+    .hero-sub { max-width: 100%; }
 
     .modules-grid {
       grid-template-columns: repeat(2, 1fr);
@@ -531,6 +1022,15 @@
 
   @media (max-width: 520px) {
     .home { padding: 16px 12px; gap: 16px; }
+
+    h1 { font-size: clamp(2.2rem, 8vw, 3rem); }
+    .hero-sub { font-size: 0.92rem; }
+    .hero-ctas { gap: 8px; }
+    .cta-primary, .cta-ghost { font-size: 0.82rem; padding: 10px 18px; }
+    .demo-body { flex-direction: column; }
+    .demo-mem { width: 100%; border-right: none; border-top: 1px solid rgba(255,255,255,0.06); flex-direction: row; align-items: stretch; }
+    .demo-mem-vars { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+    .demo-var { flex: 1; min-width: 80px; }
 
     .modules-grid {
       grid-template-columns: 1fr;
@@ -549,14 +1049,14 @@
 
   @media (max-width: 360px) {
     .home { padding: 12px 8px; gap: 12px; }
-    .hero-section { gap: 6px; }
-    h1 { font-size: clamp(1.6rem, 8vw, 2.2rem); }
-    .tagline { font-size: 0.82rem; }
+    h1 { font-size: clamp(1.8rem, 8vw, 2.4rem); }
+    .hero-sub { font-size: 0.85rem; }
+    .cta-primary, .cta-ghost { font-size: 0.78rem; padding: 9px 14px; width: 100%; justify-content: center; }
+    .hero-ctas { flex-direction: column; }
     .card-hero { width: 72px; padding: 12px; }
     .hero-svg { max-width: 52px; }
     .card-text { padding: 10px 12px 10px 0; }
     .card-text h3 { font-size: 0.82rem; }
     .card-text p { font-size: 0.65rem; }
-    .footer-bar { font-size: 0.48rem; }
   }
 </style>
