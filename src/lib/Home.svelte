@@ -321,12 +321,12 @@
   /* ─── Page ───────────────────────────────────────────────────────────────── */
   .home {
     width: 100%;
-    height: 100%;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 36px 28px;
+    justify-content: flex-start;
+    padding: 56px 28px 48px;
     gap: 32px;
     overflow-y: auto;
     position: relative;
