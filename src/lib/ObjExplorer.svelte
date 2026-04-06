@@ -220,22 +220,20 @@
   <!-- Placeholder -->
   {#snippet placeholder()}
     <div class="vis-placeholder">
-      <svg viewBox="0 0 220 150" class="ph-svg">
-        <!-- Object notation -->
-        <text x="60"  y="32" fill="rgba(255,255,255,0.45)" font-size="29" font-family="monospace" font-weight="700">{'{'}</text>
-        <text x="80"  y="48" fill="rgba(255,255,255,0.55)" font-size="13"  font-family="monospace">name: "Alice"</text>
-        <text x="80"  y="62" fill="rgba(255,255,255,0.55)" font-size="13"  font-family="monospace">age: 25</text>
-        <text x="150" y="72" fill="rgba(255,255,255,0.45)" font-size="29" font-family="monospace" font-weight="700">{'}'}</text>
-        <!-- Hash buckets -->
-        <rect x="30"  y="85" width="36" height="18" rx="2" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-        <rect x="70"  y="85" width="36" height="18" rx="2" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-        <rect x="110" y="85" width="36" height="18" rx="2" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-        <rect x="150" y="85" width="36" height="18" rx="2" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-        <text x="48"  y="97" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="8.5" font-family="monospace">bucket 0</text>
-        <text x="88"  y="97" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="8.5" font-family="monospace">bucket 1</text>
-        <text x="128" y="97" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="8.5" font-family="monospace">bucket 2</text>
-        <text x="168" y="97" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="8.5" font-family="monospace">bucket 3</text>
-        <text x="110" y="125" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="13" font-family="monospace">key → hash → bucket → O(1)</text>
+      <svg viewBox="0 0 400 220" class="ph-svg">
+        <text x="96"  y="56" fill="rgba(255,255,255,0.40)" font-size="30" font-family="monospace" font-weight="700">{'{'}</text>
+        <text x="116" y="82" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">name: "Alice"</text>
+        <text x="116" y="106" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">age: 25</text>
+        <text x="288" y="106" fill="rgba(255,255,255,0.40)" font-size="30" font-family="monospace" font-weight="700">{'}'}</text>
+        <rect x="28"  y="130" width="76" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+        <rect x="112" y="130" width="76" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+        <rect x="196" y="130" width="76" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+        <rect x="280" y="130" width="76" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+        <text x="66"  y="150" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="12" font-family="monospace">bucket 0</text>
+        <text x="150" y="150" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="12" font-family="monospace">bucket 1</text>
+        <text x="234" y="150" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="12" font-family="monospace">bucket 2</text>
+        <text x="318" y="150" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="12" font-family="monospace">bucket 3</text>
+        <text x="200" y="196" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="14" font-family="monospace">key → hash → bucket → O(1)</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see objects in action</p>
     </div>

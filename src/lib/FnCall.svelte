@@ -201,17 +201,16 @@
   <!-- Placeholder -->
   {#snippet placeholder()}
     <div class="vis-placeholder">
-      <svg viewBox="0 0 200 150" class="ph-svg">
-        <rect x="60" y="10" width="80" height="28" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.3"/>
-        <text x="100" y="28" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">ƒ double(x)</text>
-        <line x1="100" y1="38" x2="100" y2="52" stroke="rgba(255,255,255,0.20)" stroke-width="2.3" stroke-dasharray="3 2"/>
-        <rect x="60" y="52" width="80" height="28" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.3"/>
-        <text x="100" y="70" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">result = x * 2</text>
-        <!-- Return arrow -->
-        <line x1="100" y1="80" x2="100" y2="94" stroke="rgba(255,255,255,0.20)" stroke-width="2.3" stroke-dasharray="3 2"/>
-        <polygon points="96,90 104,90 100,98" fill="rgba(255,255,255,0.30)"/>
-        <text x="100" y="115" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="13" font-family="monospace">return 42</text>
-        <text x="100" y="133" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="11" font-family="monospace">value travels back ↑</text>
+      <svg viewBox="0 0 400 220" class="ph-svg">
+        <rect x="120" y="18" width="160" height="42" rx="5" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
+        <text x="200" y="45" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">ƒ double(x)</text>
+        <line x1="200" y1="60" x2="200" y2="82" stroke="rgba(255,255,255,0.20)" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <rect x="120" y="82" width="160" height="42" rx="5" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
+        <text x="200" y="109" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">result = x * 2</text>
+        <line x1="200" y1="124" x2="200" y2="150" stroke="rgba(255,255,255,0.20)" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <polygon points="191,144 209,144 200,158" fill="rgba(255,255,255,0.30)"/>
+        <text x="200" y="180" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="16" font-family="monospace">return 42</text>
+        <text x="200" y="204" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="13" font-family="monospace">value travels back ↑</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see function calls in action</p>
     </div>

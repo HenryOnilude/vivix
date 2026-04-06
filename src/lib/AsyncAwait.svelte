@@ -583,28 +583,25 @@
   <!-- Placeholder -->
   {#snippet placeholder()}
     <div class="vis-placeholder">
-      <svg viewBox="0 0 220 170" class="ph-svg">
-        <!-- Sequential stack -->
-        <text x="14" y="22" fill="rgba(255,255,255,0.50)" font-size="11" font-family="monospace">sequential:</text>
-        <rect x="14" y="28" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.3"/>
-        <text x="36" y="39" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="9.5" font-family="monospace">task 1</text>
-        <rect x="62" y="28" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.3"/>
-        <text x="84" y="39" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="9.5" font-family="monospace">task 2</text>
-        <rect x="110" y="28" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.3"/>
-        <text x="132" y="39" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="9.5" font-family="monospace">task 3</text>
-        <text x="162" y="38" fill="rgba(255,255,255,0.40)" font-size="10.5" font-family="monospace">T=t₁+t₂+t₃</text>
-        <!-- Parallel layout -->
-        <text x="14" y="60" fill="rgba(255,255,255,0.50)" font-size="11" font-family="monospace">parallel:</text>
-        <rect x="14" y="66" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.3"/>
-        <text x="36" y="77" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="9.5" font-family="monospace">task 1</text>
-        <rect x="14" y="82" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.3"/>
-        <text x="36" y="93" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="9.5" font-family="monospace">task 2</text>
-        <rect x="14" y="98" width="44" height="14" rx="2" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.3"/>
-        <text x="36" y="109" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="9.5" font-family="monospace">task 3</text>
-        <text x="66" y="93" fill="rgba(255,255,255,0.40)" font-size="10.5" font-family="monospace">T=max(t₁,t₂,t₃)</text>
-        <!-- Call Stack visual -->
-        <rect x="14" y="130" width="192" height="30" rx="3" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-        <text x="30" y="144" fill="rgba(255,255,255,0.42)" font-size="11" font-family="monospace">call stack → event loop → microtasks</text>
+      <svg viewBox="0 0 400 220" class="ph-svg">
+        <text x="20" y="30" fill="rgba(255,255,255,0.50)" font-size="14" font-family="monospace">sequential:</text>
+        <rect x="20" y="38" width="72" height="28" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <text x="56" y="57" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">task 1</text>
+        <rect x="98" y="38" width="72" height="28" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <text x="134" y="57" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">task 2</text>
+        <rect x="176" y="38" width="72" height="28" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <text x="212" y="57" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">task 3</text>
+        <text x="258" y="57" fill="rgba(255,255,255,0.40)" font-size="13" font-family="monospace">T=t₁+t₂+t₃</text>
+        <text x="20" y="96" fill="rgba(255,255,255,0.50)" font-size="14" font-family="monospace">parallel:</text>
+        <rect x="20" y="104" width="72" height="28" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <text x="56" y="123" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">task 1</text>
+        <rect x="20" y="136" width="72" height="28" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <text x="56" y="155" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">task 2</text>
+        <rect x="20" y="168" width="72" height="28" rx="3" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <text x="56" y="187" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">task 3</text>
+        <text x="104" y="155" fill="rgba(255,255,255,0.40)" font-size="13" font-family="monospace">T=max(t₁,t₂,t₃)</text>
+        <rect x="20" y="196" width="360" height="20" rx="3" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+        <text x="200" y="210" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="12" font-family="monospace">call stack → event loop → microtasks</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to trace async execution</p>
     </div>
