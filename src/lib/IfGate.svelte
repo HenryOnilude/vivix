@@ -316,14 +316,14 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 200 160" class="ph-svg">
-        <polygon points="100,20 140,50 100,80 60,50" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="4 2"/>
-        <text x="100" y="55" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="10" font-family="monospace">condition?</text>
-        <path d="M 80 70 Q 50 100 40 130"  fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="1.5" stroke-dasharray="4 2"/>
-        <path d="M 120 70 Q 150 100 160 130" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="1.5" stroke-dasharray="4 2"/>
-        <rect x="10"  y="130" width="60" height="22" rx="4" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1" stroke-dasharray="4 2"/>
-        <rect x="130" y="130" width="60" height="22" rx="4" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1" stroke-dasharray="4 2"/>
-        <text x="40"  y="145" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="8">if {'{'} {'}'}</text>
-        <text x="160" y="145" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="8">else {'{'} {'}'}</text>
+        <polygon points="100,20 140,50 100,80 60,50" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-dasharray="4 2"/>
+        <text x="100" y="55" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">condition?</text>
+        <path d="M 80 70 Q 50 100 40 130"  fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="2.3" stroke-dasharray="4 2"/>
+        <path d="M 120 70 Q 150 100 160 130" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="2.3" stroke-dasharray="4 2"/>
+        <rect x="10"  y="130" width="60" height="22" rx="4" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <rect x="130" y="130" width="60" height="22" rx="4" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <text x="40"  y="145" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="13">if {'{'} {'}'}</text>
+        <text x="160" y="145" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="13">else {'{'} {'}'}</text>
       </svg>
       <p class="ph-text">Click <strong style="color:{ACCENT}">▶ Visualize</strong> to see the execution flow</p>
     </div>

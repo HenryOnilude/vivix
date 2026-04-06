@@ -346,17 +346,17 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 200 170" class="ph-svg">
         <!-- Global scope (outer) -->
-        <rect x="10" y="10" width="180" height="145" rx="6" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-        <text x="20" y="26" fill="rgba(255,255,255,0.50)" font-size="8" font-family="monospace">Global</text>
+        <rect x="10" y="10" width="180" height="145" rx="6" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2.3"/>
+        <text x="20" y="26" fill="rgba(255,255,255,0.50)" font-size="13" font-family="monospace">Global</text>
         <!-- Function scope (middle) -->
-        <rect x="26" y="34" width="148" height="105" rx="5" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-        <text x="36" y="49" fill="rgba(255,255,255,0.50)" font-size="8" font-family="monospace">makeCounter()</text>
+        <rect x="26" y="34" width="148" height="105" rx="5" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2.3"/>
+        <text x="36" y="49" fill="rgba(255,255,255,0.50)" font-size="13" font-family="monospace">makeCounter()</text>
         <!-- Closure scope (inner, dashed) -->
-        <rect x="42" y="58" width="116" height="68" rx="4" fill="none" stroke="#00d4aa" stroke-width="1" stroke-dasharray="4 3" opacity="0.55"/>
-        <text x="52" y="72" fill="#00d4aa" font-size="7" font-family="monospace" opacity="0.72">🔒 closure scope</text>
-        <text x="52" y="86" fill="#00d4aa" font-size="7" font-family="monospace" opacity="0.60">count: 0  ← captured</text>
-        <text x="52" y="102" fill="rgba(255,255,255,0.42)" font-size="6" font-family="monospace">persists after outer fn returns</text>
-        <text x="52" y="116" fill="rgba(255,255,255,0.42)" font-size="6" font-family="monospace">inner fn holds a reference</text>
+        <rect x="42" y="58" width="116" height="68" rx="4" fill="none" stroke="#00d4aa" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.55"/>
+        <text x="52" y="72" fill="#00d4aa" font-size="11" font-family="monospace" opacity="0.72">🔒 closure scope</text>
+        <text x="52" y="86" fill="#00d4aa" font-size="11" font-family="monospace" opacity="0.60">count: 0  ← captured</text>
+        <text x="52" y="102" fill="rgba(255,255,255,0.42)" font-size="9.5" font-family="monospace">persists after outer fn returns</text>
+        <text x="52" y="116" fill="rgba(255,255,255,0.42)" font-size="9.5" font-family="monospace">inner fn holds a reference</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see closure scopes</p>
     </div>

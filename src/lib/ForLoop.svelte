@@ -271,12 +271,12 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 200 140" class="ph-svg">
-        <circle cx="100" cy="60" r="40" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="3" stroke-dasharray="6 3"/>
-        <circle cx="100" cy="60" r="40" fill="none" stroke="#ffcc6622" stroke-width="8"/>
-        <path d="M 120 40 L 132 60 L 120 80" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
-        <text x="100" y="57" text-anchor="middle" fill="rgba(255,255,255,0.50)" font-size="18" font-weight="900" font-family="monospace">0</text>
-        <text x="100" y="70" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="7" font-family="monospace">ITERS</text>
-        <text x="100" y="115" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="8" font-family="monospace">iteration loop</text>
+        <circle cx="100" cy="60" r="40" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="4.5" stroke-dasharray="6 3"/>
+        <circle cx="100" cy="60" r="40" fill="none" stroke="#ffcc6622" stroke-width="12"/>
+        <path d="M 120 40 L 132 60 L 120 80" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-linecap="round"/>
+        <text x="100" y="57" text-anchor="middle" fill="rgba(255,255,255,0.50)" font-size="29" font-weight="900" font-family="monospace">0</text>
+        <text x="100" y="70" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="11" font-family="monospace">ITERS</text>
+        <text x="100" y="115" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="13" font-family="monospace">iteration loop</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see loops execute step by step</p>
     </div>

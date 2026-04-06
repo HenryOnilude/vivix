@@ -138,12 +138,12 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 200 140" class="ph-svg">
-        <rect x="30"  y="20" width="60" height="40" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="4 2"/>
-        <text x="60"  y="44" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">x = 42</text>
-        <rect x="110" y="20" width="60" height="40" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="4 2"/>
-        <text x="140" y="44" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">y = "hi"</text>
-        <rect x="70"  y="80" width="60" height="40" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="4 2"/>
-        <text x="100" y="104" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="monospace">z = true</text>
+        <rect x="30"  y="20" width="60" height="40" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-dasharray="4 2"/>
+        <text x="60"  y="44" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">x = 42</text>
+        <rect x="110" y="20" width="60" height="40" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-dasharray="4 2"/>
+        <text x="140" y="44" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">y = "hi"</text>
+        <rect x="70"  y="80" width="60" height="40" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-dasharray="4 2"/>
+        <text x="100" y="104" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">z = true</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see variables in memory</p>
     </div>
