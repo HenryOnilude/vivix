@@ -123,11 +123,6 @@
 
     <!-- Left: copy + CTA -->
     <div class="hero-copy">
-      <div class="hero-badge">
-        <span class="badge-dot"></span>
-        Interactive JavaScript Visualiser
-      </div>
-
       <h1>visual<span class="accent">JS</span></h1>
 
       <p class="hero-sub">
@@ -378,37 +373,6 @@
     gap: 0;
   }
 
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'Geist', system-ui, sans-serif;
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: rgba(255,255,255,0.52);
-    letter-spacing: 0.3px;
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 100px;
-    padding: 5px 14px 5px 10px;
-    width: fit-content;
-    margin-bottom: 22px;
-    background: rgba(255,255,255,0.03);
-  }
-
-  .badge-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #4ade80;
-    box-shadow: 0 0 8px #4ade80;
-    animation: badge-pulse 2s ease-in-out infinite;
-    flex-shrink: 0;
-  }
-
-  @keyframes badge-pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.4; }
-  }
 
   h1 {
     font-family: 'Geist Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
