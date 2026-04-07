@@ -380,9 +380,6 @@
     {/each}
   </ul>
 
-  <footer>
-    <p>Svelte · Acorn · GSAP · D3</p>
-  </footer>
 </div>
 
 <style>
@@ -1214,16 +1211,6 @@
     font-weight: 400;
   }
 
-  /* ─── Footer ─────────────────────────────────────────────────────────────── */
-  footer { text-align: center; }
-  footer p {
-    font-family: 'Geist', 'Inter', system-ui, sans-serif;
-    font-size: 0.65rem;
-    color: rgba(255,255,255,0.25);
-    letter-spacing: 1.2px;
-    margin: 0;
-    text-transform: uppercase;
-  }
 
   /* ─── Responsive ─────────────────────────────────────────────────────────── */
   @media (max-width: 960px) {
