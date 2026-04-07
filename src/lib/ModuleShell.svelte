@@ -177,6 +177,10 @@
       total  = steps.length;
       step   = 0;
       hasRun = true;
+      // Auto-start playback
+      if (playing) { clearInterval(timer); timer = null; playing = false; }
+      playing = true;
+      _startTimer(interval);
     } catch (e) {
       err = e.message;
       if (!errFriendly) errFriendly = friendlyError(e.message, codeText);
@@ -193,7 +197,7 @@
   function _startTimer(ms) {
     timer = setInterval(() => {
       if (step < total - 1) step++;
-      else { clearInterval(timer); timer = null; playing = false; }
+      else { step = 0; }
     }, ms);
   }
 
