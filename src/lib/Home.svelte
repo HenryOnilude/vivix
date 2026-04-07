@@ -10,14 +10,13 @@
   ];
 
   const DEMO_STEPS = [
-    { line: 0, vars: [],                                                                                                                                     out: null,           explain: 'Execution starts — memory is empty, no variables exist yet.' },
-    { line: 0, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }],                                                                             out: null,           explain: 'JS allocates a slot in memory for name and stores the string "Alex".' },
-    { line: 1, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }],                                                                             out: null,           explain: 'Moving to line 2 — age is about to be declared as a number.' },
-    { line: 1, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }],                    out: null,           explain: 'A second memory slot opens. Numbers and strings get different colours.' },
-    { line: 2, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }],                    out: null,           explain: 'JS evaluates age >= 18 — comparing 25 to 18 produces a boolean.' },
-    { line: 2, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: null,  explain: 'Result: true. A third slot appears — boolean stored as yellow.' },
-    { line: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: null,  explain: 'console.log() is called — JS looks up name in memory to build the string.' },
-    { line: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: '"Hello, Alex"', explain: 'Output printed. "Hello, " + name concatenated to produce the final string.' },
+    { line: 0, pc: 'LINE 1', op: 'START',   stack: 'Global',  writes: 0, vars: [],                                                                                                                                                           out: null,            explain: 'Program starts. JS engine sets up the Global call stack frame — ready to execute.' },
+    { line: 0, pc: 'LINE 1', op: 'DECLARE', stack: 'Global',  writes: 1, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string',  bytes: 5  }],                                                                                        out: null,            explain: 'LET: name declared. JS allocates a heap slot, writes "Alex" (5 bytes). 1 memory write.' },
+    { line: 1, pc: 'LINE 2', op: 'DECLARE', stack: 'Global',  writes: 2, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string',  bytes: 5  }, { n: 'age', v: '25', c: '#38bdf8', t: 'number', bytes: 8 }],                           out: null,            explain: 'LET: age declared. Numbers always take 8 bytes (64-bit float). 2 total writes.' },
+    { line: 2, pc: 'LINE 3', op: 'COMPARE', stack: 'Global',  writes: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string',  bytes: 5  }, { n: 'age', v: '25', c: '#38bdf8', t: 'number', bytes: 8 }, { n: 'adult', v: '…', c: '#fbbf24', t: 'boolean', bytes: 0 }], out: null, explain: 'age >= 18 evaluated. JS compares 25 to 18 — result is a boolean, about to be stored.' },
+    { line: 2, pc: 'LINE 3', op: 'DECLARE', stack: 'Global',  writes: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string',  bytes: 5  }, { n: 'age', v: '25', c: '#38bdf8', t: 'number', bytes: 8 }, { n: 'adult', v: 'true', c: '#fbbf24', t: 'boolean', bytes: 1 }], out: null, explain: 'adult = true written to heap. Booleans take just 1 byte. 3 total memory writes.' },
+    { line: 3, pc: 'LINE 4', op: 'CALL',    stack: 'console.log', writes: 3, vars: [{ n: 'name', v: '"Alex"', c: '#4ade80', t: 'string', bytes: 5 }, { n: 'age', v: '25', c: '#38bdf8', t: 'number', bytes: 8 }, { n: 'adult', v: 'true', c: '#fbbf24', t: 'boolean', bytes: 1 }], out: null, explain: 'console.log() called — a new frame is pushed onto the call stack above Global.' },
+    { line: 3, pc: 'END',    op: 'DONE',    stack: 'Global',  writes: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string',  bytes: 5  }, { n: 'age', v: '25', c: '#38bdf8', t: 'number', bytes: 8 }, { n: 'adult', v: 'true', c: '#fbbf24', t: 'boolean', bytes: 1 }], out: '"Hello, Alex"', explain: 'Output: "Hello, Alex". Call stack pops back to Global. Program complete — 3 writes, 1 call.' },
   ];
 
   let demoStep = $state(0);
@@ -146,7 +145,7 @@
     <!-- Right: live simulation panel -->
     <div class="demo-shell" aria-hidden="true">
 
-      <!-- Panel header -->
+      <!-- macOS window chrome -->
       <div class="demo-bar">
         <span class="demo-dot" style="background:#ff5f57"></span>
         <span class="demo-dot" style="background:#febc2e"></span>
@@ -156,8 +155,10 @@
         <span class="demo-badge">● LIVE</span>
       </div>
 
-      <!-- Code + memory panels -->
+      <!-- Main body: code left, viz right -->
       <div class="demo-body">
+
+        <!-- Code panel -->
         <div class="demo-code">
           {#each DEMO_LINES as tokens, i}
             <div class="demo-line" class:demo-line-active={currentStep.line === i}>
@@ -172,37 +173,103 @@
           {/each}
         </div>
 
-        <!-- Memory panel -->
-        <div class="demo-mem">
-          <div class="demo-mem-hdr">MEMORY</div>
-          <div class="demo-mem-vars">
-            {#each currentStep.vars as v (v.n)}
-              <div class="demo-var" style="--vc: {v.c}">
-                <span class="demo-var-name">{v.n}</span>
-                <span class="demo-var-type">{v.t}</span>
-                <span class="demo-var-val" style="color:{v.c}">{v.v}</span>
+        <!-- Viz panel — the real unique parts -->
+        <div class="demo-viz">
+
+          <!-- CPU dashboard row -->
+          <div class="demo-cpu">
+            <!-- Circular step gauge -->
+            <div class="demo-gauge">
+              <svg viewBox="0 0 52 52" width="52" height="52">
+                <circle cx="26" cy="26" r="22" fill="none" stroke="#1a1a2e" stroke-width="4"/>
+                <circle cx="26" cy="26" r="22" fill="none" stroke="#4ade80" stroke-width="3.5"
+                  stroke-dasharray="{(demoStep / (DEMO_STEPS.length - 1)) * 138} 138"
+                  stroke-linecap="round"
+                  transform="rotate(-90 26 26)"
+                  style="transition: stroke-dasharray 0.5s ease"/>
+                <text x="26" y="24" text-anchor="middle" fill="#fff" font-size="11" font-weight="800" font-family="monospace">{demoStep + 1}</text>
+                <text x="26" y="34" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="6.5" font-family="monospace">/{DEMO_STEPS.length}</text>
+              </svg>
+            </div>
+
+            <!-- CPU chip icon -->
+            <div class="demo-chip" class:demo-chip-active={currentStep.op !== 'DONE'}>
+              <svg viewBox="0 0 36 36" width="36" height="36">
+                <rect x="8" y="8" width="20" height="20" rx="3" fill="#0d0d1a" stroke="#4ade80" stroke-width="1.5"/>
+                <rect x="12" y="12" width="12" height="12" rx="2" fill="#4ade8015" stroke="#4ade80" stroke-width="1"/>
+                {#if currentStep.op !== 'DONE'}
+                  <circle cx="18" cy="18" r="2.5" fill="#4ade80" opacity="0.9"/>
+                {:else}
+                  <path d="M14 18 l3 3 l6-6" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round"/>
+                {/if}
+              </svg>
+            </div>
+
+            <!-- Registers -->
+            <div class="demo-registers">
+              <div class="demo-reg">
+                <span class="demo-reg-label">PC</span>
+                <span class="demo-reg-val">{currentStep.pc}</span>
               </div>
-            {/each}
-            {#if currentStep.vars.length === 0}
-              <span class="demo-mem-empty">waiting…</span>
+              <div class="demo-reg">
+                <span class="demo-reg-label">OP</span>
+                <span class="demo-reg-val demo-reg-op" class:op-done={currentStep.op === 'DONE'}>{currentStep.op}</span>
+              </div>
+              <div class="demo-reg">
+                <span class="demo-reg-label">WRITES</span>
+                <span class="demo-reg-val" style="color:#fbbf24">{currentStep.writes}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Call stack -->
+          <div class="demo-stack-row">
+            <span class="demo-stack-label">STACK</span>
+            <span class="demo-stack-frame" class:frame-call={currentStep.stack !== 'Global'}>{currentStep.stack}</span>
+          </div>
+
+          <!-- Heap memory -->
+          <div class="demo-heap">
+            <div class="demo-heap-hdr">HEAP MEMORY</div>
+            <div class="demo-heap-vars">
+              {#each currentStep.vars as v (v.n)}
+                <div class="demo-heap-var" style="--vc: {v.c}">
+                  <div class="demo-heap-top">
+                    <span class="demo-heap-name">{v.n}</span>
+                    <span class="demo-heap-type">{v.t}</span>
+                  </div>
+                  <span class="demo-heap-val" style="color:{v.c}">{v.v}</span>
+                  {#if v.bytes}
+                    <div class="demo-heap-bytes">
+                      {#each Array(Math.min(v.bytes, 8)) as _}
+                        <span class="demo-byte" style="background:{v.c}"></span>
+                      {/each}
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+              {#if currentStep.vars.length === 0}
+                <span class="demo-heap-empty">no variables yet…</span>
+              {/if}
+            </div>
+            {#if currentStep.out}
+              <div class="demo-stdout">
+                <span class="demo-stdout-label">› console.log</span>
+                <span class="demo-stdout-val">{currentStep.out}</span>
+              </div>
             {/if}
           </div>
-          {#if currentStep.out}
-            <div class="demo-stdout">
-              <span class="demo-stdout-label">› console</span>
-              <span class="demo-stdout-val">{currentStep.out}</span>
-            </div>
-          {/if}
+
         </div>
       </div>
 
-      <!-- What's happening explanation -->
+      <!-- Explanation strip -->
       <div class="demo-explain">
         <span class="demo-explain-icon">◈</span>
         <span class="demo-explain-text">{currentStep.explain}</span>
       </div>
 
-      <!-- Progress bar + step counter -->
+      <!-- Progress bar -->
       <div class="demo-footer">
         <div class="demo-progress-track">
           <div class="demo-progress-fill" style="width: {((demoStep + 1) / DEMO_STEPS.length) * 100}%"></div>
@@ -506,7 +573,7 @@
 
   /* ── Right: demo shell ── */
   .demo-shell {
-    flex: 0 0 480px;
+    flex: 0 0 520px;
     background: #0c0c18;
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 14px;
@@ -564,7 +631,7 @@
 
   .demo-body {
     display: flex;
-    min-height: 180px;
+    min-height: 200px;
   }
 
   /* Code side */
@@ -572,6 +639,7 @@
     flex: 1;
     padding: 14px 0;
     border-right: 1px solid rgba(255,255,255,0.06);
+    min-width: 0;
   }
 
   .demo-line {
@@ -623,49 +691,147 @@
   .tok-op  { color: rgba(255,255,255,0.35); }
   .tok-fn  { color: #fbbf24; }
 
-  /* Memory side */
-  .demo-mem {
-    width: 160px;
+  /* ── Viz panel (right side) ── */
+  .demo-viz {
+    width: 220px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     background: #0a0a15;
-  }
-
-  .demo-mem-hdr {
-    font-family: 'Geist Mono', monospace;
-    font-size: 0.52rem;
-    color: rgba(255,255,255,0.28);
-    letter-spacing: 1.5px;
-    padding: 10px 12px 6px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-
-  .demo-mem-vars {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 8px;
     overflow: hidden;
   }
 
-  .demo-mem-empty {
-    font-family: 'Geist Mono', monospace;
-    font-size: 0.62rem;
-    color: rgba(255,255,255,0.15);
-    padding: 4px;
-    font-style: italic;
+  /* CPU dashboard row */
+  .demo-cpu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: #09090f;
   }
 
-  .demo-var {
-    background: color-mix(in srgb, var(--vc) 8%, #0d0d1a);
-    border: 1px solid color-mix(in srgb, var(--vc) 25%, rgba(255,255,255,0.05));
-    border-radius: 6px;
+  .demo-gauge { flex-shrink: 0; }
+
+  .demo-chip {
+    flex-shrink: 0;
+    opacity: 0.6;
+    transition: opacity 0.3s;
+  }
+  .demo-chip-active { opacity: 1; }
+
+  .demo-registers {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .demo-reg {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .demo-reg-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.45rem;
+    color: rgba(255,255,255,0.28);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    min-width: 36px;
+    flex-shrink: 0;
+  }
+
+  .demo-reg-val {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  .demo-reg-op { color: #38bdf8; }
+  .op-done { color: #4ade80; }
+
+  /* Call stack row */
+  .demo-stack-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: #08080e;
+  }
+
+  .demo-stack-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.45rem;
+    color: rgba(255,255,255,0.28);
+    letter-spacing: 1px;
+  }
+
+  .demo-stack-frame {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.72);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 3px;
+    padding: 1px 6px;
+    transition: all 0.3s;
+  }
+
+  .frame-call {
+    color: #fbbf24;
+    background: rgba(251,191,36,0.10);
+    border-color: rgba(251,191,36,0.25);
+  }
+
+  /* Heap memory */
+  .demo-heap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .demo-heap-hdr {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.45rem;
+    color: rgba(255,255,255,0.28);
+    letter-spacing: 1.5px;
+    padding: 6px 10px 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .demo-heap-vars {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 6px 8px;
+    overflow: hidden;
+  }
+
+  .demo-heap-empty {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.58rem;
+    color: rgba(255,255,255,0.15);
+    font-style: italic;
+    padding: 4px 2px;
+  }
+
+  .demo-heap-var {
+    background: color-mix(in srgb, var(--vc) 8%, #0c0c18);
+    border: 1px solid color-mix(in srgb, var(--vc) 22%, rgba(255,255,255,0.05));
+    border-radius: 5px;
     padding: 5px 8px;
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
     animation: var-appear 0.25s ease;
   }
 
@@ -674,50 +840,68 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .demo-var-name {
+  .demo-heap-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .demo-heap-name {
     font-family: 'Geist Mono', monospace;
     font-size: 0.65rem;
-    color: rgba(255,255,255,0.85);
-    font-weight: 600;
+    color: rgba(255,255,255,0.88);
+    font-weight: 700;
   }
 
-  .demo-var-type {
+  .demo-heap-type {
     font-family: 'Geist Mono', monospace;
-    font-size: 0.48rem;
-    color: rgba(255,255,255,0.28);
+    font-size: 0.42rem;
+    color: rgba(255,255,255,0.30);
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.6px;
   }
 
-  .demo-var-val {
+  .demo-heap-val {
     font-family: 'Geist Mono', monospace;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 800;
+  }
+
+  .demo-heap-bytes {
+    display: flex;
+    gap: 1.5px;
     margin-top: 2px;
   }
 
+  .demo-byte {
+    width: 5px;
+    height: 5px;
+    border-radius: 1px;
+    opacity: 0.5;
+  }
+
   .demo-stdout {
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding: 7px 10px;
+    border-top: 1px solid rgba(74,222,128,0.15);
+    padding: 6px 10px;
     display: flex;
     flex-direction: column;
     gap: 2px;
-    background: rgba(74,222,128,0.04);
+    background: rgba(74,222,128,0.06);
   }
 
   .demo-stdout-label {
     font-family: 'Geist Mono', monospace;
-    font-size: 0.48rem;
-    color: rgba(74,222,128,0.5);
+    font-size: 0.42rem;
+    color: rgba(74,222,128,0.6);
     letter-spacing: 0.8px;
     text-transform: uppercase;
   }
 
   .demo-stdout-val {
     font-family: 'Geist Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     color: #4ade80;
-    font-weight: 600;
+    font-weight: 700;
     animation: var-appear 0.25s ease;
   }
 
