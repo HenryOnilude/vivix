@@ -119,12 +119,12 @@
             <!-- O(1) vs O(n) End Diagram -->
             <div class="end-diagram">
               <div class="end-box end-left" class:end-active={isShiftOp}>
-                <span class="end-cost-label" style="color:{isShiftOp ? '#f87171' : '#333'}">O(n)</span>
+                <span class="end-cost-label" style="color:{isShiftOp ? '#f87171' : 'rgba(248,113,113,0.55)'}">O(n)</span>
                 <div class="end-ops">
-                  <span style="color:{isShiftOp ? '#f87171' : '#444'}">shift</span>
-                  <span style="color:{isShiftOp ? '#f87171' : '#444'}">unshift</span>
+                  <span style="color:{isShiftOp ? '#f87171' : 'rgba(255,255,255,0.45)'}">shift</span>
+                  <span style="color:{isShiftOp ? '#f87171' : 'rgba(255,255,255,0.45)'}">unshift</span>
                 </div>
-                <div class="end-arrow end-arrow-right" style="color:{isShiftOp ? '#f87171' : '#222'}">
+                <div class="end-arrow end-arrow-right" style="color:{isShiftOp ? '#f87171' : 'rgba(255,255,255,0.30)'}">
                   all {arrVal.length} elements re-index →
                 </div>
               </div>
@@ -143,14 +143,14 @@
               </div>
 
               <div class="end-box end-right" class:end-active={sd.lastOp?.end === 'right'}>
-                <div class="end-arrow end-arrow-left" style="color:{sd.lastOp?.end === 'right' ? '#4ade80' : '#222'}">
+                <div class="end-arrow end-arrow-left" style="color:{sd.lastOp?.end === 'right' ? '#4ade80' : 'rgba(255,255,255,0.30)'}">
                   ← nothing moves
                 </div>
                 <div class="end-ops">
-                  <span style="color:{sd.lastOp?.end === 'right' ? '#4ade80' : '#444'}">push</span>
-                  <span style="color:{sd.lastOp?.end === 'right' ? '#4ade80' : '#444'}">pop</span>
+                  <span style="color:{sd.lastOp?.end === 'right' ? '#4ade80' : 'rgba(255,255,255,0.45)'}">push</span>
+                  <span style="color:{sd.lastOp?.end === 'right' ? '#4ade80' : 'rgba(255,255,255,0.45)'}">pop</span>
                 </div>
-                <span class="end-cost-label" style="color:{sd.lastOp?.end === 'right' ? '#4ade80' : '#333'}">O(1)</span>
+                <span class="end-cost-label" style="color:{sd.lastOp?.end === 'right' ? '#4ade80' : 'rgba(74,222,128,0.55)'}">O(1)</span>
               </div>
             </div>
 
@@ -308,9 +308,9 @@
 
   .end-middle    { flex:1; display:flex; align-items:center; justify-content:center; padding:0 6px; }
   .memory-strip  { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
-  .mem-addr      { display:flex; align-items:center; justify-content:center; width:40px; height:28px; border:1px solid #1a1a2e; border-radius:4px; background:#08080e; }
-  .mem-addr-val  { font-size:0.6rem; color:#3a3a5a; font-family:monospace; }
-  .mem-empty     { font-size:0.65rem; color:#2a2a3e; font-family:monospace; }
+  .mem-addr      { display:flex; align-items:center; justify-content:center; width:40px; height:28px; border:1px solid rgba(136,170,255,0.25); border-radius:4px; background:#08080e; }
+  .mem-addr-val  { font-size:0.6rem; color:rgba(136,170,255,0.65); font-family:monospace; }
+  .mem-empty     { font-size:0.65rem; color:rgba(255,255,255,0.25); font-family:monospace; }
 
   /* Array cells */
   .arr-cells     { display:flex; flex-wrap:wrap; gap:6px; padding:10px; }
