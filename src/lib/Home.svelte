@@ -10,14 +10,14 @@
   ];
 
   const DEMO_STEPS = [
-    { line: 0, vars: [],                                                                                                                                     out: null  },
-    { line: 0, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }],                                                                             out: null  },
-    { line: 1, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }],                                                                             out: null  },
-    { line: 1, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }],                    out: null  },
-    { line: 2, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }],                    out: null  },
-    { line: 2, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: null  },
-    { line: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: null  },
-    { line: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: '"Hello, Alex"' },
+    { line: 0, vars: [],                                                                                                                                     out: null,           explain: 'Execution starts — memory is empty, no variables exist yet.' },
+    { line: 0, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }],                                                                             out: null,           explain: 'JS allocates a slot in memory for name and stores the string "Alex".' },
+    { line: 1, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }],                                                                             out: null,           explain: 'Moving to line 2 — age is about to be declared as a number.' },
+    { line: 1, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }],                    out: null,           explain: 'A second memory slot opens. Numbers and strings get different colours.' },
+    { line: 2, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }],                    out: null,           explain: 'JS evaluates age >= 18 — comparing 25 to 18 produces a boolean.' },
+    { line: 2, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: null,  explain: 'Result: true. A third slot appears — boolean stored as yellow.' },
+    { line: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: null,  explain: 'console.log() is called — JS looks up name in memory to build the string.' },
+    { line: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string'  }, { n: 'age',   v: '25',     c: '#38bdf8', t: 'number'  }, { n: 'adult', v: 'true',   c: '#fbbf24', t: 'boolean' }], out: '"Hello, Alex"', explain: 'Output printed. "Hello, " + name concatenated to produce the final string.' },
   ];
 
   let demoStep = $state(0);
@@ -126,9 +126,14 @@
       <h1>visual<span class="accent">JS</span></h1>
 
       <p class="hero-sub">
-        Write JavaScript and watch it execute step by step —
-        see the CPU, memory, and call stack working in real time.
+        Stop reading about JavaScript.<br>Watch it think.
       </p>
+
+      <ul class="hero-features">
+        <li><span class="feat-arrow">→</span><span><strong>Line-by-line execution</strong> — step through any concept</span></li>
+        <li><span class="feat-arrow">→</span><span><strong>Live memory view</strong> — see variables appear as they're declared</span></li>
+        <li><span class="feat-arrow">→</span><span><strong>9 concepts</strong> — variables, loops, closures, async and more</span></li>
+      </ul>
 
       <div class="hero-ctas">
         <a href="#/variables" class="cta-primary">Try it now →</a>
@@ -146,11 +151,12 @@
         <span class="demo-dot" style="background:#ff5f57"></span>
         <span class="demo-dot" style="background:#febc2e"></span>
         <span class="demo-dot" style="background:#28c840"></span>
-        <span class="demo-title">script.js</span>
-        <span class="demo-badge">● EXECUTING</span>
+        <span class="demo-title">variables.js</span>
+        <span class="demo-concept-tag">Variables &amp; Memory</span>
+        <span class="demo-badge">● LIVE</span>
       </div>
 
-      <!-- Code panel -->
+      <!-- Code + memory panels -->
       <div class="demo-body">
         <div class="demo-code">
           {#each DEMO_LINES as tokens, i}
@@ -190,11 +196,18 @@
         </div>
       </div>
 
-      <!-- Step indicator dots -->
-      <div class="demo-steps">
-        {#each DEMO_STEPS as _, i}
-          <span class="demo-step-dot" class:demo-step-dot-active={demoStep === i}></span>
-        {/each}
+      <!-- What's happening explanation -->
+      <div class="demo-explain">
+        <span class="demo-explain-icon">◈</span>
+        <span class="demo-explain-text">{currentStep.explain}</span>
+      </div>
+
+      <!-- Progress bar + step counter -->
+      <div class="demo-footer">
+        <div class="demo-progress-track">
+          <div class="demo-progress-fill" style="width: {((demoStep + 1) / DEMO_STEPS.length) * 100}%"></div>
+        </div>
+        <span class="demo-step-counter">step {demoStep + 1} / {DEMO_STEPS.length}</span>
       </div>
 
     </div>
@@ -393,12 +406,43 @@
 
   .hero-sub {
     font-family: 'Geist', system-ui, sans-serif;
-    font-size: 1.05rem;
-    color: rgba(255,255,255,0.58);
-    margin: 20px 0 0 0;
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.72);
+    margin: 18px 0 0 0;
     font-weight: 400;
-    line-height: 1.65;
+    line-height: 1.5;
     max-width: 420px;
+  }
+
+  .hero-features {
+    list-style: none;
+    padding: 0;
+    margin: 24px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .hero-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.52);
+    line-height: 1.5;
+  }
+
+  .hero-features li strong {
+    color: rgba(255,255,255,0.82);
+    font-weight: 600;
+  }
+
+  .feat-arrow {
+    color: #4ade80;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+    opacity: 0.9;
   }
 
   .hero-ctas {
@@ -495,7 +539,19 @@
     font-size: 0.68rem;
     color: rgba(255,255,255,0.35);
     margin-left: 8px;
+  }
+
+  .demo-concept-tag {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.6rem;
+    color: rgba(74,222,128,0.7);
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.18);
+    border-radius: 4px;
+    padding: 1px 7px;
+    margin-left: 6px;
     flex: 1;
+    width: fit-content;
   }
 
   .demo-badge {
@@ -665,27 +721,63 @@
     animation: var-appear 0.25s ease;
   }
 
-  /* Step dots */
-  .demo-steps {
+  /* Explanation strip */
+  .demo-explain {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: rgba(74,222,128,0.04);
+    min-height: 48px;
+  }
+
+  .demo-explain-icon {
+    font-size: 0.7rem;
+    color: #4ade80;
+    opacity: 0.7;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .demo-explain-text {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.62);
+    line-height: 1.55;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Progress bar + step counter */
+  .demo-footer {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 5px;
-    padding: 10px;
+    gap: 10px;
+    padding: 8px 14px;
     border-top: 1px solid rgba(255,255,255,0.05);
   }
 
-  .demo-step-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    transition: background 0.3s ease, transform 0.3s ease;
+  .demo-progress-track {
+    flex: 1;
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
   }
 
-  .demo-step-dot-active {
-    background: #4ade80;
-    transform: scale(1.4);
+  .demo-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80, #22d3ee);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .demo-step-counter {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.58rem;
+    color: rgba(255,255,255,0.28);
+    white-space: nowrap;
+    letter-spacing: 0.3px;
   }
 
   /* ── Section divider ── */
