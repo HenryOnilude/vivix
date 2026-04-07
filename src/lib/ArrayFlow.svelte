@@ -257,26 +257,29 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
-        <text x="28" y="92" fill="rgba(255,255,255,0.55)" font-size="14" font-family="monospace" font-weight="700">O(n)</text>
-        <text x="24" y="110" fill="rgba(255,255,255,0.40)" font-size="12" font-family="monospace">shift</text>
-        <text x="14" y="126" fill="rgba(255,255,255,0.40)" font-size="12" font-family="monospace">unshift</text>
+        <!-- O(n) left side -->
+        <text x="28" y="92" fill="rgba(248,113,113,0.80)" font-size="14" font-family="monospace" font-weight="800">O(n)</text>
+        <text x="24" y="110" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">shift</text>
+        <text x="14" y="126" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">unshift</text>
         <!-- Array cells -->
-        <rect x="68"  y="62" width="62" height="52" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
-        <text x="99"  y="94" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">[0]</text>
-        <rect x="134" y="62" width="62" height="52" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
-        <text x="165" y="94" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">[1]</text>
-        <rect x="200" y="62" width="62" height="52" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
-        <text x="231" y="94" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">[2]</text>
-        <rect x="266" y="62" width="62" height="52" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
-        <text x="297" y="94" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">[3]</text>
-        <text x="344" y="84" fill="rgba(255,255,255,0.55)" font-size="14" font-family="monospace" font-weight="700">O(1)</text>
-        <text x="344" y="102" fill="rgba(255,255,255,0.40)" font-size="12" font-family="monospace">push</text>
-        <text x="344" y="118" fill="rgba(255,255,255,0.40)" font-size="12" font-family="monospace">pop</text>
-        <text x="99"  y="128" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="10" font-family="monospace">0x00</text>
-        <text x="165" y="128" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="10" font-family="monospace">0x08</text>
-        <text x="231" y="128" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="10" font-family="monospace">0x10</text>
-        <text x="297" y="128" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="10" font-family="monospace">0x18</text>
-        <text x="200" y="170" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="14" font-family="monospace">contiguous memory layout</text>
+        <rect x="68"  y="62" width="62" height="52" rx="4" fill="rgba(136,170,255,0.06)" stroke="rgba(136,170,255,0.45)" stroke-width="2"/>
+        <text x="99"  y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="monospace" font-weight="600">[0]</text>
+        <rect x="134" y="62" width="62" height="52" rx="4" fill="rgba(136,170,255,0.06)" stroke="rgba(136,170,255,0.45)" stroke-width="2"/>
+        <text x="165" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="monospace" font-weight="600">[1]</text>
+        <rect x="200" y="62" width="62" height="52" rx="4" fill="rgba(136,170,255,0.06)" stroke="rgba(136,170,255,0.45)" stroke-width="2"/>
+        <text x="231" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="monospace" font-weight="600">[2]</text>
+        <rect x="266" y="62" width="62" height="52" rx="4" fill="rgba(136,170,255,0.06)" stroke="rgba(136,170,255,0.45)" stroke-width="2"/>
+        <text x="297" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="monospace" font-weight="600">[3]</text>
+        <!-- O(1) right side -->
+        <text x="344" y="84" fill="rgba(74,222,128,0.80)" font-size="14" font-family="monospace" font-weight="800">O(1)</text>
+        <text x="344" y="102" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">push</text>
+        <text x="344" y="118" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">pop</text>
+        <!-- Memory addresses -->
+        <text x="99"  y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="monospace">0x00</text>
+        <text x="165" y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="monospace">0x08</text>
+        <text x="231" y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="monospace">0x10</text>
+        <text x="297" y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="monospace">0x18</text>
+        <text x="200" y="170" text-anchor="middle" fill="rgba(255,255,255,0.50)" font-size="14" font-family="monospace">contiguous memory layout</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see arrays in action</p>
     </div>
@@ -352,8 +355,8 @@
   .sc-val        { font-size:0.85rem; font-weight:700; font-family:'SF Mono',monospace; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
-  .ph-svg  { width:260px; height:auto; opacity:0.5; }
-  .ph-text { font-size:0.75rem; color:#333; text-align:center; }
+  .ph-svg  { width:360px; height:auto; opacity:1; }
+  .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
   .cx-s { display:flex; align-items:center; gap:4px; font-size:0.62rem; color:#555; font-family:monospace; }
 </style>
