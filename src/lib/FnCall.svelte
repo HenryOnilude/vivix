@@ -202,15 +202,15 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
-        <rect x="120" y="18" width="160" height="42" rx="5" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
-        <text x="200" y="45" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">ƒ double(x)</text>
-        <line x1="200" y1="60" x2="200" y2="82" stroke="rgba(255,255,255,0.20)" stroke-width="2.5" stroke-dasharray="4 3"/>
-        <rect x="120" y="82" width="160" height="42" rx="5" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
-        <text x="200" y="109" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">result = x * 2</text>
-        <line x1="200" y1="124" x2="200" y2="150" stroke="rgba(255,255,255,0.20)" stroke-width="2.5" stroke-dasharray="4 3"/>
-        <polygon points="191,144 209,144 200,158" fill="rgba(255,255,255,0.30)"/>
-        <text x="200" y="180" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="16" font-family="monospace">return 42</text>
-        <text x="200" y="204" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="13" font-family="monospace">value travels back ↑</text>
+        <rect x="120" y="18" width="160" height="42" rx="5" fill="rgba(251,146,60,0.07)" stroke="rgba(251,146,60,0.55)" stroke-width="2.5"/>
+        <text x="200" y="45" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">ƒ double(x)</text>
+        <line x1="200" y1="60" x2="200" y2="82" stroke="rgba(251,146,60,0.50)" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <rect x="120" y="82" width="160" height="42" rx="5" fill="rgba(251,146,60,0.07)" stroke="rgba(251,146,60,0.45)" stroke-width="2.5"/>
+        <text x="200" y="109" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">result = x * 2</text>
+        <line x1="200" y1="124" x2="200" y2="150" stroke="rgba(251,146,60,0.50)" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <polygon points="191,144 209,144 200,158" fill="rgba(251,146,60,0.65)"/>
+        <text x="200" y="180" text-anchor="middle" fill="rgba(251,146,60,0.85)" font-size="16" font-family="monospace" font-weight="600">return 42</text>
+        <text x="200" y="204" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">value travels back ↑</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see function calls in action</p>
     </div>
@@ -276,7 +276,7 @@
   .stack-note     { font-size:0.6rem; color:rgba(255,255,255,0.40); font-family:monospace; font-style:italic; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
-  .ph-svg  { width:200px; height:auto; opacity:0.5; }
+  .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.8rem; color:rgba(255,255,255,0.45); text-align:center; }
 
   .cx-s { display:flex; align-items:center; gap:4px; font-size:0.58rem; color:rgba(255,255,255,0.45); font-family:monospace; }

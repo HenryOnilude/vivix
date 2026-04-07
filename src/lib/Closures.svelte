@@ -345,15 +345,15 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
-        <rect x="16" y="10" width="368" height="200" rx="8" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2.5"/>
-        <text x="32" y="34" fill="rgba(255,255,255,0.50)" font-size="16" font-family="monospace">Global</text>
-        <rect x="36" y="44" width="328" height="154" rx="6" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
-        <text x="52" y="68" fill="rgba(255,255,255,0.45)" font-size="16" font-family="monospace">makeCounter()</text>
-        <rect x="56" y="78" width="288" height="108" rx="5" fill="none" stroke="#00d4aa" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.60"/>
-        <text x="74" y="104" fill="#00d4aa" font-size="15" font-family="monospace" opacity="0.80">🔒 closure scope</text>
-        <text x="74" y="128" fill="#00d4aa" font-size="15" font-family="monospace" opacity="0.65">count: 0  ← captured</text>
-        <text x="74" y="154" fill="rgba(255,255,255,0.42)" font-size="13" font-family="monospace">persists after outer fn returns</text>
-        <text x="74" y="174" fill="rgba(255,255,255,0.42)" font-size="13" font-family="monospace">inner fn holds a reference</text>
+        <rect x="16" y="10" width="368" height="200" rx="8" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2.5"/>
+        <text x="32" y="34" fill="rgba(255,255,255,0.80)" font-size="16" font-family="monospace" font-weight="700">Global</text>
+        <rect x="36" y="44" width="328" height="154" rx="6" fill="none" stroke="rgba(255,255,255,0.30)" stroke-width="2"/>
+        <text x="52" y="68" fill="rgba(255,255,255,0.75)" font-size="16" font-family="monospace" font-weight="600">makeCounter()</text>
+        <rect x="56" y="78" width="288" height="108" rx="5" fill="rgba(0,212,170,0.06)" stroke="#00d4aa" stroke-width="2" stroke-dasharray="6 4"/>
+        <text x="74" y="104" fill="#00d4aa" font-size="15" font-family="monospace" font-weight="700">🔒 closure scope</text>
+        <text x="74" y="128" fill="#00d4aa" font-size="15" font-family="monospace" font-weight="600">count: 0  ← captured</text>
+        <text x="74" y="154" fill="rgba(255,255,255,0.65)" font-size="13" font-family="monospace">persists after outer fn returns</text>
+        <text x="74" y="174" fill="rgba(255,255,255,0.65)" font-size="13" font-family="monospace">inner fn holds a reference</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see closure scopes</p>
     </div>
@@ -537,6 +537,6 @@
 
   /* ── Placeholder ───────────────────────────────────────────────────────── */
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
-  .ph-svg  { width:200px; height:auto; opacity:0.5; }
-  .ph-text { font-size:0.75rem; color:#333; text-align:center; }
+  .ph-svg  { width:360px; height:auto; opacity:1; }
+  .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 </style>

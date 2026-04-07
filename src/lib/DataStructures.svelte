@@ -264,15 +264,15 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
-        <rect x="130" y="28" width="140" height="36" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
-        <text x="200" y="52" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="15" font-family="monospace">push → top</text>
-        <rect x="130" y="70" width="140" height="36" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
-        <text x="200" y="94" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="15" font-family="monospace">item 2</text>
-        <rect x="130" y="112" width="140" height="36" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
-        <text x="200" y="136" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="15" font-family="monospace">item 1</text>
-        <rect x="130" y="154" width="140" height="36" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
-        <text x="200" y="178" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="15" font-family="monospace">bottom</text>
-        <text x="200" y="210" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="14" font-family="monospace">stack • queue • map • set</text>
+        <rect x="130" y="28" width="140" height="36" rx="4" fill="rgba(244,114,182,0.10)" stroke="rgba(244,114,182,0.60)" stroke-width="2.5"/>
+        <text x="200" y="52" text-anchor="middle" fill="rgba(244,114,182,0.90)" font-size="15" font-family="monospace" font-weight="700">push → top</text>
+        <rect x="130" y="70" width="140" height="36" rx="4" fill="rgba(244,114,182,0.07)" stroke="rgba(244,114,182,0.45)" stroke-width="2.5"/>
+        <text x="200" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="15" font-family="monospace" font-weight="600">item 2</text>
+        <rect x="130" y="112" width="140" height="36" rx="4" fill="rgba(244,114,182,0.05)" stroke="rgba(244,114,182,0.35)" stroke-width="2.5"/>
+        <text x="200" y="136" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="15" font-family="monospace" font-weight="600">item 1</text>
+        <rect x="130" y="154" width="140" height="36" rx="4" fill="rgba(244,114,182,0.03)" stroke="rgba(244,114,182,0.25)" stroke-width="2.5"/>
+        <text x="200" y="178" text-anchor="middle" fill="rgba(255,255,255,0.60)" font-size="15" font-family="monospace" font-weight="600">bottom</text>
+        <text x="200" y="210" text-anchor="middle" fill="rgba(244,114,182,0.65)" font-size="14" font-family="monospace" font-weight="600">stack • queue • map • set</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see data structures in action</p>
     </div>
@@ -363,8 +363,8 @@
   .sc-val        { font-size:0.85rem; font-weight:700; font-family:'SF Mono',monospace; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
-  .ph-svg  { width:200px; height:auto; opacity:0.5; }
-  .ph-text { font-size:0.75rem; color:#333; text-align:center; }
+  .ph-svg  { width:360px; height:auto; opacity:1; }
+  .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
   .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
 </style>

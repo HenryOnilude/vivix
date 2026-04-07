@@ -138,12 +138,12 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
-        <rect x="60"  y="60" width="110" height="52" rx="5" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-dasharray="6 3"/>
-        <text x="115" y="92" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">x = 42</text>
-        <rect x="230" y="60" width="110" height="52" rx="5" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-dasharray="6 3"/>
-        <text x="285" y="92" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">y = "hi"</text>
-        <rect x="145" y="138" width="110" height="52" rx="5" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-dasharray="6 3"/>
-        <text x="200" y="170" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="16" font-family="monospace">z = true</text>
+        <rect x="60"  y="60" width="110" height="52" rx="5" fill="rgba(56,189,248,0.06)" stroke="rgba(56,189,248,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
+        <text x="115" y="92" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">x = 42</text>
+        <rect x="230" y="60" width="110" height="52" rx="5" fill="rgba(74,222,128,0.06)" stroke="rgba(74,222,128,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
+        <text x="285" y="92" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">y = "hi"</text>
+        <rect x="145" y="138" width="110" height="52" rx="5" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
+        <text x="200" y="170" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">z = true</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see variables in memory</p>
     </div>
@@ -181,8 +181,8 @@
   .leg-label     { font-size:0.45rem; color:#444; font-family:monospace; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
-  .ph-svg { width:200px; height:auto; opacity:0.5; }
-  .ph-text { font-size:0.75rem; color:#333; text-align:center; }
+  .ph-svg { width:360px; height:auto; opacity:1; }
+  .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
   .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
 </style>

@@ -316,14 +316,14 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
-        <polygon points="200,20 270,75 200,130 130,75" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-dasharray="6 3"/>
-        <text x="200" y="82" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="18" font-family="monospace">condition?</text>
-        <path d="M 158 112 Q 110 150 88 188" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="2.5" stroke-dasharray="5 3"/>
-        <path d="M 242 112 Q 290 150 312 188" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="2.5" stroke-dasharray="5 3"/>
-        <rect x="28"  y="186" width="120" height="30" rx="5" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-dasharray="5 3"/>
-        <rect x="252" y="186" width="120" height="30" rx="5" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-dasharray="5 3"/>
-        <text x="88"  y="207" text-anchor="middle" fill="rgba(255,255,255,0.50)" font-size="16" font-family="monospace">if {'{'} {'}'}</text>
-        <text x="312" y="207" text-anchor="middle" fill="rgba(255,255,255,0.50)" font-size="16" font-family="monospace">else {'{'} {'}'}</text>
+        <polygon points="200,20 270,75 200,130 130,75" fill="rgba(74,222,128,0.05)" stroke="rgba(74,222,128,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
+        <text x="200" y="82" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="18" font-family="monospace" font-weight="600">condition?</text>
+        <path d="M 158 112 Q 110 150 88 188" fill="none" stroke="rgba(74,222,128,0.45)" stroke-width="2.5" stroke-dasharray="5 3"/>
+        <path d="M 242 112 Q 290 150 312 188" fill="none" stroke="rgba(248,113,113,0.45)" stroke-width="2.5" stroke-dasharray="5 3"/>
+        <rect x="28"  y="186" width="120" height="30" rx="5" fill="rgba(74,222,128,0.07)" stroke="rgba(74,222,128,0.50)" stroke-width="2" stroke-dasharray="5 3"/>
+        <rect x="252" y="186" width="120" height="30" rx="5" fill="rgba(248,113,113,0.07)" stroke="rgba(248,113,113,0.50)" stroke-width="2" stroke-dasharray="5 3"/>
+        <text x="88"  y="207" text-anchor="middle" fill="rgba(74,222,128,0.90)" font-size="16" font-family="monospace" font-weight="600">if {'{'} {'}'}</text>
+        <text x="312" y="207" text-anchor="middle" fill="rgba(248,113,113,0.90)" font-size="16" font-family="monospace" font-weight="600">else {'{'} {'}'}</text>
       </svg>
       <p class="ph-text">Click <strong style="color:{ACCENT}">▶ Visualize</strong> to see the execution flow</p>
     </div>
@@ -355,8 +355,8 @@
   .badge-false { color:#f87171; background:#f8717118; border:1px solid #f8717133; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
-  .ph-svg  { width:200px; height:auto; opacity:0.5; }
-  .ph-text { font-size:0.75rem; color:#333; text-align:center; }
+  .ph-svg  { width:360px; height:auto; opacity:1; }
+  .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
   .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
 

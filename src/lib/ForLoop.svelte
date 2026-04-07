@@ -271,12 +271,12 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
-        <circle cx="200" cy="100" r="68" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="4" stroke-dasharray="8 4"/>
-        <circle cx="200" cy="100" r="68" fill="none" stroke="#ffcc6622" stroke-width="14"/>
-        <path d="M 240 68 L 258 100 L 240 132" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-linecap="round"/>
-        <text x="200" y="94" text-anchor="middle" fill="rgba(255,255,255,0.50)" font-size="40" font-weight="900" font-family="monospace">0</text>
-        <text x="200" y="118" text-anchor="middle" fill="rgba(255,255,255,0.40)" font-size="15" font-family="monospace">ITERS</text>
-        <text x="200" y="192" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-size="15" font-family="monospace">iteration loop</text>
+        <circle cx="200" cy="100" r="68" fill="none" stroke="rgba(251,191,36,0.50)" stroke-width="3.5" stroke-dasharray="8 4"/>
+        <circle cx="200" cy="100" r="68" fill="none" stroke="rgba(251,191,36,0.12)" stroke-width="14"/>
+        <path d="M 240 68 L 258 100 L 240 132" fill="none" stroke="rgba(251,191,36,0.65)" stroke-width="3" stroke-linecap="round"/>
+        <text x="200" y="94" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="40" font-weight="900" font-family="monospace">0</text>
+        <text x="200" y="118" text-anchor="middle" fill="rgba(251,191,36,0.75)" font-size="15" font-family="monospace" font-weight="700">ITERS</text>
+        <text x="200" y="192" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="15" font-family="monospace">iteration loop</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see loops execute step by step</p>
     </div>
@@ -319,8 +319,8 @@
   .body-line-active .body-code { color:#ffcc66; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
-  .ph-svg  { width:200px; height:auto; opacity:0.5; }
-  .ph-text { font-size:0.75rem; color:#333; text-align:center; }
+  .ph-svg  { width:360px; height:auto; opacity:1; }
+  .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
   .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
 
