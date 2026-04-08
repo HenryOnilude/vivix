@@ -12,19 +12,20 @@ describe('Home.svelte', () => {
 
   it('renders the main heading', () => {
     render(Home);
-    expect(screen.getByText('JS')).toBeTruthy();
+    expect(screen.getByText(/Stop reading about JavaScript/)).toBeTruthy();
+    expect(screen.getByText('think')).toBeTruthy();
   });
 
   it('renders the tagline', () => {
     render(Home);
-    expect(screen.getByText(/Watch it think/)).toBeTruthy();
+    expect(screen.getByText(/Stop reading about JavaScript/)).toBeTruthy();
   });
 
-  it('renders all module cards plus hero features', () => {
+  it('renders all module cards', () => {
     render(Home);
     const cards = screen.getAllByRole('listitem');
-    // 3 hero feature bullets + 9 module cards = 12
-    expect(cards.length).toBe(12);
+    // 9 module cards (hero features are now divs, not list items)
+    expect(cards.length).toBe(9);
   });
 
   it('renders correct module titles', () => {

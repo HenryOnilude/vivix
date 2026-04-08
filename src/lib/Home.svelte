@@ -120,46 +120,29 @@
   <!-- ── Hero ── -->
   <section class="hero">
 
-    <!-- Left: copy + CTA -->
+    <!-- Centered copy -->
     <div class="hero-copy">
-      <h1>visual<span class="accent">JS</span></h1>
-      <div class="title-glow" aria-hidden="true"></div>
+      <h1 class="hero-title">
+        <span class="hero-title-line">Stop reading about JavaScript.</span>
+        <span class="hero-title-line hero-title-accent">Watch it <span class="accent">think</span>.</span>
+      </h1>
 
       <p class="hero-sub">
-        Stop reading about JavaScript.<br>Watch it think.
+        Write real code, click play, and step through every instruction — see the CPU, memory, and call stack update in real time.
       </p>
 
-      <ul class="hero-features">
-        <li>
-          <span class="feat-icon" style="--fc:#4ade80">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M10 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <span><strong>Step-by-step execution</strong> — watch every line run in order</span>
-        </li>
-        <li>
-          <span class="feat-icon" style="--fc:#38bdf8">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="5" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="6" width="5" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
-          </span>
-          <span><strong>Live memory view</strong> — see variables appear as they're declared</span>
-        </li>
-        <li>
-          <span class="feat-icon" style="--fc:#c084fc">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          </span>
-          <span><strong>9 interactive concepts</strong> — variables, loops, closures, async and more</span>
-        </li>
-      </ul>
-
       <div class="hero-ctas">
-        <a href="#/variables" class="cta-primary">Try it now →</a>
-        <a href="#/if-gate"   class="cta-ghost">See conditionals</a>
+        <a href="#/variables" class="cta-primary">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2l10 6-10 6V2z" fill="currentColor"/></svg>
+          Try it now
+        </a>
+        <a href="#/if-gate" class="cta-ghost">See all 9 modules</a>
       </div>
 
-      <p class="hero-hint">No sign-up. Runs in your browser.</p>
-
+      <p class="hero-hint">No sign-up required — runs entirely in your browser.</p>
     </div>
 
-    <!-- Right: live simulation panel -->
+    <!-- Product preview: the star of the hero -->
     <div class="demo-shell" aria-hidden="true">
 
       <!-- macOS window chrome -->
@@ -295,6 +278,38 @@
       </div>
 
     </div>
+
+    <!-- Feature highlights — below the demo -->
+    <div class="hero-highlights">
+      <div class="highlight">
+        <span class="hl-icon" style="--fc:#4ade80">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10h14M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <div class="hl-text">
+          <strong>Step-by-step execution</strong>
+          <span>Scrub through every instruction with ⟪ ◁ ▷ ⟫ controls</span>
+        </div>
+      </div>
+      <div class="highlight">
+        <span class="hl-icon" style="--fc:#38bdf8">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="7" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="11" y="7" width="7" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>
+        </span>
+        <div class="hl-text">
+          <strong>Live memory view</strong>
+          <span>Watch variables, types, and byte sizes appear in real time</span>
+        </div>
+      </div>
+      <div class="highlight">
+        <span class="hl-icon" style="--fc:#c084fc">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M10 6v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span>
+        <div class="hl-text">
+          <strong>9 interactive concepts</strong>
+          <span>Variables, loops, functions, closures, async/await, and more</span>
+        </div>
+      </div>
+    </div>
+
   </section>
 
   <!-- ── Section divider ── -->
@@ -454,26 +469,41 @@
     width: 100%;
     max-width: 1040px;
     display: flex;
-    align-items: center;
-    gap: 48px;
-  }
-
-  /* ── Left: copy ── */
-  .hero-copy {
-    flex: 1;
-    min-width: 0;
-    display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 0;
   }
 
-  h1 {
-    font-family: 'Geist Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    font-size: clamp(3rem, 6vw, 4.6rem);
+  /* ── Centered copy ── */
+  .hero-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0;
+    animation: hero-fade-in 0.8s ease both;
+  }
+
+  @keyframes hero-fade-in {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-title {
+    font-family: 'Geist', 'Inter', system-ui, sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
     font-weight: 800;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
     margin: 0;
-    line-height: 1.0;
+    line-height: 1.15;
+    color: rgba(255,255,255,0.88);
+  }
+
+  .hero-title-line {
+    display: block;
+  }
+
+  .hero-title-accent {
     color: #ffffff;
   }
 
@@ -484,67 +514,14 @@
     background-clip: text;
   }
 
-  .title-glow {
-    width: 180px;
-    height: 4px;
-    margin-top: 10px;
-    border-radius: 4px;
-    background: linear-gradient(90deg, #4ade80, #22d3ee, #818cf8);
-    opacity: 0.6;
-    filter: blur(0px);
-    animation: glow-pulse 3s ease-in-out infinite alternate;
-  }
-
-  @keyframes glow-pulse {
-    from { opacity: 0.4; filter: blur(0px); width: 160px; }
-    to   { opacity: 0.8; filter: blur(1px); width: 200px; }
-  }
-
   .hero-sub {
     font-family: 'Geist', system-ui, sans-serif;
-    font-size: 1.15rem;
-    color: rgba(255,255,255,0.75);
-    margin: 22px 0 0 0;
+    font-size: 1.05rem;
+    color: rgba(255,255,255,0.50);
+    margin: 18px 0 0 0;
     font-weight: 400;
-    line-height: 1.55;
-    max-width: 440px;
-  }
-
-  .hero-features {
-    list-style: none;
-    padding: 0;
-    margin: 28px 0 0 0;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .hero-features li {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    font-size: 0.88rem;
-    color: rgba(255,255,255,0.55);
-    line-height: 1.5;
-  }
-
-  .hero-features li strong {
-    color: rgba(255,255,255,0.88);
-    font-weight: 600;
-  }
-
-  .feat-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    flex-shrink: 0;
-    border-radius: 8px;
-    color: var(--fc);
-    background: color-mix(in srgb, var(--fc) 10%, transparent);
-    border: 1px solid color-mix(in srgb, var(--fc) 20%, transparent);
-    margin-top: 0px;
+    line-height: 1.6;
+    max-width: 560px;
   }
 
   .hero-ctas {
@@ -607,9 +584,11 @@
   }
 
 
-  /* ── Right: demo shell ── */
+  /* ── Demo shell: full-width product preview ── */
   .demo-shell {
-    flex: 0 0 520px;
+    width: 100%;
+    max-width: 780px;
+    margin-top: 40px;
     background: var(--a11y-surface3, #0c0c18);
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 14px;
@@ -619,6 +598,73 @@
       0 24px 64px rgba(0,0,0,0.6),
       0 8px 24px rgba(0,0,0,0.4),
       inset 0 1px 0 rgba(255,255,255,0.06);
+    animation: demo-rise 0.9s ease 0.15s both;
+  }
+
+  @keyframes demo-rise {
+    from { opacity: 0; transform: translateY(28px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── Feature highlights strip ── */
+  .hero-highlights {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 780px;
+    margin-top: 36px;
+    animation: hero-fade-in 0.8s ease 0.4s both;
+  }
+
+  .highlight {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .highlight:hover {
+    border-color: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+  }
+
+  .hl-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    color: var(--fc);
+    background: color-mix(in srgb, var(--fc) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--fc) 18%, transparent);
+  }
+
+  .hl-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .hl-text strong {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.88);
+  }
+
+  .hl-text span {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.40);
+    line-height: 1.5;
   }
 
   .demo-bar {
@@ -1252,11 +1298,6 @@
 
 
   /* ─── Responsive ─────────────────────────────────────────────────────────── */
-  @media (max-width: 960px) {
-    .hero { gap: 32px; }
-    .demo-shell { flex: 0 0 400px; }
-  }
-
   @media (max-width: 860px) {
     .home {
       padding: 24px 14px;
@@ -1266,14 +1307,9 @@
       min-height: 100vh;
     }
 
-    .hero {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 28px;
-    }
-
-    .demo-shell { flex: none; width: 100%; }
-    .hero-sub { max-width: 100%; }
+    .hero-title { font-size: clamp(1.8rem, 4.5vw, 2.6rem); }
+    .hero-sub { max-width: 100%; font-size: 0.95rem; }
+    .hero-highlights { grid-template-columns: 1fr; gap: 12px; }
 
     .modules-grid {
       grid-template-columns: repeat(2, 1fr);
@@ -1289,14 +1325,15 @@
   @media (max-width: 520px) {
     .home { padding: 16px 12px; gap: 16px; }
 
-    h1 { font-size: clamp(2.2rem, 8vw, 3rem); }
-    .hero-sub { font-size: 0.92rem; }
-    .hero-ctas { gap: 8px; }
+    .hero-title { font-size: clamp(1.5rem, 6vw, 2rem); }
+    .hero-sub { font-size: 0.88rem; }
+    .hero-ctas { gap: 8px; justify-content: center; }
     .cta-primary, .cta-ghost { font-size: 0.82rem; padding: 10px 18px; }
+    .hero-highlights { grid-template-columns: 1fr; gap: 10px; margin-top: 24px; }
+    .highlight { padding: 12px; }
+    .hl-icon { width: 32px; height: 32px; }
+    .demo-shell { margin-top: 28px; }
     .demo-body { flex-direction: column; }
-    .demo-mem { width: 100%; border-right: none; border-top: 1px solid rgba(255,255,255,0.06); flex-direction: row; align-items: stretch; }
-    .demo-mem-vars { flex-direction: row; flex-wrap: wrap; gap: 4px; }
-    .demo-var { flex: 1; min-width: 80px; }
 
     .modules-grid {
       grid-template-columns: 1fr;
@@ -1315,8 +1352,8 @@
 
   @media (max-width: 360px) {
     .home { padding: 12px 8px; gap: 12px; }
-    h1 { font-size: clamp(1.8rem, 8vw, 2.4rem); }
-    .hero-sub { font-size: 0.85rem; }
+    .hero-title { font-size: clamp(1.3rem, 5.5vw, 1.7rem); }
+    .hero-sub { font-size: 0.82rem; }
     .cta-primary, .cta-ghost { font-size: 0.78rem; padding: 9px 14px; width: 100%; justify-content: center; }
     .hero-ctas { flex-direction: column; }
     .card-hero { width: 72px; padding: 12px; }
