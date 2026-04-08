@@ -28,6 +28,7 @@
 <ModuleShell
   {examples}
   accent={ACCENT}
+  routeKey="variables"
   titlePrefix="var"
   titleAccent="Store"
   subtitle="— Variables & Memory"

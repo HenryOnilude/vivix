@@ -80,6 +80,7 @@
 <ModuleShell
   {examples}
   accent={ACCENT}
+  routeKey="if-gate"
   titlePrefix="if"
   titleAccent="Gate"
   subtitle="— Conditionals"
