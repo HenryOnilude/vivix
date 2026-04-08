@@ -122,8 +122,6 @@
 
     <!-- Left: copy + CTA -->
     <div class="hero-copy">
-      <span class="hero-badge">Open-source JS visualizer</span>
-
       <h1>visual<span class="accent">JS</span></h1>
       <div class="title-glow" aria-hidden="true"></div>
 
@@ -159,14 +157,6 @@
 
       <p class="hero-hint">No sign-up. Runs in your browser.</p>
 
-      <div class="hero-trust">
-        <span class="trust-label">Built with</span>
-        <span class="trust-tag">Svelte 5</span>
-        <span class="trust-sep">·</span>
-        <span class="trust-tag">Acorn AST</span>
-        <span class="trust-sep">·</span>
-        <span class="trust-tag">CodeMirror 6</span>
-      </div>
     </div>
 
     <!-- Right: live simulation panel -->
@@ -477,29 +467,6 @@
     gap: 0;
   }
 
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    font-family: 'Geist Mono', monospace;
-    font-size: 0.58rem;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: #4ade80;
-    background: rgba(74,222,128,0.08);
-    border: 1px solid rgba(74,222,128,0.18);
-    border-radius: 20px;
-    padding: 5px 14px;
-    margin-bottom: 18px;
-    width: fit-content;
-    animation: badge-glow 2.5s ease-in-out infinite alternate;
-  }
-
-  @keyframes badge-glow {
-    from { box-shadow: 0 0 8px rgba(74,222,128,0.08); }
-    to   { box-shadow: 0 0 18px rgba(74,222,128,0.18); }
-  }
-
   h1 {
     font-family: 'Geist Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
     font-size: clamp(3rem, 6vw, 4.6rem);
@@ -639,36 +606,6 @@
     letter-spacing: 0.1px;
   }
 
-  .hero-trust {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 20px;
-    flex-wrap: wrap;
-  }
-
-  .trust-label {
-    font-family: 'Geist', system-ui, sans-serif;
-    font-size: 0.62rem;
-    color: rgba(255,255,255,0.22);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-  }
-
-  .trust-tag {
-    font-family: 'Geist Mono', monospace;
-    font-size: 0.58rem;
-    color: rgba(255,255,255,0.38);
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 4px;
-    padding: 2px 8px;
-  }
-
-  .trust-sep {
-    color: rgba(255,255,255,0.12);
-    font-size: 0.6rem;
-  }
 
   /* ── Right: demo shell ── */
   .demo-shell {
