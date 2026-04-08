@@ -35,6 +35,7 @@
 <ModuleShell
   {examples}
   accent={ACCENT}
+  routeKey="data-structures"
   titlePrefix="data"
   titleAccent="Struct"
   subtitle="— Data Structures"
@@ -282,7 +283,7 @@
 
 <style>
   /* ── DS card shell ────────────────────────────────────────────────────── */
-  .ds-card      { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .ds-card      { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .ds-card-hdr  { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; flex-wrap:wrap; }
   .ds-card-title { font-size:0.65rem; color:#f472b6; font-family:'SF Mono',monospace; font-weight:700; }
   .ds-card-len  { margin-left:auto; font-size:0.5rem; color:#444; font-family:monospace; }
@@ -351,7 +352,7 @@
   .ds-empty     { font-size:0.6rem; color:#2a2a3e; padding:6px; font-family:monospace; }
 
   /* ── Scalar vars ──────────────────────────────────────────────────────── */
-  .scalars-card  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .scalars-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scalars-hdr   { display:flex; align-items:center; gap:6px; padding:6px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .scalars-label { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .scalars-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; padding:8px; }

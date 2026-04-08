@@ -58,6 +58,7 @@
 <ModuleShell
   {examples}
   accent={ACCENT}
+  routeKey="array"
   titlePrefix="array"
   titleAccent="Flow"
   subtitle="— Arrays"
@@ -289,7 +290,7 @@
 
 <style>
   /* Array cards */
-  .arr-card      { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .arr-card      { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .arr-card-hdr  { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .arr-card-title { font-size:0.88rem; color:#88aaff; font-family:'SF Mono',monospace; font-weight:700; }
   .arr-card-len  { margin-left:auto; font-size:0.72rem; color:#666; font-family:monospace; }
@@ -343,7 +344,7 @@
   .scan-arrow    { font-size:0.6rem; color:#a78bfa; font-family:monospace; }
 
   /* Scalar vars */
-  .scalars-card  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .scalars-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scalars-hdr   { display:flex; align-items:center; gap:6px; padding:8px 12px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .scalars-label { font-size:0.68rem; color:#666; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .scalars-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; padding:8px; }

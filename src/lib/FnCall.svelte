@@ -49,6 +49,7 @@
 <ModuleShell
   {examples}
   accent={ACCENT}
+  routeKey="function"
   titlePrefix="fn"
   titleAccent="Call"
   subtitle="— Functions"
@@ -237,7 +238,7 @@
 
   /* Call stack card */
   .stack-card     {
-    background: color-mix(in srgb, #ff8866 3%, #0a0a12);
+    background: color-mix(in srgb, #ff8866 3%, var(--a11y-bg, #0a0a12));
     border: 1px solid color-mix(in srgb, #ff8866 18%, rgba(255,255,255,0.05));
     border-radius:10px; overflow:hidden; flex-shrink:0;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 16px rgba(0,0,0,0.3);

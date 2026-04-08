@@ -409,6 +409,7 @@
 <ModuleShell
   {examples}
   accent={ACCENT}
+  routeKey="async"
   titlePrefix="async"
   titleAccent="Await"
   subtitle="— Asynchronous"
@@ -619,7 +620,7 @@
   .awaiting     { color:#cc88ff; background:#cc88ff15; }
   .parallel     { color:#4ade80; background:#4ade8015; }
   .asyncbadge   { color:#cc88ff; background:#cc88ff15; }
-  .brain-box    { background:#0a0a12; padding:10px 12px; transition:all 0.3s; }
+  .brain-box    { background:var(--a11y-bg, #0a0a12); padding:10px 12px; transition:all 0.3s; }
   .brain-done   { border-color:#88aaff33; background:#88aaff08; }
   .brain-await  { border-color:#ffcc6633; background:#ffcc6608; }
   .brain-resume { border-color:#00ff8833; background:#00ff8808; }
@@ -633,8 +634,8 @@
 
   /* Call Stack + Event Loop */
   .runtime-row   { display:flex; gap:6px; }
-  .runtime-panel { flex:1; min-width:0; background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .frames-panel  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .runtime-panel { flex:1; min-width:0; background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .frames-panel  { background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:8px; overflow:hidden; flex-shrink:0; }
   .runtime-hdr   { padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .stack-box     { padding:6px 8px; display:flex; flex-direction:column; gap:3px; min-height:40px; }
   .stack-frame   { display:flex; justify-content:space-between; align-items:center; padding:3px 6px; border-radius:3px; border:1px solid #1a1a2e; font-size:0.65rem; transition:all 0.3s; }
@@ -659,7 +660,7 @@
   .var-empty   { font-size:0.72rem; color:#2a2a3e; padding:10px 4px; }
 
   /* Timeline */
-  .timeline-panel  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .timeline-panel  { background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:8px; overflow:hidden; flex-shrink:0; }
   .timeline-hdr    { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .timeline-title  { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .timeline-body   { padding:8px; display:flex; flex-direction:column; gap:6px; }

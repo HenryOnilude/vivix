@@ -137,6 +137,7 @@
 <ModuleShell
   {examples}
   accent={ACCENT}
+  routeKey="closures"
   titlePrefix="closure"
   titleAccent="Scope"
   subtitle="— Closures & Scope"
@@ -363,7 +364,7 @@
 
 <style>
   /* ── Scope chain card ──────────────────────────────────────────────────── */
-  .scope-card       { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .scope-card       { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scope-card-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .scope-card-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1px; font-weight:700; }
   .scope-card-depth { margin-left:auto; font-size:0.5rem; color:#00d4aa; font-family:monospace; }
@@ -523,7 +524,7 @@
   }
 
   /* ── Scalar result vars card ───────────────────────────────────────────── */
-  .scalar-card  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .scalar-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scalar-hdr   { display:flex; align-items:center; gap:6px; padding:4px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .scalar-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .scalar-grid  { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; }

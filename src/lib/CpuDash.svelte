@@ -447,7 +447,7 @@
 <style>
   .cpu-dash {
     flex-shrink:0;
-    background: color-mix(in srgb, var(--acc, #6366f1) 4%, #0a0a12);
+    background: color-mix(in srgb, var(--acc, #6366f1) 4%, var(--a11y-bg, #0a0a12));
     border: 1px solid color-mix(in srgb, var(--acc, #6366f1) 16%, rgba(255,255,255,0.06));
     border-radius:10px; overflow:hidden;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 20px rgba(0,0,0,0.4);

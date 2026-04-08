@@ -50,6 +50,7 @@
 <ModuleShell
   {examples}
   accent={ACCENT}
+  routeKey="for-loop"
   titlePrefix="for"
   titleAccent="Loop"
   subtitle="— Iteration"
@@ -308,7 +309,7 @@
 
   /* ── Loop body code card ───────────────────────────── */
   .body-card  { margin:0; border-top:1px solid #1a1a2e; overflow:hidden; }
-  .body-hdr   { display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#0a0a12; }
+  .body-hdr   { display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:var(--a11y-bg, #0a0a12); }
   .body-label { font-size:0.5rem; color:#555; font-family:monospace; letter-spacing:1px; font-weight:700; }
   .body-phase { font-size:0.45rem; font-family:monospace; }
   .body-lines { padding:4px 8px 6px; background:#08080e; }

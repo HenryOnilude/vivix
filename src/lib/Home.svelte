@@ -522,7 +522,7 @@
     align-items: center;
     gap: 6px;
     background: linear-gradient(135deg, #4ade80, #22d3ee);
-    color: #080810;
+    color: var(--a11y-bg, #080810);
     font-family: 'Geist', system-ui, sans-serif;
     font-size: 0.92rem;
     font-weight: 700;
@@ -571,7 +571,7 @@
   /* ── Right: demo shell ── */
   .demo-shell {
     flex: 0 0 520px;
-    background: #0c0c18;
+    background: var(--a11y-surface3, #0c0c18);
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 14px;
     overflow: hidden;
@@ -822,7 +822,7 @@
   }
 
   .demo-heap-var {
-    background: color-mix(in srgb, var(--vc) 8%, #0c0c18);
+    background: color-mix(in srgb, var(--vc) 8%, var(--a11y-surface3, #0c0c18));
     border: 1px solid color-mix(in srgb, var(--vc) 22%, rgba(255,255,255,0.05));
     border-radius: 5px;
     padding: 5px 8px;

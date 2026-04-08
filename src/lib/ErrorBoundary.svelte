@@ -66,7 +66,7 @@
     justify-content: center;
     height: 100vh;
     width: 100vw;
-    background: #0a0a14;
+    background: var(--a11y-bg, #0a0a14);
   }
 
   .error-card {
@@ -130,7 +130,7 @@
 
   button {
     background: #00ff88;
-    color: #0a0a14;
+    color: var(--a11y-bg, #0a0a14);
     border: none;
     padding: 8px 20px;
     border-radius: 6px;
