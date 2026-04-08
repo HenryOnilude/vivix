@@ -11,7 +11,7 @@
  * On load it redirects to the hash-routed SPA: /#/<module>
  */
 
-import { mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 const DIST = join(process.cwd(), 'dist');
@@ -261,4 +261,9 @@ console.log('  ✓ sitemap.xml');
 writeFileSync(join(DIST, 'robots.txt'), buildRobotsTxt());
 console.log('  ✓ robots.txt');
 
-console.log(`Done — ${MODULES.length} landing pages + sitemap + robots.txt`);
+// SPA fallback: copy index.html → 404.html (GitHub Pages serves this for unknown routes)
+const indexHtml = readFileSync(join(DIST, 'index.html'), 'utf-8');
+writeFileSync(join(DIST, '404.html'), indexHtml);
+console.log('  ✓ 404.html (SPA fallback)');
+
+console.log(`Done — ${MODULES.length} landing pages + sitemap + robots.txt + 404`);
