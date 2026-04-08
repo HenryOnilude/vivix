@@ -128,7 +128,7 @@
       </h1>
 
       <p class="hero-sub">
-        Write real code, click play, and step through every instruction — see the CPU, memory, and call stack update in real time.
+        Step through real code and watch the CPU, memory, and call stack respond.
       </p>
 
       <div class="hero-ctas">
