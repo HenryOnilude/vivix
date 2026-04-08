@@ -1,50 +1,96 @@
-# visualJS — See How JavaScript Thinks
+<div align="center">
 
-An interactive JavaScript execution visualizer. Write real JS, click **▶ Visualize**, and step through every instruction — watching the CPU, memory, and call stack update in real time.
+# ⚡ visualJS
 
-**Live:** [visualjs.dev](https://visualjs.dev) (coming soon)
+### See Inside JavaScript As It Thinks
 
-## Quick Start
+Write real code → click play → watch the CPU, memory, and call stack respond in real time.
+
+[![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen)](https://github.com/HenryOnilude/visual-learning-javascript)
+[![Svelte 5](https://img.shields.io/badge/svelte-5-FF3E00?logo=svelte&logoColor=white)](https://svelte.dev)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/HenryOnilude/visual-learning-javascript/pulls)
+
+</div>
+
+---
+
+## What is this?
+
+Most JS tutorials tell you what code does. **visualJS shows you.**
+
+You write JavaScript, hit play, and step through execution one instruction at a time — watching variables appear in heap memory, call stack frames push and pop, byte sizes update, and the CPU dashboard tick through each operation. It's like having X-ray vision for JavaScript.
+
+**No sign-up. No install. Runs entirely in your browser.**
+
+---
+
+## 🎬 Demo
+
+<!-- Replace with actual screenshots or GIFs after recording -->
+> **📸 Add a screen recording here!** Record a 60-second walkthrough of the Variables module using [Kap](https://getkap.co/) (macOS) or [ScreenToGif](https://www.screentogif.com/) (Windows), then replace this block with:
+> ```
+> ![visualJS demo](./docs/demo.gif)
+> ```
+
+---
+
+## ✨ What You Get
+
+| | Feature | Details |
+|---|---|---|
+| 🔬 | **Step-by-step execution** | Scrub through every instruction with ⟪ ◁ ▷ ⟫ controls |
+| 🧠 | **Live memory view** | Watch variables, types, and byte sizes appear in real time |
+| 📊 | **CPU dashboard** | SVG registers, program counter, operation phase, write counter |
+| 📦 | **Memory map** | See exactly how many bytes each variable occupies |
+| 🔗 | **Shareable URLs** | Share any code + step position via a single link |
+| ⏩ | **Auto-play** | Adjustable speed (0.5x – 4x) with keyboard shortcuts |
+| 📱 | **Mobile responsive** | Stacked layout with Code/Visual tab switcher on small screens |
+| 🎓 | **Guided onboarding** | 4-step tour for first-time users |
+| ♿ | **Accessibility themes** | Default dark, comfort, and dyslexia-friendly modes |
+| 🛡️ | **Infinite loop protection** | 500-step limit with friendly truncation message |
+
+---
+
+## 📚 9 Interactive Modules
+
+Each module teaches a core JavaScript concept with a purpose-built visualization:
+
+| Module | Concept | What You See |
+|--------|---------|-------------|
+| **varStore** | Variables & Memory | Heap memory slots, byte sizes, type tags |
+| **ifGate** | Conditionals | Branch flowchart — true/false paths light up |
+| **forLoop** | Iteration | Loop ring with iteration counter and body highlighting |
+| **fnCall** | Functions | Call stack frames push/pop, return values flow back |
+| **arrayFlow** | Array Methods | Array cells with index scanning and O(n) cost badges |
+| **objExplorer** | Objects & Hash Maps | Property hash map, key→bucket→O(1) visualization |
+| **dataStruct** | Data Structures | Stack/queue push-pop, Map/Set operations |
+| **asyncFlow** | Async / Await | Event loop, microtask queue, Promise timeline |
+| **closureScope** | Closures & Scope | Nested scope boxes with captured variable highlighting |
+
+---
+
+## 🚀 Quick Start
 
 ```bash
 git clone https://github.com/HenryOnilude/visual-learning-javascript.git
 cd visual-learning-javascript
 npm install
 npm run dev      # → http://localhost:5173
+```
+
+```bash
 npm run test     # 161 unit tests
 npm run build    # production build + SEO pages
 ```
 
-## Modules
+---
 
-9 interactive modules, each teaching a core JavaScript concept:
-
-| Route | Module | What You See |
-|-------|--------|-------------|
-| `#/variables` | **varStore** | Heap memory slots, byte sizes, type tags |
-| `#/if-gate` | **ifGate** | Branch flowchart — true/false paths light up |
-| `#/for-loop` | **forLoop** | Loop ring with iteration counter and body highlighting |
-| `#/function` | **fnCall** | Call stack frames push/pop, return values flow back |
-| `#/array` | **arrayFlow** | Array cells with index scanning and O(n) cost badges |
-| `#/objects` | **objExplorer** | Property hash map, key→bucket→O(1) visualization |
-| `#/data-structures` | **dataStructures** | Stack/queue push-pop, Map/Set operations |
-| `#/async` | **asyncAwait** | Event loop, microtask queue, Promise timeline |
-| `#/closures` | **closures** | Nested scope boxes with captured variable highlighting |
-
-## Architecture
+## 🏗️ How It Works
 
 ```
-index.html
-  └─ App.svelte              ← hash router, lazy-loads modules
-       ├─ Home.svelte         ← landing page with live demo
-       └─ ModuleShell.svelte  ← shared layout for all 9 modules
-            ├─ CodeEditor.svelte   (CodeMirror 6)
-            ├─ CpuDash.svelte      (SVG CPU dashboard)
-            ├─ OnboardingTour.svelte (first-run tooltips)
-            └─ <Module>.svelte     (module-specific visualization)
+Your Code → Acorn Parser → AST → Custom Interpreter → Step Array → Visualizer
 ```
-
-### How It Works
 
 1. **Acorn** parses user code into an AST
 2. **Custom interpreter** (`interpreter.js`) walks the AST and produces an array of execution steps — each step captures line index, variables, memory ops, call stack, phase, and output
@@ -57,23 +103,14 @@ The interpreter runs in a **Web Worker** for non-blocking execution, with a **50
 ### Key Design Decisions
 
 - **No runtime eval** — the interpreter walks the AST directly, so we capture every intermediate state
-- **Shared shell** — `ModuleShell.svelte` handles code editing, step controls, playback, timeline, and keyboard shortcuts; modules only provide the visualization snippets
-- **Accessibility themes** — 3 themes (default dark, comfort, dyslexia) via CSS custom properties (`--a11y-*`), managed by `a11y-theme.js`
+- **Shared shell** — `ModuleShell.svelte` handles code editing, step controls, playback, timeline, and keyboard shortcuts; modules only provide the visualization
+- **Accessibility themes** — 3 themes via CSS custom properties (`--a11y-*`)
 - **Hash routing** — SPA with `#/module` routes, no server config needed
 - **Shareable URLs** — base64-encoded code + step index in the URL hash
 
-## Features
+---
 
-- **Step-by-step execution** — scrub through every instruction with ⟪ ◁ ▷ ⟫ controls
-- **Auto-play** — adjustable speed (0.5x – 4x) with keyboard shortcuts
-- **Shareable URLs** — share any code + step position via a single link
-- **Mobile responsive** — stacked layout with Code/Visual tab switcher on ≤768px
-- **First-run onboarding** — 4-step guided tour for new users
-- **SEO landing pages** — per-module pages with structured data, sitemap, robots.txt
-- **Infinite loop protection** — 500-step limit with friendly truncation message
-- **161 unit tests** — interpreter, shell logic, URL state, and Home component
-
-## Tech Stack
+## 🧰 Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -82,38 +119,58 @@ The interpreter runs in a **Web Worker** for non-blocking execution, with a **50
 | Code Editor | CodeMirror 6 |
 | Build | Vite 7 |
 | Tests | Vitest + Testing Library + happy-dom |
-| E2E | Playwright (configured, not yet used) |
+| Styling | Custom CSS with CSS custom properties |
 
-## Project Structure
+---
+
+## 📁 Project Structure
 
 ```
-src/
-  lib/
-    interpreter.js       ← AST walker, step generator, step limit
-    interpreter.test.js  ← 99 interpreter tests
-    shell-logic.js       ← shared step utilities (phase colors, markers, etc.)
-    shell-logic.test.js  ← 35 shell logic tests
-    url-state.js         ← shareable URL encoding/decoding
-    url-state.test.js    ← 20 URL state tests
-    a11y-theme.js        ← accessibility theme system (3 themes)
-    ModuleShell.svelte   ← shared module layout (code panel + visual panel)
-    CodeEditor.svelte    ← CodeMirror 6 wrapper
-    CpuDash.svelte       ← SVG CPU dashboard
-    OnboardingTour.svelte ← first-run guided tooltips
-    Home.svelte          ← landing page
-    Variables.svelte     ← module: variables & memory
-    IfGate.svelte        ← module: conditionals
-    ForLoop.svelte       ← module: iteration
-    FnCall.svelte        ← module: functions & call stack
-    ArrayFlow.svelte     ← module: arrays
-    ObjExplorer.svelte   ← module: objects & hash maps
-    DataStructures.svelte ← module: stack, queue, map, set
-    AsyncAwait.svelte    ← module: async/await & event loop
-    Closures.svelte      ← module: closures & scope chain
+src/lib/
+  interpreter.js         ← AST walker, step generator (99 tests)
+  shell-logic.js         ← shared step utilities (35 tests)
+  url-state.js           ← shareable URL encoding (20 tests)
+  a11y-theme.js          ← accessibility theme system
+  ModuleShell.svelte     ← shared module layout
+  CodeEditor.svelte      ← CodeMirror 6 wrapper
+  CpuDash.svelte         ← SVG CPU dashboard
+  OnboardingTour.svelte  ← first-run guided tooltips
+  Home.svelte            ← landing page with live demo
+  Variables.svelte       ← varStore module
+  IfGate.svelte          ← ifGate module
+  ForLoop.svelte         ← forLoop module
+  FnCall.svelte          ← fnCall module
+  ArrayFlow.svelte       ← arrayFlow module
+  ObjExplorer.svelte     ← objExplorer module
+  DataStructures.svelte  ← dataStruct module
+  AsyncAwait.svelte      ← asyncFlow module
+  Closures.svelte        ← closureScope module
 scripts/
-  generate-seo-pages.js  ← build-time SEO page + sitemap generator
+  generate-seo-pages.js  ← build-time SEO pages + sitemap
 ```
 
-## License
+---
 
-MIT
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a PR.
+
+```bash
+npm run test     # run before submitting
+```
+
+---
+
+## 📄 License
+
+MIT — use it, learn from it, build on it.
+
+---
+
+<div align="center">
+
+**Built by [Henry Onilude](https://github.com/HenryOnilude)**
+
+If this helped you understand JavaScript better, consider giving it a ⭐
+
+</div>

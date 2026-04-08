@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px; height: 630px;
+    background: #0a0a12;
+    font-family: 'Geist', system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    overflow: hidden;
+    position: relative;
+  }
+  /* Subtle gradient bg */
+  body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(74,222,128,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 40% at 30% 60%, rgba(56,189,248,0.04) 0%, transparent 60%);
+  }
+  .title {
+    font-size: 72px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.92);
+    letter-spacing: -0.03em;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  .accent {
+    background: linear-gradient(135deg, #4ade80 0%, #22d3ee 45%, #818cf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .sub {
+    font-size: 24px;
+    color: rgba(255,255,255,0.45);
+    position: relative;
+    z-index: 1;
+  }
+  .badge {
+    display: flex;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+    margin-top: 8px;
+  }
+  .badge span {
+    font-family: 'Geist Mono', monospace;
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 6px 14px;
+  }
+  .logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.3);
+    position: absolute;
+    bottom: 32px;
+    position: relative;
+    z-index: 1;
+    margin-top: 16px;
+  }
+  .logo em { font-style: normal; color: #4ade80; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;700;800&family=Geist+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="title">See Inside JavaScript<br>As It <span class="accent">Thinks</span></div>
+  <div class="sub">Step through real code · Watch the CPU, memory, and call stack respond</div>
+  <div class="badge">
+    <span>9 interactive modules</span>
+    <span>Svelte 5</span>
+    <span>161 tests</span>
+    <span>Open source</span>
+  </div>
+  <div class="logo"><em>⚡</em> visualJS</div>
+</body>
+</html>
