@@ -123,8 +123,8 @@
     <!-- Centered copy -->
     <div class="hero-copy">
       <h1 class="hero-title">
-        <span class="hero-title-line">Stop reading about JavaScript.</span>
-        <span class="hero-title-line hero-title-accent">Watch it <span class="accent">think</span>.</span>
+        <span class="hero-title-line">See Inside JavaScript</span>
+        <span class="hero-title-line hero-title-accent">As It <span class="accent">Thinks</span></span>
       </h1>
 
       <p class="hero-sub">

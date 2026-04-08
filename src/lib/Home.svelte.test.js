@@ -12,13 +12,13 @@ describe('Home.svelte', () => {
 
   it('renders the main heading', () => {
     render(Home);
-    expect(screen.getByText(/Stop reading about JavaScript/)).toBeTruthy();
-    expect(screen.getByText('think')).toBeTruthy();
+    expect(screen.getByText(/See Inside JavaScript/)).toBeTruthy();
+    expect(screen.getByText('Thinks')).toBeTruthy();
   });
 
   it('renders the tagline', () => {
     render(Home);
-    expect(screen.getByText(/Stop reading about JavaScript/)).toBeTruthy();
+    expect(screen.getByText(/See Inside JavaScript/)).toBeTruthy();
   });
 
   it('renders all module cards', () => {
