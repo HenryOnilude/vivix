@@ -122,16 +122,34 @@
 
     <!-- Left: copy + CTA -->
     <div class="hero-copy">
+      <span class="hero-badge">Open-source JS visualizer</span>
+
       <h1>visual<span class="accent">JS</span></h1>
+      <div class="title-glow" aria-hidden="true"></div>
 
       <p class="hero-sub">
         Stop reading about JavaScript.<br>Watch it think.
       </p>
 
       <ul class="hero-features">
-        <li><span class="feat-arrow">→</span><span><strong>Line-by-line execution</strong> — step through any concept</span></li>
-        <li><span class="feat-arrow">→</span><span><strong>Live memory view</strong> — see variables appear as they're declared</span></li>
-        <li><span class="feat-arrow">→</span><span><strong>9 concepts</strong> — variables, loops, closures, async and more</span></li>
+        <li>
+          <span class="feat-icon" style="--fc:#4ade80">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M10 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span><strong>Step-by-step execution</strong> — watch every line run in order</span>
+        </li>
+        <li>
+          <span class="feat-icon" style="--fc:#38bdf8">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="5" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="6" width="5" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+          </span>
+          <span><strong>Live memory view</strong> — see variables appear as they're declared</span>
+        </li>
+        <li>
+          <span class="feat-icon" style="--fc:#c084fc">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </span>
+          <span><strong>9 interactive concepts</strong> — variables, loops, closures, async and more</span>
+        </li>
       </ul>
 
       <div class="hero-ctas">
@@ -140,6 +158,15 @@
       </div>
 
       <p class="hero-hint">No sign-up. Runs in your browser.</p>
+
+      <div class="hero-trust">
+        <span class="trust-label">Built with</span>
+        <span class="trust-tag">Svelte 5</span>
+        <span class="trust-sep">·</span>
+        <span class="trust-tag">Acorn AST</span>
+        <span class="trust-sep">·</span>
+        <span class="trust-tag">CodeMirror 6</span>
+      </div>
     </div>
 
     <!-- Right: live simulation panel -->
@@ -450,10 +477,32 @@
     gap: 0;
   }
 
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #4ade80;
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.18);
+    border-radius: 20px;
+    padding: 5px 14px;
+    margin-bottom: 18px;
+    width: fit-content;
+    animation: badge-glow 2.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes badge-glow {
+    from { box-shadow: 0 0 8px rgba(74,222,128,0.08); }
+    to   { box-shadow: 0 0 18px rgba(74,222,128,0.18); }
+  }
 
   h1 {
     font-family: 'Geist Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    font-size: clamp(2.8rem, 5.5vw, 4.2rem);
+    font-size: clamp(3rem, 6vw, 4.6rem);
     font-weight: 800;
     letter-spacing: -0.04em;
     margin: 0;
@@ -468,45 +517,67 @@
     background-clip: text;
   }
 
+  .title-glow {
+    width: 180px;
+    height: 4px;
+    margin-top: 10px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #4ade80, #22d3ee, #818cf8);
+    opacity: 0.6;
+    filter: blur(0px);
+    animation: glow-pulse 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow-pulse {
+    from { opacity: 0.4; filter: blur(0px); width: 160px; }
+    to   { opacity: 0.8; filter: blur(1px); width: 200px; }
+  }
+
   .hero-sub {
     font-family: 'Geist', system-ui, sans-serif;
-    font-size: 1.1rem;
-    color: rgba(255,255,255,0.72);
-    margin: 18px 0 0 0;
+    font-size: 1.15rem;
+    color: rgba(255,255,255,0.75);
+    margin: 22px 0 0 0;
     font-weight: 400;
-    line-height: 1.5;
-    max-width: 420px;
+    line-height: 1.55;
+    max-width: 440px;
   }
 
   .hero-features {
     list-style: none;
     padding: 0;
-    margin: 24px 0 0 0;
+    margin: 28px 0 0 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
   }
 
   .hero-features li {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
     font-size: 0.88rem;
-    color: rgba(255,255,255,0.52);
+    color: rgba(255,255,255,0.55);
     line-height: 1.5;
   }
 
   .hero-features li strong {
-    color: rgba(255,255,255,0.82);
+    color: rgba(255,255,255,0.88);
     font-weight: 600;
   }
 
-  .feat-arrow {
-    color: #4ade80;
-    font-size: 0.82rem;
+  .feat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
     flex-shrink: 0;
-    margin-top: 1px;
-    opacity: 0.9;
+    border-radius: 8px;
+    color: var(--fc);
+    background: color-mix(in srgb, var(--fc) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--fc) 20%, transparent);
+    margin-top: 0px;
   }
 
   .hero-ctas {
@@ -566,6 +637,37 @@
     color: rgba(255,255,255,0.28);
     margin: 14px 0 0 0;
     letter-spacing: 0.1px;
+  }
+
+  .hero-trust {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .trust-label {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 0.62rem;
+    color: rgba(255,255,255,0.22);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .trust-tag {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.58rem;
+    color: rgba(255,255,255,0.38);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 2px 8px;
+  }
+
+  .trust-sep {
+    color: rgba(255,255,255,0.12);
+    font-size: 0.6rem;
   }
 
   /* ── Right: demo shell ── */
