@@ -441,7 +441,7 @@ for (let a = 0; a < 3; a++) {
     }
   }
 }`;
-    const { vars } = run(code, { trackLoops: true });
+    const { vars } = run(code, { trackLoops: true, maxSteps: Infinity });
     expect(vars.count).toBe(243); // 3^5
   });
 
@@ -686,5 +686,36 @@ describe('brain-text.js — buildDoneBrain', () => {
   it('includes loop iterations when present', () => {
     const text = buildDoneBrain({}, [], { memOps: 0, comps: 5, extra: { loopIters: 10 } });
     expect(text).toContain('Loop iterations: 10');
+  });
+});
+
+// ═══════════════════════════════════════
+// Step limit
+// ═══════════════════════════════════════
+describe('Step limit', () => {
+  it('truncates at MAX_STEPS by default and returns partial steps', () => {
+    const code = 'let i = 0;\nwhile (true) { i = i + 1; }';
+    const result = interpret(code, { trackLoops: true });
+    expect(result.error).toBeNull();
+    expect(result.truncated).toBe(true);
+    expect(result.steps.length).toBeLessThanOrEqual(502); // ~500 + start + limit step
+    const last = result.steps[result.steps.length - 1];
+    expect(last.phase).toBe('limit');
+    expect(last.done).toBe(true);
+  });
+
+  it('respects custom maxSteps option', () => {
+    const code = 'let i = 0;\nwhile (true) { i = i + 1; }';
+    const result = interpret(code, { trackLoops: true, maxSteps: 20 });
+    expect(result.truncated).toBe(true);
+    expect(result.steps.length).toBeLessThanOrEqual(22);
+  });
+
+  it('does not truncate short programs', () => {
+    const result = interpret('let x = 1;\nlet y = 2;');
+    expect(result.error).toBeNull();
+    expect(result.truncated).toBeFalsy();
+    const last = result.steps[result.steps.length - 1];
+    expect(last.phase).toBe('done');
   });
 });

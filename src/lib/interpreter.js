@@ -51,6 +51,22 @@ import {
 import { buildDeclBrain, buildDoneBrain } from './brain-text.js';
 
 // ═══════════════════════════════════════════════════════
+// STEP LIMIT
+// Prevents runaway code (infinite loops, huge iterations)
+// from crashing the browser tab.
+// ═══════════════════════════════════════════════════════
+
+export const MAX_STEPS = 500;
+
+class StepLimitError extends Error {
+  constructor(limit) {
+    super(`Execution stopped — reached the ${limit}-step limit.`);
+    this.name = 'StepLimitError';
+    this.limit = limit;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 // STEP-BY-STEP INTERPRETER
 // This is what modules call. It walks the AST and produces
 // an array of step objects for visualization.
@@ -68,7 +84,7 @@ export function interpret(code, options = {}) {
   const steps = [];
   const vars = {};
   const output = [];
-  const state = { memOps: 0, comps: 0, extra: {} };
+  const state = { memOps: 0, comps: 0, extra: {}, _stepCount: 0, _maxSteps: options.maxSteps ?? MAX_STEPS };
 
   // Module-specific counters
   if (options.trackLoops) state.extra.loopIters = 0;
@@ -96,6 +112,20 @@ export function interpret(code, options = {}) {
       walkStatement(stmt, nextStmt, vars, output, lines, steps, state, options, 0);
     }
   } catch (runtimeErr) {
+    if (runtimeErr instanceof StepLimitError) {
+      // Graceful step-limit: return partial steps with an informative final step
+      steps.push(makeStep(-1, -1, vars, output, null, 'limit',
+        `STEP LIMIT REACHED (${MAX_STEPS} steps)\n\n` +
+        'Your code produced too many execution steps to visualize safely. ' +
+        'This usually means a loop runs many iterations or there\'s an infinite loop.\n\n' +
+        'Tips:\n' +
+        '  - Reduce the loop count (e.g. use i < 5 instead of i < 1000)\n' +
+        '  - Check your loop condition for infinite loops (while(true))\n' +
+        '  - Simplify the code to focus on the concept you\'re learning',
+        `LIMIT | ${steps.length} steps`, state, options, true));
+      setGlobalTrackClosures(false);
+      return { steps, error: null, truncated: true };
+    }
     // Return partial steps so the user can see what executed before the error
     const errLine = runtimeErr._interpLine != null ? runtimeErr._interpLine + 1 : '?';
     const fe = friendlyError(runtimeErr.message, code, typeof errLine === 'number' ? errLine : undefined);
@@ -896,6 +926,12 @@ function walkClassDeclaration(stmt, nextLi, vars, output, lines, steps, state, o
 // ═══ Helpers ═══
 
 function makeStep(lineIndex, nextLineIndex, vars, output, highlight, phase, brain, memLabel, state, options, done = false, extra = {}) {
+  // Guard: throw if we've exceeded the step limit (unless this is a terminal step)
+  if (!done && state._maxSteps && state._stepCount >= state._maxSteps) {
+    throw new StepLimitError(state._maxSteps);
+  }
+  state._stepCount++;
+
   const step = {
     lineIndex,
     nextLineIndex: nextLineIndex !== null ? nextLineIndex : -1,
