@@ -31,6 +31,8 @@
   import CodeEditor from './CodeEditor.svelte';
   import CpuDash from './CpuDash.svelte';
   import TapTooltip from './TapTooltip.svelte';
+  import { parseHashState, updateUrlSilent, buildShareUrl } from './url-state.js';
+  import OnboardingTour from './OnboardingTour.svelte';
 
 
   /**
@@ -49,6 +51,8 @@
     subtitle     = '',
     desc         = '',
     accent       = '#38bdf8',
+    /** Route key for this module, used for shareable URLs (e.g. 'variables', 'closures') */
+    routeKey     = '',
 
     // ── data ──────────────────────────────────────────────────────────────────
     /** @type {Array<{label:string, code:string, cx?:CxData, complexity?:CxData}>} */
@@ -94,6 +98,9 @@
   /** @type {CxData|null} */
   let dynamicCx = $state(null);
   let running   = $state(false);
+  let shareToast = $state('');
+  /** @type {'code'|'visual'} Mobile tab switcher */
+  let mobileTab  = $state('code');
 
   // ── Web Worker for off-main-thread interpretation ──
   let interpWorker = null;
@@ -177,6 +184,7 @@
       total  = steps.length;
       step   = 0;
       hasRun = true;
+      mobileTab = 'visual'; // Auto-switch to visual tab on mobile after running
       // Auto-start playback
       if (playing) { clearInterval(timer); timer = null; playing = false; }
       playing = true;
@@ -226,7 +234,7 @@
     _reset();
   }
 
-  function editCode() { _reset(); }
+  function editCode() { _reset(); mobileTab = 'code'; }
 
   function _reset() {
     hasRun = false; step = -1; steps = []; err = ''; errFriendly = null; dynamicCx = null;
@@ -258,14 +266,77 @@
   /** Whether to show icons inside markers (too many = just dots) */
   let showIcons = $derived(total <= 35);
 
+  // ── URL state: read on mount, auto-run if step param is present ──────────
+  let _urlApplied = false;
+
   onMount(() => {
     window.addEventListener('keydown', handleKey);
+
+    // Read URL params and apply initial state
+    if (!_urlApplied) {
+      _urlApplied = true;
+      const parsed = parseHashState();
+
+      // Apply example selection from URL
+      if (parsed.ex != null && parsed.ex >= 0 && parsed.ex < examples.length) {
+        selEx = parsed.ex;
+        codeText = examples[parsed.ex].code;
+      }
+
+      // Apply custom code from URL (overrides example code)
+      if (parsed.code) {
+        codeText = parsed.code;
+      }
+
+      // If step param is present, auto-run and seek to that step
+      if (parsed.step != null && parsed.step >= 0) {
+        const targetStep = parsed.step;
+        _runCode().then(() => {
+          if (targetStep < steps.length) {
+            step = targetStep;
+          }
+          // Don't auto-play when opening a shared link
+          if (playing) { clearInterval(timer); timer = null; playing = false; }
+        });
+      }
+    }
+
     return () => {
       window.removeEventListener('keydown', handleKey);
       if (timer) clearInterval(timer);
       if (interpWorker) { interpWorker.terminate(); interpWorker = null; }
     };
   });
+
+  // ── Silently update URL when state changes ────────────────────────────────
+  $effect(() => {
+    if (!routeKey) return;
+    updateUrlSilent({
+      route: routeKey,
+      ex: selEx,
+      step: step,
+      code: codeText,
+      exampleCode: examples[selEx]?.code ?? '',
+    });
+  });
+
+  // ── Share button handler ──────────────────────────────────────────────────
+  async function shareUrl() {
+    const url = buildShareUrl({
+      route: routeKey,
+      ex: selEx,
+      step: step,
+      code: codeText,
+      exampleCode: examples[selEx]?.code ?? '',
+    });
+    try {
+      await navigator.clipboard.writeText(url);
+      shareToast = 'Link copied!';
+    } catch (e) {
+      shareToast = 'Copy failed';
+    }
+    setTimeout(() => { shareToast = ''; }, 2200);
+  }
 </script>
 
 <div class="mod" role="main" aria-label="{titlePrefix}{titleAccent} learning module">
@@ -278,6 +349,12 @@
       {#if desc}<p class="desc">{desc}</p>{/if}
     </div>
     <div class="hdr-spacer"></div>
+    <button class="share-btn" style="--acc:{accent}" onclick={shareUrl} aria-label="Copy shareable link">
+      <span class="share-icon">🔗</span> Share
+    </button>
+    {#if shareToast}
+      <div class="share-toast" style="--acc:{accent}">{shareToast}</div>
+    {/if}
   </header>
 
   <!-- Example picker -->
@@ -295,18 +372,30 @@
     {/each}
   </nav>
 
+  <!-- Mobile tab switcher (hidden on desktop via CSS) -->
+  {#if hasRun}
+    <div class="mob-tabs" style="--acc:{accent}">
+      <button class="mob-tab" class:mob-tab-act={mobileTab === 'code'} onclick={() => mobileTab = 'code'}>
+        <span class="mob-tab-icon">{'{ }'}</span> Code
+      </button>
+      <button class="mob-tab" class:mob-tab-act={mobileTab === 'visual'} onclick={() => mobileTab = 'visual'}>
+        <span class="mob-tab-icon">◉</span> Visual
+      </button>
+    </div>
+  {/if}
+
   <!-- Main split layout -->
   <div class="main">
 
     <!-- ── LEFT: CODE PANEL ────────────────────────────────────────────────── -->
-    <div class="code-panel">
+    <div class="code-panel" class:mob-hidden={hasRun && mobileTab !== 'code'}>
       <div class="ph">
         <span class="pt">Source Code</span>
         <div class="pa">
           {#if hasRun}
             <button class="eb" onclick={editCode} aria-label="Edit code">✎ Edit</button>
           {/if}
-          <button class="rb" style="background:{accent};color:#0a0a0f" onclick={_runCode} disabled={running}
+          <button class="rb" style="background:{accent};color:var(--a11y-bg, #0a0a0f)" onclick={_runCode} disabled={running}
             aria-label={running ? 'Running code' : 'Visualize code execution'}>
             {running ? '⏳ Running…' : '▶ Visualize'}
           </button>
@@ -410,7 +499,7 @@
     </div>
 
     <!-- ── RIGHT: VISUAL STATE PANEL ──────────────────────────────────────── -->
-    <div class="vis-panel">
+    <div class="vis-panel" class:mob-hidden={hasRun && mobileTab !== 'visual'}>
       {#if sd}
 
         <!-- CPU dashboard -->
@@ -561,6 +650,9 @@
     </div>
 
   </div>
+
+  <!-- First-run onboarding tour -->
+  <OnboardingTour {accent} />
 </div>
 
 <style>
@@ -576,7 +668,7 @@
       radial-gradient(ellipse 65% 50% at 100% 0%,   color-mix(in srgb, var(--acc) 10%, transparent) 0%, transparent 65%),
       radial-gradient(ellipse 45% 35% at 0%   100%,  color-mix(in srgb, var(--acc) 6%,  transparent) 0%, transparent 60%);
   }
-  .hdr { display:flex; align-items:center; gap:14px; flex-shrink:0; }
+  .hdr { display:flex; align-items:center; gap:14px; flex-shrink:0; position:relative; }
   .hdr-spacer { flex:1; }
   .back { font-size:0.78rem; color:rgba(255,255,255,0.45); text-decoration:none; transition:color 0.2s; font-family:'Geist','Inter',system-ui,sans-serif; }
   .back:hover { color:var(--acc); }
@@ -585,6 +677,38 @@
   .ac  { /* colour set inline */ }
   .sub { font-weight:400; font-size:0.88rem; color:rgba(255,255,255,0.55); font-family:'Geist','Inter',system-ui,sans-serif; }
   .desc { font-size:0.72rem; color:rgba(255,255,255,0.52); margin:2px 0 0; font-family:'Geist','Inter',system-ui,sans-serif; }
+
+  /* ── Share button + toast ────────────────────────────────────────────── */
+  .share-btn {
+    display:flex; align-items:center; gap:5px;
+    background:color-mix(in srgb, var(--acc) 8%, transparent);
+    border:1px solid color-mix(in srgb, var(--acc) 30%, transparent);
+    border-radius:6px; color:var(--acc);
+    font-size:0.72rem; font-weight:600; padding:5px 12px;
+    cursor:pointer; font-family:'Geist','Inter',system-ui,sans-serif;
+    transition:all 0.15s; white-space:nowrap; flex-shrink:0;
+  }
+  .share-btn:hover {
+    background:color-mix(in srgb, var(--acc) 16%, transparent);
+    border-color:color-mix(in srgb, var(--acc) 55%, transparent);
+  }
+  .share-btn:active { transform:scale(0.96); }
+  .share-icon { font-size:0.82rem; line-height:1; }
+  .share-toast {
+    position:absolute; top:100%; right:0; margin-top:6px;
+    background:color-mix(in srgb, var(--acc) 18%, #0a0a12);
+    border:1px solid color-mix(in srgb, var(--acc) 40%, transparent);
+    border-radius:6px; padding:5px 12px;
+    font-size:0.68rem; color:var(--acc); font-weight:600;
+    font-family:'Geist','Inter',system-ui,sans-serif;
+    white-space:nowrap; z-index:20;
+    animation:toast-in 0.2s ease-out;
+    box-shadow:0 4px 16px rgba(0,0,0,0.4);
+  }
+  @keyframes toast-in {
+    from { opacity:0; transform:translateY(-4px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
 
   /* ── Example picker ────────────────────────────────────────────────────── */
   .ex-bar  { display:flex; gap:6px; align-items:center; flex-wrap:wrap; flex-shrink:0; }
@@ -653,7 +777,7 @@
   /* ── Error card ──────────────────────────────────────────────────────── */
   .err-card     { background:#ef444410; border:1px solid #ef444433; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .err-head     { display:flex; align-items:flex-start; gap:8px; padding:8px 12px; background:#ef44440a; border-bottom:1px solid #ef444418; }
-  .err-icon     { flex-shrink:0; width:20px; height:20px; display:flex; align-items:center; justify-content:center; background:#ef4444; color:#0a0a0f; font-size:0.7rem; font-weight:800; border-radius:50%; margin-top:1px; }
+  .err-icon     { flex-shrink:0; width:20px; height:20px; display:flex; align-items:center; justify-content:center; background:#ef4444; color:var(--a11y-bg, #0a0a0f); font-size:0.7rem; font-weight:800; border-radius:50%; margin-top:1px; }
   .err-friendly { font-size:0.78rem; color:#fca5a5; line-height:1.5; font-weight:600; }
   .err-hint     { padding:8px 12px; font-size:0.7rem; color:#d4a0a0; line-height:1.65; white-space:pre-wrap; font-family:'SF Mono','Fira Code','Consolas',monospace; background:transparent; margin:0; border:none; }
   .err-details  { border-top:1px solid #ef444418; }
@@ -749,7 +873,7 @@
     color:#555;
     pointer-events:none;
   }
-  .tl-active .tl-icon { color:#0a0a0f; font-size:0.6rem; font-weight:700; }
+  .tl-active .tl-icon { color:var(--a11y-bg, #0a0a0f); font-size:0.6rem; font-weight:700; }
   .tl-past .tl-icon { color:color-mix(in srgb, var(--acc) 60%, transparent); }
 
   /* ── Visual panel (right) ──────────────────────────────────────────────── */
@@ -859,6 +983,9 @@
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-text         { font-size:0.8rem; color:rgba(255,255,255,0.45); text-align:center; }
 
+  /* ── Mobile tab switcher (hidden on desktop) ─────────────────────────── */
+  .mob-tabs { display:none; }
+
   /* ── Responsive: tablet ≤768px ────────────────────────────────────────── */
   @media (max-width: 768px) {
     .mod        { padding:10px 12px; gap:8px; height:auto; min-height:100vh; min-height:100dvh; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
@@ -869,9 +996,9 @@
     .ex-bar     { gap:4px; overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; }
     .ex-bar::-webkit-scrollbar { display:none; }
     .ex-btn     { font-size:0.62rem; padding:6px 12px; white-space:nowrap; flex-shrink:0; min-height:44px; min-width:44px; display:inline-flex; align-items:center; justify-content:center; }
-    .main       { flex-direction:column; overflow:visible; min-height:0; flex:none; gap:10px; }
-    .code-panel { min-height:auto; flex:none; }
-    .vis-panel  { width:100%; flex-shrink:initial; max-height:none; overflow:visible; }
+    .main       { flex-direction:column; overflow:visible; min-height:0; flex:1; gap:10px; }
+    .code-panel { min-height:auto; flex:1; }
+    .vis-panel  { width:100%; flex:1; max-height:none; overflow-y:auto; }
     .code-disp  { max-height:260px; min-height:180px; }
     .ctrls      { flex-wrap:wrap; gap:4px; justify-content:center; }
     .cb         { padding:6px 12px; font-size:0.75rem; min-height:44px; min-width:44px; display:flex; align-items:center; justify-content:center; }
@@ -895,20 +1022,65 @@
     .err-raw      { font-size:0.55rem; }
     .vis-placeholder { padding:16px 12px; gap:14px; }
     .ph-text    { font-size:0.75rem; }
+
+    /* ── Mobile tab switcher ── */
+    .mob-tabs {
+      display:flex; gap:0; flex-shrink:0;
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:8px; overflow:hidden;
+    }
+    .mob-tab {
+      flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
+      padding:10px 0; border:none; background:transparent;
+      color:rgba(255,255,255,0.45); font-size:0.72rem; font-weight:600;
+      font-family:'Geist','Inter',system-ui,sans-serif;
+      cursor:pointer; transition:all 0.15s;
+    }
+    .mob-tab-act {
+      background:color-mix(in srgb, var(--acc) 12%, transparent);
+      color:var(--acc);
+      box-shadow:inset 0 -2px 0 var(--acc);
+    }
+    .mob-tab-icon { font-size:0.8rem; }
+
+    /* ── Panel visibility on mobile ── */
+    .mob-hidden { display:none !important; }
+
+    /* ── Share button compact ── */
+    .share-btn { padding:4px 10px; font-size:0.65rem; }
   }
 
   /* ── Responsive: phone ≤480px ────────────────────────────────────────── */
   @media (max-width: 480px) {
-    .mod        { padding:6px 8px; gap:6px; }
-    .hdr        { flex-direction:column; align-items:flex-start; gap:4px; }
+    .mod        { padding:6px 8px; gap:6px; padding-bottom:72px; } /* padding-bottom for fixed bottom bar */
+    .hdr        { flex-direction:row; align-items:center; gap:6px; flex-wrap:wrap; }
+    .hdr-spacer { flex:1; min-width:0; }
+    .title-group { flex:1; min-width:0; }
     h2          { font-size:0.95rem; }
     .sub        { font-size:0.68rem; }
+    .desc       { display:none; }
     .ex-btn     { font-size:0.6rem; padding:5px 10px; min-height:44px; min-width:44px; display:inline-flex; align-items:center; justify-content:center; }
     .code-disp  { max-height:200px; min-height:140px; font-size:0.75rem; line-height:1.6; }
     .ln         { width:22px; font-size:0.62rem; }
     .ac-col     { width:16px; }
-    .cb         { padding:6px 10px; font-size:0.7rem; min-height:44px; min-width:44px; }
+
+    /* ── Fixed bottom bar for step controls ── */
+    .ctrls {
+      position:fixed; bottom:0; left:0; right:0; z-index:50;
+      background:var(--a11y-bg, #0a0a0f);
+      border-top:1px solid rgba(255,255,255,0.1);
+      padding:6px 12px; gap:6px;
+      display:flex; align-items:center; justify-content:center;
+      flex-wrap:nowrap;
+      box-shadow:0 -4px 20px rgba(0,0,0,0.6);
+      -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+    }
+    .cb         { padding:6px 10px; font-size:0.8rem; min-height:44px; min-width:44px; }
     .abtn       { min-width:48px; min-height:44px; }
+    .sc         { font-size:0.62rem; width:auto; order:0; margin:0; white-space:nowrap; }
+    .speed-row  { display:none; } /* hide speed on small phones — simplify */
+
     .heap-grid  { grid-template-columns:1fr 1fr; gap:4px; padding:4px; }
     .heap-name  { font-size:0.72rem; }
     .heap-val   { font-size:0.9rem; padding:3px 8px 6px; }
@@ -935,6 +1107,13 @@
     .tl-active .tl-icon { font-size:0.42rem; }
     .vis-placeholder { padding:10px 8px; gap:8px; min-height:180px; }
     .ph-text    { font-size:0.68rem; padding:0 6px; }
+
+    /* ── Share button even more compact ── */
+    .share-btn  { padding:3px 8px; font-size:0.6rem; }
+    .share-icon { font-size:0.7rem; }
+
+    /* ── Mobile tabs tighter ── */
+    .mob-tab { padding:8px 0; font-size:0.68rem; }
   }
 
   /* ── Responsive: very small phone ≤360px ─────────────────────────────── */

@@ -17,13 +17,14 @@ describe('Home.svelte', () => {
 
   it('renders the tagline', () => {
     render(Home);
-    expect(screen.getByText('See how JavaScript thinks.')).toBeTruthy();
+    expect(screen.getByText(/Watch it think/)).toBeTruthy();
   });
 
-  it('renders all 9 module cards', () => {
+  it('renders all module cards plus hero features', () => {
     render(Home);
     const cards = screen.getAllByRole('listitem');
-    expect(cards.length).toBe(9);
+    // 3 hero feature bullets + 9 module cards = 12
+    expect(cards.length).toBe(12);
   });
 
   it('renders correct module titles', () => {
@@ -54,9 +55,10 @@ describe('Home.svelte', () => {
     expect(hrefs).toContain('#/closures');
   });
 
-  it('renders the footer', () => {
+  it('renders the demo progress bar', () => {
     render(Home);
-    expect(screen.getByText(/Svelte.*Acorn/)).toBeTruthy();
+    // The demo section has a progress bar — verify it exists
+    expect(document.querySelector('.demo-progress-track')).toBeTruthy();
   });
 
   it('renders module descriptions', () => {

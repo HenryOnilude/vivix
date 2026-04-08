@@ -3,6 +3,7 @@
   import Home from './lib/Home.svelte';
   import ErrorBoundary from './lib/ErrorBoundary.svelte';
   import { initTheme } from './lib/a11y-theme.js';
+  import { parseHashState } from './lib/url-state.js';
 
   // Initialize accessibility theme from localStorage on load
   initTheme();
@@ -27,8 +28,8 @@
   let loading = $state(false);
 
   function getRoute() {
-    const hash = window.location.hash.slice(2) || '';
-    return hash || 'home';
+    const parsed = parseHashState();
+    return parsed.route;
   }
 
   async function loadRoute(r) {
