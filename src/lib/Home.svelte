@@ -260,6 +260,40 @@
             {/if}
           </div>
 
+          <!-- Memory map — matches the real module view -->
+          {#if currentStep.vars.length > 0}
+            <div class="demo-memmap">
+              <div class="demo-memmap-hdr">
+                <span class="demo-memmap-icon">⣿</span>
+                <span class="demo-memmap-title">MEMORY MAP</span>
+                <span class="demo-memmap-usage">~{currentStep.vars.reduce((s, v) => s + (v.bytes || 0), 0)}B used</span>
+              </div>
+              <div class="demo-memmap-rows">
+                {#each currentStep.vars as v (v.n)}
+                  <div class="demo-memmap-row">
+                    <span class="demo-memmap-name">{v.n}</span>
+                    <span class="demo-memmap-type">{v.t}</span>
+                    <div class="demo-memmap-bar">
+                      {#each Array(Math.min(v.bytes || 1, 8)) as _}
+                        <span class="demo-memmap-byte" style="background:{v.c}"></span>
+                      {/each}
+                    </div>
+                    <span class="demo-memmap-size">{v.bytes || 0}B</span>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {/if}
+
+          <!-- Status row — shows completion stats like real module -->
+          {#if currentStep.op === 'DONE'}
+            <div class="demo-status">
+              <span class="demo-status-check">✓</span>
+              <span class="demo-status-label">Program Complete</span>
+              <span class="demo-status-stats">{currentStep.vars.length} vars · {currentStep.writes} writes</span>
+            </div>
+          {/if}
+
         </div>
       </div>
 
@@ -587,7 +621,7 @@
   /* ── Demo shell: full-width product preview ── */
   .demo-shell {
     width: 100%;
-    max-width: 780px;
+    max-width: 860px;
     margin-top: 40px;
     background: var(--a11y-surface3, #0c0c18);
     border: 1px solid rgba(255,255,255,0.10);
@@ -612,7 +646,7 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     width: 100%;
-    max-width: 780px;
+    max-width: 860px;
     margin-top: 36px;
     animation: hero-fade-in 0.8s ease 0.4s both;
   }
@@ -909,11 +943,11 @@
   .demo-heap-var {
     background: color-mix(in srgb, var(--vc) 8%, var(--a11y-surface3, #0c0c18));
     border: 1px solid color-mix(in srgb, var(--vc) 22%, rgba(255,255,255,0.05));
-    border-radius: 5px;
-    padding: 5px 8px;
+    border-radius: 6px;
+    padding: 8px 10px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
     animation: var-appear 0.25s ease;
   }
 
@@ -930,7 +964,7 @@
 
   .demo-heap-name {
     font-family: 'Geist Mono', monospace;
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     color: rgba(255,255,255,0.88);
     font-weight: 700;
   }
@@ -945,7 +979,7 @@
 
   .demo-heap-val {
     font-family: 'Geist Mono', monospace;
-    font-size: 0.75rem;
+    font-size: 0.88rem;
     font-weight: 800;
   }
 
@@ -956,9 +990,9 @@
   }
 
   .demo-byte {
-    width: 5px;
-    height: 5px;
-    border-radius: 1px;
+    width: 7px;
+    height: 7px;
+    border-radius: 1.5px;
     opacity: 0.5;
   }
 
@@ -985,6 +1019,128 @@
     color: #4ade80;
     font-weight: 700;
     animation: var-appear 0.25s ease;
+  }
+
+  /* Memory map */
+  .demo-memmap {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.015);
+    animation: var-appear 0.25s ease;
+  }
+
+  .demo-memmap-hdr {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .demo-memmap-icon {
+    font-size: 0.55rem;
+    color: rgba(56,189,248,0.5);
+  }
+
+  .demo-memmap-title {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.45rem;
+    color: rgba(255,255,255,0.30);
+    letter-spacing: 1.5px;
+    flex: 1;
+  }
+
+  .demo-memmap-usage {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.45rem;
+    color: rgba(56,189,248,0.60);
+    letter-spacing: 0.5px;
+  }
+
+  .demo-memmap-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .demo-memmap-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+  }
+
+  .demo-memmap-name {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.75);
+    min-width: 38px;
+  }
+
+  .demo-memmap-type {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.40rem;
+    color: rgba(255,255,255,0.22);
+    min-width: 32px;
+  }
+
+  .demo-memmap-bar {
+    display: flex;
+    gap: 1.5px;
+    flex: 1;
+  }
+
+  .demo-memmap-byte {
+    width: 8px;
+    height: 8px;
+    border-radius: 1.5px;
+    opacity: 0.50;
+  }
+
+  .demo-memmap-size {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.45rem;
+    color: rgba(255,255,255,0.28);
+    min-width: 20px;
+    text-align: right;
+  }
+
+  /* Status row */
+  .demo-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-top: 1px solid rgba(74,222,128,0.15);
+    background: rgba(74,222,128,0.05);
+    animation: var-appear 0.3s ease;
+  }
+
+  .demo-status-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: rgba(74,222,128,0.18);
+    color: #4ade80;
+    font-size: 0.6rem;
+    font-weight: 800;
+  }
+
+  .demo-status-label {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #4ade80;
+  }
+
+  .demo-status-stats {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.52rem;
+    color: rgba(255,255,255,0.35);
+    margin-left: auto;
   }
 
   /* Explanation strip */
