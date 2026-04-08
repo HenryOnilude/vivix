@@ -136,7 +136,7 @@
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2l10 6-10 6V2z" fill="currentColor"/></svg>
           Try it now
         </a>
-        <a href="#/if-gate" class="cta-ghost">See all 9 modules</a>
+        <button class="cta-ghost" onclick={() => document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' })}>See all 9 modules</button>
       </div>
 
       <p class="hero-hint">No sign-up required — runs entirely in your browser.</p>
@@ -347,7 +347,7 @@
   </section>
 
   <!-- ── Section divider ── -->
-  <div class="section-divider">
+  <div id="modules" class="section-divider">
     <span class="divider-label">Pick a concept to explore</span>
   </div>
 
@@ -601,6 +601,7 @@
     border: 1px solid rgba(255,255,255,0.12);
     transition: all 0.2s ease;
     background: rgba(255,255,255,0.03);
+    cursor: pointer;
   }
 
   .cta-ghost:hover {
