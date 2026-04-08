@@ -37,9 +37,9 @@
     },
     {
       selector: '.vis-panel',
-      title: 'Watch the CPU',
-      text: 'After running, this panel shows CPU state, memory, and output — updated each step.',
-      arrow: 'top',
+      title: 'Visual panel',
+      text: 'After running, this panel shows CPU state, memory, and output — updated each step. Use the step controls to scrub through.',
+      arrow: 'bottom',
     },
   ];
 
@@ -91,21 +91,32 @@
     }
 
     const rect = el.getBoundingClientRect();
-    arrowDir = step.arrow;
 
     // Calculate position based on arrow direction
     let top, left;
-    const pad = 12;
+    const pad = 14;
+    const tipH = 180; // approximate tooltip height
+    let dir = step.arrow;
 
-    if (step.arrow === 'top') {
+    if (dir === 'top') {
       // Tooltip below the element
       top = rect.bottom + pad;
       left = rect.left + rect.width / 2;
-    } else if (step.arrow === 'bottom') {
+      // Auto-flip above if would overflow bottom
+      if (top + tipH > window.innerHeight - 20) {
+        top = rect.top - pad;
+        dir = 'bottom';
+      }
+    } else if (dir === 'bottom') {
       // Tooltip above the element
       top = rect.top - pad;
       left = rect.left + rect.width / 2;
-    } else if (step.arrow === 'left') {
+      // Auto-flip below if would overflow top
+      if (top - tipH < 20) {
+        top = rect.bottom + pad;
+        dir = 'top';
+      }
+    } else if (dir === 'left') {
       // Tooltip to the right of the element
       top = rect.top + rect.height / 2;
       left = rect.right + pad;
@@ -115,13 +126,15 @@
       left = rect.left - pad;
     }
 
+    arrowDir = dir;
+
     // Clamp to viewport
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     if (left < 20) left = 20;
     if (left > vw - 20) left = vw - 20;
-    if (top < 10) top = 10;
-    if (top > vh - 120) top = vh - 120;
+    if (top < 20) top = 20;
+    if (top > vh - tipH - 20) top = vh - tipH - 20;
 
     tooltipStyle = `top:${top}px;left:${left}px`;
   }
