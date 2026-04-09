@@ -66,6 +66,10 @@ class StepLimitError extends Error {
   }
 }
 
+// Sentinels for break/continue inside nested blocks (e.g. break inside if inside while)
+class BreakSignal { }
+class ContinueSignal { }
+
 // ═══════════════════════════════════════════════════════
 // STEP-BY-STEP INTERPRETER
 // This is what modules call. It walks the AST and produces
@@ -211,9 +215,10 @@ function walkStatement(stmt, nextStmt, vars, output, lines, steps, state, option
       break;
 
     case 'BreakStatement':
+      throw new BreakSignal();
+
     case 'ContinueStatement':
-      // Handled by loop/switch logic via exceptions
-      break;
+      throw new ContinueSignal();
 
     default:
       break;
@@ -616,9 +621,18 @@ function walkForStatement(stmt, nextLi, vars, output, lines, steps, state, optio
 
     // Body
     const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
+    let hitBreak = false;
+    let hitContinue = false;
     for (let i = 0; i < body.length; i++) {
-      walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+      try {
+        walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+      } catch (sig) {
+        if (sig instanceof BreakSignal) { hitBreak = true; break; }
+        if (sig instanceof ContinueSignal) { hitContinue = true; break; }
+        throw sig;
+      }
     }
+    if (hitBreak) break;
 
     // Update
     if (stmt.update) {
@@ -650,9 +664,17 @@ function walkWhileStatement(stmt, nextLi, vars, output, lines, steps, state, opt
     if (!testVal) break;
 
     const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
+    let hitBreak = false;
     for (let i = 0; i < body.length; i++) {
-      walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+      try {
+        walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+      } catch (sig) {
+        if (sig instanceof BreakSignal) { hitBreak = true; break; }
+        if (sig instanceof ContinueSignal) break;
+        throw sig;
+      }
     }
+    if (hitBreak) break;
   }
 }
 
@@ -749,8 +771,12 @@ function walkSwitchStatement(stmt, nextLi, vars, output, lines, steps, state, op
     if (matched) {
       let hitBreak = false;
       for (const s of c.consequent) {
-        if (s.type === 'BreakStatement') { hitBreak = true; break; }
-        walkStatement(s, null, vars, output, lines, steps, state, options, depth + 1);
+        try {
+          walkStatement(s, null, vars, output, lines, steps, state, options, depth + 1);
+        } catch (sig) {
+          if (sig instanceof BreakSignal) { hitBreak = true; break; }
+          throw sig;
+        }
       }
       if (hitBreak) break;
       fell = true; // fall-through to next case
@@ -790,9 +816,13 @@ function walkForOfStatement(stmt, nextLi, vars, output, lines, steps, state, opt
     const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
     let hitBreak = false;
     for (let i = 0; i < body.length; i++) {
-      if (body[i].type === 'BreakStatement') { hitBreak = true; break; }
-      if (body[i].type === 'ContinueStatement') break;
-      walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+      try {
+        walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+      } catch (sig) {
+        if (sig instanceof BreakSignal) { hitBreak = true; break; }
+        if (sig instanceof ContinueSignal) break;
+        throw sig;
+      }
     }
     if (hitBreak) break;
   }
@@ -805,9 +835,17 @@ function walkDoWhileStatement(stmt, nextLi, vars, output, lines, steps, state, o
   while (guard++ < 500) {
     // Execute body first
     const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
+    let hitBreak = false;
     for (let i = 0; i < body.length; i++) {
-      walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+      try {
+        walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+      } catch (sig) {
+        if (sig instanceof BreakSignal) { hitBreak = true; break; }
+        if (sig instanceof ContinueSignal) break;
+        throw sig;
+      }
     }
+    if (hitBreak) break;
     // Then test
     const testVal = evalNode(stmt.test, vars);
     state.comps++;

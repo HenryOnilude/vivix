@@ -52,12 +52,12 @@
       },
     },
     {
-      label: 'Closure loop',
+      label: 'Closure loop trap',
       code: 'let funcs = [];\n\nfor (let i = 0; i < 3; i++) {\n  funcs[i] = function() {\n    return i;\n  };\n}\n\nlet r0 = funcs[0]();\nlet r1 = funcs[1]();\nlet r2 = funcs[2]();',
       complexity: {
         time: 'O(n)', space: 'O(n)',
         timeWhy: 'Loop runs n times creating n closures — linear time.',
-        spaceWhy: 'Each closure with let captures its own i — n separate scope snapshots in memory. With var, all closures would share one i.',
+        spaceWhy: 'All three closures share the same i variable. After the loop, i = 3, so every function returns 3. This is the classic "closure in a loop" trap. In full JS, using let creates a fresh binding per iteration — but here all closures see the final value.',
       },
     },
   ];

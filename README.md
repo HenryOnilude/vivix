@@ -6,7 +6,7 @@
 
 Write real code → click play → watch the CPU, memory, and call stack respond in real time.
 
-[![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen)](https://github.com/HenryOnilude/visual-learning-javascript)
+[![Tests](https://img.shields.io/badge/tests-294%20passing-brightgreen)](https://github.com/HenryOnilude/visual-learning-javascript)
 [![Svelte 5](https://img.shields.io/badge/svelte-5-FF3E00?logo=svelte&logoColor=white)](https://svelte.dev)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/HenryOnilude/visual-learning-javascript/pulls)
@@ -80,7 +80,7 @@ npm run dev      # → http://localhost:5173
 ```
 
 ```bash
-npm run test     # 161 unit tests
+npm run test     # 294 unit tests
 npm run build    # production build + SEO pages
 ```
 
@@ -118,7 +118,7 @@ The interpreter runs in a **Web Worker** for non-blocking execution, with a **50
 | Parser | Acorn (ESTree AST) |
 | Code Editor | CodeMirror 6 |
 | Build | Vite 7 |
-| Tests | Vitest + Testing Library + happy-dom |
+| Tests | Vitest + Testing Library + happy-dom (294 tests) |
 | Styling | Custom CSS with CSS custom properties |
 
 ---
@@ -127,7 +127,7 @@ The interpreter runs in a **Web Worker** for non-blocking execution, with a **50
 
 ```
 src/lib/
-  interpreter.js         ← AST walker, step generator (99 tests)
+  interpreter.js         ← AST walker, step generator (99 + 71 + 62 tests)
   shell-logic.js         ← shared step utilities (35 tests)
   url-state.js           ← shareable URL encoding (20 tests)
   a11y-theme.js          ← accessibility theme system

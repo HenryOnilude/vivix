@@ -367,12 +367,10 @@ export function createFuncFromNode(node, outerVars) {
       returnVal = evalNode(node.body, localVars);
     }
 
-    // trackClosures: write back primitive mutations to outer scope (closure semantics)
-    if (_globalTrackClosures) {
-      for (const key of Object.keys(outerVars)) {
-        if (!paramSet.has(key) && localVars[key] !== outerVars[key]) {
-          outerVars[key] = localVars[key];
-        }
+    // Write back outer-scope mutations (closure semantics — always needed)
+    for (const key of Object.keys(outerVars)) {
+      if (!paramSet.has(key) && localVars[key] !== outerVars[key]) {
+        outerVars[key] = localVars[key];
       }
     }
 
