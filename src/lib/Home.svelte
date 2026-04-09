@@ -115,7 +115,7 @@
   ];
 </script>
 
-<div class="home" role="main" aria-label="VisualJS home page">
+<div class="home" role="main" aria-label="Vivix home page">
 
   <!-- ── Hero ── -->
   <section class="hero">

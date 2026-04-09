@@ -1,6 +1,6 @@
 # Launch Copy — Ready to Post
 
-Use these templates when sharing visualJS. Replace `[LIVE_URL]` with your deployed URL once you have one.
+Use these templates when sharing Vivix. Replace `[LIVE_URL]` with your deployed URL once you have one.
 
 ---
 
@@ -10,7 +10,7 @@ Use these templates when sharing visualJS. Replace `[LIVE_URL]` with your deploy
 
 **Body:**
 
-Hey everyone! I built **visualJS** — an interactive JavaScript execution visualizer.
+Hey everyone! I built **Vivix** — an interactive JavaScript execution visualizer.
 
 You write real JS, click play, and step through every instruction one at a time. As you step, you see:
 
@@ -39,7 +39,7 @@ Would love to hear what you think — especially which concepts you'd want visua
 
 **Body:**
 
-I've been working on **visualJS** — a tool that visualizes JavaScript execution at a low level.
+I've been working on **Vivix** — a tool that visualizes JavaScript execution at a low level.
 
 Instead of just showing "this variable equals 5", it shows:
 - The heap memory slot being allocated
@@ -63,7 +63,7 @@ Open source (MIT). Feedback welcome!
 
 ## Hacker News — Show HN
 
-**Title:** Show HN: VisualJS – Step through JavaScript and watch the CPU, memory, and call stack respond
+**Title:** Show HN: Vivix – Step through JavaScript and watch the CPU, memory, and call stack respond
 
 **Body:**
 
@@ -92,7 +92,7 @@ When I was learning JavaScript, I kept reading things like "variables are stored
 
 ## The solution
 
-I built **visualJS** — an interactive tool where you write real JavaScript, click play, and step through execution one instruction at a time.
+I built **Vivix** — an interactive tool where you write real JavaScript, click play, and step through execution one instruction at a time.
 
 At each step, you see:
 - 🧠 **Heap memory** — variables with types, values, and byte sizes
@@ -147,7 +147,7 @@ Free, no sign-up, open source (MIT). Would love feedback — especially on which
 
 **Tweet:**
 
-I built visualJS — an interactive tool that lets you see inside JavaScript as it runs.
+I built Vivix — an interactive tool that lets you see inside JavaScript as it runs.
 
 Step through real code and watch:
 ⚡ CPU dashboard tick through operations

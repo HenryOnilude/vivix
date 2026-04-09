@@ -14,7 +14,7 @@
   /** @type {string} */
   let { accent = '#6366f1' } = $props();
 
-  const STORAGE_KEY = 'visualjs-onboarding-done';
+  const STORAGE_KEY = 'vivix-onboarding-done';
 
   const STEPS = [
     {

@@ -98,7 +98,7 @@ export function friendlyError(raw, code = '', line = '?') {
   if (/Assignment to constant/i.test(msg) || /Assignment to const/i.test(msg)) {
     return {
       friendly: 'You tried to change a `const` variable, which isn\'t allowed.',
-      hint: '`const` means "constant" — once set, it can\'t be changed.\n\nTwo options:\n1. Use `let` instead of `const` if you need to change it later\n2. Keep `const` and don\'t reassign it\n\nconst is great for values that should never change, like:\n  const PI = 3.14159;\n  const APP_NAME = "VisualJS";',
+      hint: '`const` means "constant" — once set, it can\'t be changed.\n\nTwo options:\n1. Use `let` instead of `const` if you need to change it later\n2. Keep `const` and don\'t reassign it\n\nconst is great for values that should never change, like:\n  const PI = 3.14159;\n  const APP_NAME = "Vivix";',
       raw
     };
   }

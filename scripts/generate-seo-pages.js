@@ -16,8 +16,8 @@ import { join } from 'path';
 
 const DIST = join(process.cwd(), 'dist');
 
-const SITE_NAME = 'visualJS';
-const BASE_URL  = 'https://visualjs.dev'; // Update when you have a real domain
+const SITE_NAME = 'Vivix';
+const BASE_URL  = 'https://vivix.dev'; // Update when you have a real domain
 
 const MODULES = [
   {
@@ -206,12 +206,12 @@ function buildLandingPage(mod) {
   </style>
 </head>
 <body>
-  <a href="/" class="back">&larr; visualJS Home</a>
+  <a href="/" class="back">&larr; Vivix Home</a>
   <h1>${mod.h1}</h1>
   ${mod.body}
   <a href="/#/${mod.slug}" class="cta">&#9654; Open Interactive Visualizer</a>
   <noscript>
-    <p>This interactive visualizer requires JavaScript to run. Please enable JavaScript in your browser to use visualJS.</p>
+    <p>This interactive visualizer requires JavaScript to run. Please enable JavaScript in your browser to use Vivix.</p>
   </noscript>
   <script>
     // Redirect browsers (not crawlers) to the SPA hash route

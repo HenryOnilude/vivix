@@ -46,9 +46,9 @@ describe('Variables', () => {
   });
 
   it('const vs let: both work', () => {
-    const { vars } = run('const PI = 3.14159;\nconst APP_NAME = "VisualJS";\nlet counter = 0;\ncounter = counter + 1;\ncounter = counter + 1;');
+    const { vars } = run('const PI = 3.14159;\nconst APP_NAME = "Vivix";\nlet counter = 0;\ncounter = counter + 1;\ncounter = counter + 1;');
     expect(vars.PI).toBeCloseTo(3.14159);
-    expect(vars.APP_NAME).toBe('VisualJS');
+    expect(vars.APP_NAME).toBe('Vivix');
     expect(vars.counter).toBe(2);
   });
 });

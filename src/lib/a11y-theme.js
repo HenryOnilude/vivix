@@ -10,7 +10,7 @@
  * CSS custom properties are set on <html> and consumed via var(--a11y-bg), etc.
  */
 
-const STORAGE_KEY = 'visualjs-a11y-theme';
+const STORAGE_KEY = 'vivix-a11y-theme';
 
 export const THEMES = {
   default: {

@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ visualJS
+# Vivix
 
 ### See Inside JavaScript As It Thinks
 
@@ -17,7 +17,7 @@ Write real code → click play → watch the CPU, memory, and call stack respond
 
 ## What is this?
 
-Most JS tutorials tell you what code does. **visualJS shows you.**
+Most JS tutorials tell you what code does. **Vivix shows you.**
 
 You write JavaScript, hit play, and step through execution one instruction at a time — watching variables appear in heap memory, call stack frames push and pop, byte sizes update, and the CPU dashboard tick through each operation. It's like having X-ray vision for JavaScript.
 
@@ -30,7 +30,7 @@ You write JavaScript, hit play, and step through execution one instruction at a 
 <!-- Replace with actual screenshots or GIFs after recording -->
 > **📸 Add a screen recording here!** Record a 60-second walkthrough of the Variables module using [Kap](https://getkap.co/) (macOS) or [ScreenToGif](https://www.screentogif.com/) (Windows), then replace this block with:
 > ```
-> ![visualJS demo](./docs/demo.gif)
+> ![Vivix demo](./docs/demo.gif)
 > ```
 
 ---
