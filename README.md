@@ -151,6 +151,20 @@ scripts/
 
 ---
 
+## ⚠️ Known Limitations
+
+The interpreter is an educational tool, not a full JS engine. A few simplifications:
+
+- **Flat scope** — `let`/`const` inside blocks (if, for, while) share the outer scope. Variables declared in a block are visible outside it. This means the classic "closure in a loop with `let`" pattern behaves like `var` (all closures share the final value).
+- **No `this` in standalone functions** — `this` is only supported for class method calls, not general `this` binding.
+- **Limited built-ins** — supports core methods (`push`, `pop`, `map`, `filter`, `reduce`, `Object.keys`, `Math.*`, etc.) but not the full standard library.
+- **No prototypes or `new` (outside classes)** — constructor functions with `new` are not supported; use the class syntax instead.
+- **500-step limit** — prevents infinite loops but caps very long programs.
+
+These trade-offs keep the visualizations clear and the codebase manageable while covering the concepts that matter most for learning.
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! Feel free to open an issue or submit a PR.
