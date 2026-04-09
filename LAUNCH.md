@@ -22,7 +22,7 @@ You write real JS, click play, and step through every instruction one at a time.
 
 There are **9 modules** covering variables, conditionals, loops, functions, arrays, objects, data structures, async/await, and closures. Each has its own purpose-built visualization.
 
-**Tech:** Svelte 5, Acorn parser, custom AST interpreter (no eval), CodeMirror 6, 294 unit tests.
+**Tech:** Svelte 5, Acorn parser, custom AST interpreter (no eval), CodeMirror 6, 332 unit tests.
 
 It's completely free, no sign-up, runs in your browser.
 
@@ -52,7 +52,7 @@ It's built with **Svelte 5** (runes), **Acorn** for parsing, and a **custom AST 
 
 9 modules: variables, conditionals, loops, functions, arrays, objects, data structures, async/await, closures.
 
-**294 tests**, mobile responsive, shareable URLs, accessibility themes.
+**332 tests**, mobile responsive, shareable URLs, accessibility themes.
 
 - **Live:** [LIVE_URL]
 - **GitHub:** https://github.com/HenryOnilude/visual-learning-javascript
@@ -71,7 +71,7 @@ I built an interactive JavaScript execution visualizer. You write code, click pl
 
 It's powered by a custom AST interpreter (Acorn → ESTree → step array) running in a Web Worker. No eval — we walk the AST directly to capture every intermediate state. 500-step limit prevents infinite loops.
 
-9 modules covering core JS concepts (variables through closures), each with a purpose-built visualization. Svelte 5, CodeMirror 6, 294 tests.
+9 modules covering core JS concepts (variables through closures), each with a purpose-built visualization. Svelte 5, CodeMirror 6, 332 tests.
 
 Try it: [LIVE_URL]
 Source: https://github.com/HenryOnilude/visual-learning-javascript
@@ -131,7 +131,7 @@ The interpreter runs in a **Web Worker** with a 500-step limit to prevent infini
 - **Svelte 5** with runes (`$state`, `$derived`)
 - **Acorn** for parsing
 - **CodeMirror 6** for the editor
-- **294 unit tests** (Vitest)
+- **332 unit tests** (Vitest)
 - Mobile responsive, shareable URLs, accessibility themes
 
 ## Try it
