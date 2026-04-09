@@ -357,6 +357,11 @@
     {/if}
   </header>
 
+  <!-- First-run hint -->
+  {#if !hasRun}
+    <p class="run-hint">Pick an example below, then click Visualize to step through it.</p>
+  {/if}
+
   <!-- Example picker -->
   <nav class="ex-bar" aria-label="Example programs">
     <span class="ex-lbl" id="ex-label">Examples:</span>
@@ -392,9 +397,7 @@
       <div class="ph">
         <span class="pt">Source Code</span>
         <div class="pa">
-          {#if hasRun}
-            <button class="eb" onclick={editCode} aria-label="Edit code">✎ Edit</button>
-          {/if}
+          <button class="eb" onclick={editCode} aria-label="Edit code">✎ Edit</button>
           <button class="rb" style="background:{accent};color:var(--a11y-bg, #0a0a0f)" onclick={_runCode} disabled={running}
             aria-label={running ? 'Running code' : 'Visualize code execution'}>
             {running ? '⏳ Running…' : '▶ Visualize'}
@@ -527,7 +530,7 @@
                 <rect x="1" y="8" width="5" height="5" rx="1" fill={accent} opacity="0.3"/>
                 <rect x="8" y="8" width="5" height="5" rx="1" fill={accent} opacity="0.15"/>
               </svg>
-              <span class="heap-title">HEAP MEMORY</span>
+              <span class="heap-title">HEAP MEMORY<span class="panel-subtitle">where your variables live</span></span>
               <span class="heap-count">{varArr.length} var{varArr.length !== 1 ? 's' : ''}</span>
             </div>
             <div class="heap-grid">
@@ -567,7 +570,7 @@
                 <rect x="0" y="0" width="12" height="12" rx="2" fill="#111"/>
                 <text x="3" y="9" fill={accent} font-size="8" font-family="monospace">$</text>
               </svg>
-              <span>STDOUT</span>
+              <span>STDOUT<span class="panel-subtitle">console output</span></span>
             </div>
             {#each sd.output as line}
               <div class="out-ln">› {line}</div>
@@ -578,7 +581,7 @@
         <!-- COMPLEXITY ANALYSIS -->
         <div class="cx-card">
           <div class="cx-hdr">
-            <span class="cx-title">COMPLEXITY ANALYSIS</span>
+            <span class="cx-title">COMPLEXITY ANALYSIS<span class="panel-subtitle">performance cost</span></span>
             {#if cx.dynamic}<span class="cx-live-badge">live</span>{/if}
           </div>
           <div class="cx-chart">
@@ -711,6 +714,7 @@
   }
 
   /* ── Example picker ────────────────────────────────────────────────────── */
+  .run-hint { margin:0; font-size:0.85rem; color:var(--a11y-text-muted); }
   .ex-bar  { display:flex; gap:6px; align-items:center; flex-wrap:wrap; flex-shrink:0; }
   .ex-lbl  { font-size:0.68rem; color:rgba(255,255,255,0.42); font-family:'Geist','Inter',system-ui,sans-serif; }
   .ex-btn  { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:rgba(255,255,255,0.58); font-size:0.72rem; padding:4px 11px; cursor:pointer; font-family:'Geist','Inter',system-ui,sans-serif; transition:all 0.2s; }
@@ -898,8 +902,9 @@
     top:0; left:0; right:0; height:1.5px;
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 50%, transparent), transparent);
   }
-  .heap-title { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
-  .heap-count { margin-left:auto; font-size:0.5rem; color:rgba(255,255,255,0.2); font-family:monospace; }
+  .heap-title { font-size:0.72rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .panel-subtitle { display:block; color:var(--a11y-text-muted); font-size:0.65rem; font-weight:400; letter-spacing:0; text-transform:none; margin-top:1px; }
+  .heap-count { margin-left:auto; font-size:0.65rem; color:rgba(255,255,255,0.2); font-family:monospace; }
   .heap-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; padding:8px; }
   .heap-box   {
     background: color-mix(in srgb, var(--acc) 4%, #08080e);
@@ -932,7 +937,7 @@
     display:flex; align-items:center; gap:6px; padding:5px 10px;
     background: color-mix(in srgb, var(--acc) 5%, #0a0a12);
     border-bottom: 1px solid color-mix(in srgb, var(--acc) 10%, rgba(255,255,255,0.04));
-    font-size:0.55rem; color:rgba(255,255,255,0.4); font-family:monospace; letter-spacing:1px; font-weight:700;
+    font-size:0.72rem; color:rgba(255,255,255,0.4); font-family:monospace; letter-spacing:1px; font-weight:700;
     position:relative;
   }
   .out-hdr::before {

@@ -196,6 +196,7 @@
     <!-- PC register — accent-tinted border -->
     <rect x="132" y="14" width="68" height="22" rx="4" fill="#08080e" stroke={phColor(sd.phase)} stroke-width="0.6" stroke-opacity="0.35"/>
     <text x="138" y="22" fill="rgba(255,255,255,0.25)" font-size="6" font-family="monospace" letter-spacing="0.5">PC</text>
+    <text x="150" y="22" fill="rgba(255,255,255,0.18)" font-size="4.5" font-family="monospace">current line</text>
     <text x="194" y="29" text-anchor="end" fill={phColor(sd.phase)} font-size="10" font-weight="700" font-family="monospace">
       {sd.lineIndex >= 0 ? 'LINE ' + (sd.lineIndex + 1) : sd.phase === 'start' ? 'READY' : 'END'}
     </text>
@@ -203,6 +204,7 @@
     <!-- OP register — accent-tinted border -->
     <rect x="132" y="40" width="68" height="22" rx="4" fill="#08080e" stroke={phColor(sd.phase)} stroke-width="0.6" stroke-opacity="0.35"/>
     <text x="138" y="48" fill="rgba(255,255,255,0.25)" font-size="6" font-family="monospace" letter-spacing="0.5">OP</text>
+    <text x="150" y="48" fill="rgba(255,255,255,0.18)" font-size="4.5" font-family="monospace">current operation</text>
     <text x="194" y="55" text-anchor="end" fill={phColor(sd.phase)} font-size="9" font-weight="700" font-family="monospace">{sd.phase.toUpperCase()}</text>
 
     <!-- Module-specific right-column registers (x ≥ 210) -->
@@ -212,6 +214,7 @@
     <rect x="132" y="68" width="108" height="16" rx="3" fill="#08080e" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
     <rect x="133" y="69" width={Math.min(106, (sd.memOps || 0) * 14)} height="14" rx="2" fill="#f59e0b" opacity="0.3"/>
     <text x="138" y="79" fill="rgba(255,255,255,0.3)" font-size="6.5" font-family="monospace">{sd.memOps || 0} WRITES</text>
+    <text x="138" y="83" fill="rgba(255,255,255,0.15)" font-size="4.5" font-family="monospace">memory changes</text>
 
     <!-- Module-specific right gauge -->
     {#if gauge}
@@ -222,6 +225,7 @@
 
     <!-- Stack visual (bottom-left) -->
     <text x="10" y="78" fill="rgba(255,255,255,0.2)" font-size="6" font-family="monospace" letter-spacing="1">STACK</text>
+    <text x="40" y="78" fill="rgba(255,255,255,0.15)" font-size="4.5" font-family="monospace">function depth</text>
     {#if stackSnippet}
       {@render stackSnippet(sd)}
     {:else if !sd.done}

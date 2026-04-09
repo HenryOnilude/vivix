@@ -1,6 +1,6 @@
 # Launch Copy — Ready to Post
 
-Use these templates when sharing Vivix. Replace `[LIVE_URL]` with your deployed URL once you have one.
+Use these templates when sharing Vivix. Replace `https://vivix.dev` with your deployed URL once you have one.
 
 ---
 
@@ -26,7 +26,7 @@ There are **9 modules** covering variables, conditionals, loops, functions, arra
 
 It's completely free, no sign-up, runs in your browser.
 
-- **Try it:** [LIVE_URL]
+- **Try it:** https://vivix.dev
 - **Source:** https://github.com/HenryOnilude/visual-learning-javascript
 
 Would love to hear what you think — especially which concepts you'd want visualized next!
@@ -54,7 +54,7 @@ It's built with **Svelte 5** (runes), **Acorn** for parsing, and a **custom AST 
 
 **332 tests**, mobile responsive, shareable URLs, accessibility themes.
 
-- **Live:** [LIVE_URL]
+- **Live:** https://vivix.dev
 - **GitHub:** https://github.com/HenryOnilude/visual-learning-javascript
 
 Open source (MIT). Feedback welcome!
@@ -73,7 +73,7 @@ It's powered by a custom AST interpreter (Acorn → ESTree → step array) runni
 
 9 modules covering core JS concepts (variables through closures), each with a purpose-built visualization. Svelte 5, CodeMirror 6, 332 tests.
 
-Try it: [LIVE_URL]
+Try it: https://vivix.dev
 Source: https://github.com/HenryOnilude/visual-learning-javascript
 
 ---
@@ -136,7 +136,7 @@ The interpreter runs in a **Web Worker** with a 500-step limit to prevent infini
 
 ## Try it
 
-- **Live:** [LIVE_URL]
+- **Live:** https://vivix.dev
 - **GitHub:** [github.com/HenryOnilude/visual-learning-javascript](https://github.com/HenryOnilude/visual-learning-javascript)
 
 Free, no sign-up, open source (MIT). Would love feedback — especially on which concepts to add next!
@@ -157,7 +157,7 @@ Step through real code and watch:
 
 9 modules · Svelte 5 · Open source
 
-[LIVE_URL]
+https://vivix.dev
 
 ---
 

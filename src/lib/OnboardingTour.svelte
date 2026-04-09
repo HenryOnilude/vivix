@@ -81,62 +81,9 @@
   function positionTooltip() {
     const step = STEPS[currentStep];
     if (!step) return;
-
-    const el = document.querySelector(step.selector);
-    if (!el) {
-      // Element not found — skip this step
-      if (currentStep < STEPS.length - 1) { currentStep++; positionTooltip(); }
-      else dismiss();
-      return;
-    }
-
-    const rect = el.getBoundingClientRect();
-
-    // Calculate position based on arrow direction
-    let top, left;
-    const pad = 14;
-    const tipH = 180; // approximate tooltip height
-    let dir = step.arrow;
-
-    if (dir === 'top') {
-      // Tooltip below the element
-      top = rect.bottom + pad;
-      left = rect.left + rect.width / 2;
-      // Auto-flip above if would overflow bottom
-      if (top + tipH > window.innerHeight - 20) {
-        top = rect.top - pad;
-        dir = 'bottom';
-      }
-    } else if (dir === 'bottom') {
-      // Tooltip above the element
-      top = rect.top - pad;
-      left = rect.left + rect.width / 2;
-      // Auto-flip below if would overflow top
-      if (top - tipH < 20) {
-        top = rect.bottom + pad;
-        dir = 'top';
-      }
-    } else if (dir === 'left') {
-      // Tooltip to the right of the element
-      top = rect.top + rect.height / 2;
-      left = rect.right + pad;
-    } else {
-      // Tooltip to the left of the element
-      top = rect.top + rect.height / 2;
-      left = rect.left - pad;
-    }
-
-    arrowDir = dir;
-
-    // Clamp to viewport
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    if (left < 20) left = 20;
-    if (left > vw - 20) left = vw - 20;
-    if (top < 20) top = 20;
-    if (top > vh - tipH - 20) top = vh - tipH - 20;
-
-    tooltipStyle = `top:${top}px;left:${left}px`;
+    // Always center in viewport — reliable across all screen sizes and element positions
+    tooltipStyle = `top:50%;left:50%`;
+    arrowDir = 'center';
   }
 
   /** @type {number|undefined} */
@@ -183,8 +130,13 @@
     aria-label="Onboarding step {currentStep + 1} of {STEPS.length}"
   >
     <div class="tour-header">
-      <span class="tour-step-badge">{currentStep + 1}/{STEPS.length}</span>
+      <span class="tour-step-badge">{currentStep + 1} of {STEPS.length}</span>
       <button class="tour-close" onclick={dismiss} aria-label="Close tour">✕</button>
+    </div>
+    <div class="tour-progress">
+      {#each STEPS as _, i}
+        <div class="tour-dot" class:active={i === currentStep} class:done={i < currentStep}></div>
+      {/each}
     </div>
     <h4 class="tour-title">{stepData.title}</h4>
     <p class="tour-text">{stepData.text}</p>
@@ -216,39 +168,33 @@
   .tour-tip {
     position: fixed;
     z-index: 9999;
-    transform: translate(-50%, 0);
-    max-width: 320px;
-    width: max-content;
+    transform: translate(-50%, -50%);
+    max-width: 340px;
+    width: calc(100vw - 48px);
     min-width: 220px;
     background: color-mix(in srgb, var(--acc) 6%, #111118);
     border: 1px solid color-mix(in srgb, var(--acc) 30%, rgba(255,255,255,0.08));
     border-radius: 12px;
-    padding: 14px 16px 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+    padding: 18px 20px 14px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
     animation: tour-in 0.25s ease;
   }
 
-  .arrow-top    { transform: translate(-50%, 0); }
-  .arrow-bottom { transform: translate(-50%, -100%); }
-  .arrow-left   { transform: translate(0, -50%); }
-  .arrow-right  { transform: translate(-100%, -50%); }
-
-  /* Arrow pseudo-element */
-  .tour-tip::before {
-    content: '';
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    background: color-mix(in srgb, var(--acc) 6%, #111118);
-    border: 1px solid color-mix(in srgb, var(--acc) 30%, rgba(255,255,255,0.08));
-    border-radius: 2px;
-    transform: rotate(45deg);
+  /* ── Progress dots ────────────────────────────────────────────────────── */
+  .tour-progress {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 14px;
   }
-
-  .arrow-top::before    { top: -7px; left: 50%; margin-left: -6px; border-bottom: none; border-right: none; }
-  .arrow-bottom::before { bottom: -7px; left: 50%; margin-left: -6px; border-top: none; border-left: none; }
-  .arrow-left::before   { left: -7px; top: 50%; margin-top: -6px; border-top: none; border-right: none; }
-  .arrow-right::before  { right: -7px; top: 50%; margin-top: -6px; border-bottom: none; border-left: none; }
+  .tour-dot {
+    width: 20px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.12);
+    transition: background 0.2s;
+  }
+  .tour-dot.active { background: var(--acc); }
+  .tour-dot.done   { background: color-mix(in srgb, var(--acc) 50%, transparent); }
 
   @keyframes tour-in {
     from { opacity: 0; scale: 0.96; }
