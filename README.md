@@ -4,6 +4,8 @@
 
 ### See Inside JavaScript As It Thinks
 
+<img width="1319" height="844" alt="Screenshot 2026-04-10 at 17 26 56" src="https://github.com/user-attachments/assets/a9c4435a-2262-4166-8dae-41d7c6c99076" />
+
 Write real code → click play → watch the CPU, memory, and call stack respond in real time.
 
 [![Tests](https://img.shields.io/badge/tests-332%20passing-brightgreen)](https://github.com/HenryOnilude/visual-learning-javascript)
@@ -14,10 +16,11 @@ Write real code → click play → watch the CPU, memory, and call stack respond
 </div>
 
 ---
-
 ## What is this?
 
 Most JS tutorials tell you what code does. **Vivix shows you.**
+
+https://github.com/user-attachments/assets/e122c133-234b-4c5f-b483-c1ffc928f778
 
 You write JavaScript, hit play, and step through execution one instruction at a time watching variables appear in heap memory, call stack frames push and pop, byte sizes update, and the CPU dashboard tick through each operation. It's like having X-ray vision for JavaScript.
 
@@ -27,15 +30,11 @@ You write JavaScript, hit play, and step through execution one instruction at a 
 
 ## 🎬 Demo
 
-<!-- Replace with actual screenshots or GIFs after recording -->
-> **📸 Add a screen recording here!** Record a 60-second walkthrough of the Variables module using [Kap](https://getkap.co/) (macOS) or [ScreenToGif](https://www.screentogif.com/) (Windows), then replace this block with:
-> ```
-> ![Vivix demo](./docs/demo.gif)
-> ```
+https://github.com/user-attachments/assets/40b2d503-50bc-45df-bbc6-b1950e017141
 
 ---
 
-## ✨ What You Get
+## What You Get
 
 | | Feature | Details |
 |---|---|---|
@@ -52,9 +51,12 @@ You write JavaScript, hit play, and step through execution one instruction at a 
 
 ---
 
-## 📚 9 Interactive Modules
+## 9 Interactive Modules
 
 Each module teaches a core JavaScript concept with a purpose-built visualization:
+
+<img width="945" height="715" alt="Screenshot 2026-04-10 at 17 54 33" src="https://github.com/user-attachments/assets/f1f40866-1f66-4bf7-b967-df7a90ea5f62" />
+
 
 | Module | Concept | What You See |
 |--------|---------|-------------|
@@ -70,7 +72,7 @@ Each module teaches a core JavaScript concept with a purpose-built visualization
 
 ---
 
-## 🚀 Quick Start
+Quick Start
 
 ```bash
 git clone https://github.com/HenryOnilude/visual-learning-javascript.git
