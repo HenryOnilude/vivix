@@ -75,8 +75,8 @@ Each module teaches a core JavaScript concept with a purpose-built visualization
 Quick Start
 
 ```bash
-git clone https://github.com/HenryOnilude/visual-learning-javascript.git
-cd visual-learning-javascript
+git clone https://github.com/HenryOnilude/vivix.git
+cd vivix
 npm install
 npm run dev      # → http://localhost:5173
 ```
