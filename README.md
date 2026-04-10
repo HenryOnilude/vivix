@@ -19,7 +19,7 @@ Write real code → click play → watch the CPU, memory, and call stack respond
 
 Most JS tutorials tell you what code does. **Vivix shows you.**
 
-You write JavaScript, hit play, and step through execution one instruction at a time — watching variables appear in heap memory, call stack frames push and pop, byte sizes update, and the CPU dashboard tick through each operation. It's like having X-ray vision for JavaScript.
+You write JavaScript, hit play, and step through execution one instruction at a time watching variables appear in heap memory, call stack frames push and pop, byte sizes update, and the CPU dashboard tick through each operation. It's like having X-ray vision for JavaScript.
 
 **No sign-up. No install. Runs entirely in your browser.**
 
@@ -93,7 +93,7 @@ Your Code → Acorn Parser → AST → Custom Interpreter → Step Array → Vis
 ```
 
 1. **Acorn** parses user code into an AST
-2. **Custom interpreter** (`interpreter.js`) walks the AST and produces an array of execution steps — each step captures line index, variables, memory ops, call stack, phase, and output
+2. **Custom interpreter** (`interpreter.js`) walks the AST and produces an array of execution steps each step captures line index, variables, memory ops, call stack, phase, and output
 3. **Step controls** let you scrub forward/backward through the step array
 4. **CpuDash** renders each step as an SVG CPU visualization (registers, phase, program counter)
 5. **Module panels** render step-specific data (heap cards, scope chains, array cells, etc.)
