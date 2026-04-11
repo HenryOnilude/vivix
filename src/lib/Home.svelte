@@ -3,20 +3,21 @@
 
   // ── Demo simulation ───────────────────────────────────────────────────────
   const DEMO_LINES = [
-    [{ k: 'kw', v: 'let ' }, { k: 'id', v: 'name' }, { k: 'op', v: ' = ' }, { k: 'str', v: '"Alex"' }, { k: 'op', v: ';' }],
-    [{ k: 'kw', v: 'let ' }, { k: 'id', v: 'age' },  { k: 'op', v: ' = ' }, { k: 'num', v: '25' },     { k: 'op', v: ';' }],
-    [{ k: 'kw', v: 'let ' }, { k: 'id', v: 'adult' },{ k: 'op', v: ' = ' }, { k: 'id', v: 'age' }, { k: 'op', v: ' >= ' }, { k: 'num', v: '18' }, { k: 'op', v: ';' }],
-    [{ k: 'fn', v: 'console' }, { k: 'op', v: '.' }, { k: 'fn', v: 'log' }, { k: 'op', v: '(' }, { k: 'str', v: '"Hello, "' }, { k: 'op', v: ' + ' }, { k: 'id', v: 'name' }, { k: 'op', v: ');' }],
+    [{ k: 'kw', v: 'async ' }, { k: 'kw', v: 'function ' }, { k: 'fn', v: 'fetchUser' }, { k: 'op', v: '() {' }],
+    [{ k: 'kw', v: '  const ' }, { k: 'id', v: 'res' }, { k: 'op', v: ' = ' }, { k: 'kw', v: 'await ' }, { k: 'fn', v: 'Promise' }, { k: 'op', v: '.' }, { k: 'fn', v: 'resolve' }, { k: 'op', v: '(' }, { k: 'str', v: '"Alex"' }, { k: 'op', v: ');' }],
+    [{ k: 'kw', v: '  const ' }, { k: 'id', v: 'msg' }, { k: 'op', v: ' = ' }, { k: 'str', v: '"Hello, "' }, { k: 'op', v: ' + ' }, { k: 'id', v: 'res' }, { k: 'op', v: ';' }],
+    [{ k: 'kw', v: '  return ' }, { k: 'id', v: 'msg' }, { k: 'op', v: ';' }],
+    [{ k: 'op', v: '}' }],
+    [{ k: 'fn', v: 'fetchUser' }, { k: 'op', v: '();' }],
   ];
 
   const DEMO_STEPS = [
-    { line: 0, pc: 'LINE 1', op: 'START',   stack: 'Global',  writes: 0, vars: [],                                                                                                                                                           out: null,            explain: 'Program starts. JS engine sets up the Global call stack frame — ready to execute.' },
-    { line: 0, pc: 'LINE 1', op: 'DECLARE', stack: 'Global',  writes: 1, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string',  bytes: 5  }],                                                                                        out: null,            explain: 'LET: name declared. JS allocates a heap slot, writes "Alex" (5 bytes). 1 memory write.' },
-    { line: 1, pc: 'LINE 2', op: 'DECLARE', stack: 'Global',  writes: 2, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string',  bytes: 5  }, { n: 'age', v: '25', c: '#38bdf8', t: 'number', bytes: 8 }],                           out: null,            explain: 'LET: age declared. Numbers always take 8 bytes (64-bit float). 2 total writes.' },
-    { line: 2, pc: 'LINE 3', op: 'COMPARE', stack: 'Global',  writes: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string',  bytes: 5  }, { n: 'age', v: '25', c: '#38bdf8', t: 'number', bytes: 8 }, { n: 'adult', v: '…', c: '#fbbf24', t: 'boolean', bytes: 0 }], out: null, explain: 'age >= 18 evaluated. JS compares 25 to 18 — result is a boolean, about to be stored.' },
-    { line: 2, pc: 'LINE 3', op: 'DECLARE', stack: 'Global',  writes: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string',  bytes: 5  }, { n: 'age', v: '25', c: '#38bdf8', t: 'number', bytes: 8 }, { n: 'adult', v: 'true', c: '#fbbf24', t: 'boolean', bytes: 1 }], out: null, explain: 'adult = true written to heap. Booleans take just 1 byte. 3 total memory writes.' },
-    { line: 3, pc: 'LINE 4', op: 'CALL',    stack: 'console.log', writes: 3, vars: [{ n: 'name', v: '"Alex"', c: '#4ade80', t: 'string', bytes: 5 }, { n: 'age', v: '25', c: '#38bdf8', t: 'number', bytes: 8 }, { n: 'adult', v: 'true', c: '#fbbf24', t: 'boolean', bytes: 1 }], out: null, explain: 'console.log() called — a new frame is pushed onto the call stack above Global.' },
-    { line: 3, pc: 'END',    op: 'DONE',    stack: 'Global',  writes: 3, vars: [{ n: 'name',  v: '"Alex"', c: '#4ade80', t: 'string',  bytes: 5  }, { n: 'age', v: '25', c: '#38bdf8', t: 'number', bytes: 8 }, { n: 'adult', v: 'true', c: '#fbbf24', t: 'boolean', bytes: 1 }], out: '"Hello, Alex"', explain: 'Output: "Hello, Alex". Call stack pops back to Global. Program complete — 3 writes, 1 call.' },
+    { line: 5, pc: 'LINE 6', op: 'START',   stack: 'Global',      writes: 0, vars: [],                                                                                                                                                                                                     out: null,          explain: 'Program starts. fetchUser() is called — a new async frame is pushed onto the call stack.' },
+    { line: 1, pc: 'LINE 2', op: 'AWAIT',   stack: 'fetchUser',   writes: 1, vars: [{ n: 'res', v: 'pending…', c: '#a78bfa', t: 'Promise', bytes: 0 }],                                                                                                                                    out: null,          explain: 'await hit. Promise.resolve("Alex") created. fetchUser suspends — yields to the microtask queue.' },
+    { line: 1, pc: 'LINE 2', op: 'RESOLVE', stack: 'fetchUser',   writes: 2, vars: [{ n: 'res', v: '"Alex"',   c: '#4ade80', t: 'string',  bytes: 4 }],                                                                                                                                    out: null,          explain: 'Microtask fires. Promise resolved — "Alex" written to heap. res now holds 4 bytes.' },
+    { line: 2, pc: 'LINE 3', op: 'DECLARE', stack: 'fetchUser',   writes: 3, vars: [{ n: 'res', v: '"Alex"',   c: '#4ade80', t: 'string',  bytes: 4 }, { n: 'msg', v: '"Hello, Alex"', c: '#38bdf8', t: 'string', bytes: 12 }],                                                           out: null,          explain: '"Hello, " + res evaluated. Result string written to heap as msg — 12 bytes. 3 memory writes.' },
+    { line: 3, pc: 'LINE 4', op: 'RETURN',  stack: 'fetchUser',   writes: 3, vars: [{ n: 'res', v: '"Alex"',   c: '#4ade80', t: 'string',  bytes: 4 }, { n: 'msg', v: '"Hello, Alex"', c: '#38bdf8', t: 'string', bytes: 12 }],                                                           out: null,          explain: 'return msg. fetchUser resolves its outer Promise with "Hello, Alex". Frame about to pop.' },
+    { line: 5, pc: 'END',    op: 'DONE',    stack: 'Global',      writes: 3, vars: [{ n: 'res', v: '"Alex"',   c: '#4ade80', t: 'string',  bytes: 4 }, { n: 'msg', v: '"Hello, Alex"', c: '#38bdf8', t: 'string', bytes: 12 }],                                                           out: '"Hello, Alex"', explain: 'fetchUser frame popped. Promise resolved with "Hello, Alex". 3 writes, 1 microtask.' },
   ];
 
   let demoStep = $state(0);
@@ -111,7 +112,28 @@
       subtitle: 'Closures & Scope',
       desc: 'See which variables a closure captures.',
       color: '#2dd4bf',
-    }
+    },
+    {
+      id: 'promise-chain',
+      title: 'promiseChain',
+      subtitle: 'Promise Methods',
+      desc: 'Watch .then() and .catch() chain through the microtask queue.',
+      color: '#f59e0b',
+    },
+    {
+      id: 'event-listeners',
+      title: 'eventListeners',
+      subtitle: 'DOM Events',
+      desc: 'See how addEventListener registers callbacks and events dispatch.',
+      color: '#ec4899',
+    },
+    {
+      id: 'api-calls',
+      title: 'apiCalls',
+      subtitle: 'HTTP & fetch()',
+      desc: 'Trace fetch() requests through suspend, response, and parse.',
+      color: '#8b5cf6',
+    },
   ];
 </script>
 
@@ -128,7 +150,7 @@
       </h1>
 
       <p class="hero-sub">
-        Step through real code and watch the CPU, memory, and call stack respond.
+        Most tools show you the event loop at a high level. Vivix steps through every individual instruction — heap mutations, stack operations, subexpression evaluation — one tick at a time.
       </p>
 
       <div class="hero-ctas">
@@ -139,7 +161,7 @@
         <button class="cta-ghost" onclick={() => document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' })}>See all 9 modules</button>
       </div>
 
-      <p class="hero-hint">No sign-up required — runs entirely in your browser.</p>
+      <p class="hero-hint">No account. No install. Free and open source.</p>
     </div>
 
     <!-- Product preview: the star of the hero -->
@@ -150,8 +172,8 @@
         <span class="demo-dot" style="background:#ff5f57"></span>
         <span class="demo-dot" style="background:#febc2e"></span>
         <span class="demo-dot" style="background:#28c840"></span>
-        <span class="demo-title">variables.js</span>
-        <span class="demo-concept-tag">Variables &amp; Memory</span>
+        <span class="demo-title">async.js</span>
+        <span class="demo-concept-tag">Async / Await</span>
         <span class="demo-badge">● LIVE</span>
       </div>
 

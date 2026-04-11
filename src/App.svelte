@@ -11,15 +11,18 @@
   // ── Lazy-loaded route map ──────────────────────────────────────────────────
   // Each module is loaded on-demand via dynamic import() to reduce initial bundle.
   const ROUTE_LOADERS = {
-    'variables':       () => import('./lib/Variables.svelte'),
-    'if-gate':         () => import('./lib/IfGate.svelte'),
-    'for-loop':        () => import('./lib/ForLoop.svelte'),
-    'function':        () => import('./lib/FnCall.svelte'),
-    'array':           () => import('./lib/ArrayFlow.svelte'),
-    'objects':         () => import('./lib/ObjExplorer.svelte'),
-    'data-structures': () => import('./lib/DataStructures.svelte'),
-    'async':           () => import('./lib/AsyncAwait.svelte'),
-    'closures':        () => import('./lib/Closures.svelte'),
+    'variables':        () => import('./lib/Variables.svelte'),
+    'if-gate':          () => import('./lib/IfGate.svelte'),
+    'for-loop':         () => import('./lib/ForLoop.svelte'),
+    'function':         () => import('./lib/FnCall.svelte'),
+    'array':            () => import('./lib/ArrayFlow.svelte'),
+    'objects':          () => import('./lib/ObjExplorer.svelte'),
+    'data-structures':  () => import('./lib/DataStructures.svelte'),
+    'async':            () => import('./lib/AsyncAwait.svelte'),
+    'closures':         () => import('./lib/Closures.svelte'),
+    'promise-chain':    () => import('./lib/PromiseChain.svelte'),
+    'event-listeners':  () => import('./lib/EventListeners.svelte'),
+    'api-calls':        () => import('./lib/ApiCalls.svelte'),
   };
 
   let route = $state(getRoute());

@@ -4,9 +4,11 @@
 
 ### See Inside JavaScript As It Thinks
 
+#### Instruction-level JavaScript execution with simultaneous heap visualization
+
 <img width="1319" height="844" alt="Screenshot 2026-04-10 at 17 26 56" src="https://github.com/user-attachments/assets/a9c4435a-2262-4166-8dae-41d7c6c99076" />
 
-Write real code → click play → watch the CPU, memory, and call stack respond in real time.
+Most JavaScript visualizers show you the event loop at a high level. Vivix steps through every individual instruction — subexpression evaluation, heap mutations, stack operations — one tick at a time via the CPU dashboard. No account required, no install, completely free and open source.
 
 [![Tests](https://img.shields.io/badge/tests-332%20passing-brightgreen)](https://github.com/HenryOnilude/visual-learning-javascript)
 [![Svelte 5](https://img.shields.io/badge/svelte-5-FF3E00?logo=svelte&logoColor=white)](https://svelte.dev)
