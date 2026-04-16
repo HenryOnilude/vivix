@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 100">
+  <defs>
+    <linearGradient id="vgrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#00ff88"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="480" height="100" fill="#080810"/>
+
+  <!-- Green V: clean chevron, 86px wide, 82px tall, 13px arm width -->
+  <path d="M14,5 L27,5 L57,80 L87,5 L100,5 L57,90 Z" fill="url(#vgrad)"/>
+
+  <!-- ivix: tight to V, same baseline, weight 500 — precise not heavy -->
+  <text
+    x="106"
+    y="84"
+    font-family="'Inter', 'Helvetica Neue', Helvetica, sans-serif"
+    font-size="76"
+    font-weight="500"
+    fill="#eeeef2"
+    letter-spacing="-2">ivix</text>
+</svg>

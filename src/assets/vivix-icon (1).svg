@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100">
+  <defs>
+    <linearGradient id="vg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#00ff88"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="160" height="100" fill="#080810"/>
+
+  <!-- Large green V -->
+  <path d="M4,5 L17,5 L52,88 L87,5 L100,5 L52,96 Z" fill="url(#vg2)"/>
+
+  <!-- Small white v: starts at x=108, top aligned at y=28 -->
+  <path d="M108,26 L117,26 L134,74 L151,26 L160,26 L134,80 Z" fill="#eeeef2"/>
+</svg>

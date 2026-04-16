@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="vg3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#00ff88"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="32" height="32" fill="#080810"/>
+
+  <!-- V mark only at favicon size -->
+  <path d="M2,3 L7,3 L16,27 L25,3 L30,3 L16,30 Z" fill="url(#vg3)"/>
+</svg>

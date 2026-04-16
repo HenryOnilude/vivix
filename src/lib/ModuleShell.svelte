@@ -23,17 +23,11 @@
    *   cpuStack(sd)      — SVG: optional stack-visual override inside CpuDash
    */
   import { onMount } from 'svelte';
-  import { interpret, parseCode, checkSupported, friendlyError } from './interpreter.js';
+  import { interpret, parseCode, checkSupported } from './interpreter.js';
   import { fv, tc, tb, COMPLEXITY_BARS, analyzeComplexity } from './utils.js';
-  import { makeAnimateBox, makeAnimateVal, animateBar } from './animations.js';
-  import { createInterpreterWorker } from './useInterpreterWorker.js';
-  import { phColor as _phColor, phIcon, computeVarDiff, markerPct, fillPct as computeFillPct, complexityBadgeColor } from './shell-logic.js';
+  import { makeAnimateBox, makeAnimateVal, animateBar, gsapSlideIn } from './animations.js';
   import CodeEditor from './CodeEditor.svelte';
   import CpuDash from './CpuDash.svelte';
-  import TapTooltip from './TapTooltip.svelte';
-  import { parseHashState, updateUrlSilent, buildShareUrl } from './url-state.js';
-  import OnboardingTour from './OnboardingTour.svelte';
-
 
   /**
    * @typedef {Object} CxData
@@ -51,8 +45,6 @@
     subtitle     = '',
     desc         = '',
     accent       = '#38bdf8',
-    /** Route key for this module, used for shareable URLs (e.g. 'variables', 'closures') */
-    routeKey     = '',
 
     // ── data ──────────────────────────────────────────────────────────────────
     /** @type {Array<{label:string, code:string, cx?:CxData, complexity?:CxData}>} */
@@ -81,7 +73,6 @@
 
   // ── State ──────────────────────────────────────────────────────────────────
   let selEx    = $state(0);
-  // eslint-disable-next-line -- intentionally captures initial example code
   let codeText = $state(examples[0]?.code ?? '');
   let step     = $state(-1);
   let total    = $state(0);
@@ -90,20 +81,17 @@
   let timer    = $state(null);
   let hasRun   = $state(false);
   let err      = $state('');
-  /** @type {{ friendly:string, hint:string, raw:string }|null} */
-  let errFriendly = $state(null);
   let speed    = $state(1);   // 0.5 | 1 | 2 | 4
-  /** @type {'simple'|'advanced'} */
-  let explainMode = $state('simple');
   /** @type {CxData|null} */
   let dynamicCx = $state(null);
-  let running   = $state(false);
-  let shareToast = $state('');
-  /** @type {'code'|'visual'} Mobile tab switcher */
-  let mobileTab  = $state('code');
 
-  // ── Web Worker for off-main-thread interpretation ──
-  let interpWorker = null;
+  // ── Predict mode ───────────────────────────────────────────────────────────
+  let predictMode    = $state(false);
+  let predictPending = $state(false);
+  let predictOptions = $state([]);
+  let predictCorrect = $state(null);
+  let predictScore   = $state({ correct: 0, total: 0 });
+  let selectedOption = $state(null);
 
   // ── Derived ────────────────────────────────────────────────────────────────
   let lines  = $derived(codeText.split('\n'));
@@ -126,56 +114,73 @@
 
   let varDiff = $derived.by(() => {
     if (!sd) return {};
-    return computeVarDiff(sd.vars || {}, prev ? (prev.vars || {}) : {});
+    const c = sd.vars || {};
+    const p = prev ? (prev.vars || {}) : {};
+    const r = {};
+    for (const k of Object.keys(c)) {
+      if (!(k in p))                                                r[k] = 'new';
+      else if (JSON.stringify(p[k]) !== JSON.stringify(c[k]))       r[k] = 'changed';
+      else                                                           r[k] = 'same';
+    }
+    return r;
   });
 
   let varArr = $derived(sd ? Object.entries(sd.vars || {}) : []);
 
   /** Badge colour for the time complexity label */
-  let timeBadgeColor  = $derived(complexityBadgeColor(cx.time));
+  let timeBadgeColor  = $derived(COMPLEXITY_BARS.find(b => cx.time.startsWith(b.label.slice(0, 3)))?.color ?? '#4ade80');
   /** Badge colour for the space complexity label */
-  let spaceBadgeColor = $derived(complexityBadgeColor(cx.space));
+  let spaceBadgeColor = $derived(COMPLEXITY_BARS.find(b => cx.space.startsWith(b.label.slice(0, 3)))?.color ?? '#4ade80');
 
   // ── GSAP actions (accent-coloured) ─────────────────────────────────────────
-  let animateBox = $derived(makeAnimateBox(accent));
+  const animateBox = makeAnimateBox(accent);
   const animateVal = makeAnimateVal();
 
-  // ── Phase helpers (delegated to shell-logic.js) ───────────────────────────
-  function phColor(ph) { return _phColor(ph, accent); }
+  // ── Phase colour (covers all module phase names) ───────────────────────────
+  function phColor(ph) {
+    if (!ph) return '#555';
+    if (ph === 'declare')                         return '#4ade80';
+    if (ph === 'assign')                          return '#f59e0b';
+    if (ph === 'condition' || ph === 'else-enter') return '#a78bfa';
+    if (ph === 'skip')                            return '#6b7280';
+    if (ph === 'output')                          return '#38bdf8';
+    if (ph === 'done')                            return '#4ade80';
+    if (ph.startsWith('loop'))                    return accent;
+    if (ph.startsWith('fn-'))                     return accent;
+    return '#555';
+  }
+
+  // ── Phase icon for timeline markers ────────────────────────────────────────
+  function phIcon(ph) {
+    if (!ph) return '▶';
+    if (ph === 'done')                                    return '✓';
+    if (ph === 'condition' || ph === 'else-enter' || ph === 'skip') return '?';
+    if (ph.startsWith('loop'))                            return '↻';
+    if (ph.startsWith('fn-'))                             return 'ƒ';
+    return '▶';
+  }
 
   // ── Core execute ───────────────────────────────────────────────────────────
-  async function _runCode() {
+  function _runCode() {
     err = '';
-    errFriendly = null;
-    running = true;
+    predictScore = { correct: 0, total: 0 };
     try {
       let rawSteps;
       if (typeof executeCode === 'function') {
         rawSteps = executeCode(codeText);
         dynamicCx = null;
       } else {
-        const parseResult = parseCode(codeText);
-        if (parseResult.error) {
-          errFriendly = parseResult.friendly || friendlyError(parseResult.error, codeText);
-          throw new Error(parseResult.error);
-        }
+        const { ast, error: parseErr } = parseCode(codeText);
+        if (parseErr) throw new Error(parseErr);
 
-        const check = checkSupported(parseResult.ast);
-        if (!check.ok) {
-          errFriendly = friendlyError(check.message, codeText);
-          throw new Error(check.message);
-        }
+        const check = checkSupported(ast);
+        if (!check.ok) throw new Error(check.message);
 
-        if (isCustomCode) dynamicCx = analyzeComplexity(parseResult.ast);
+        if (isCustomCode) dynamicCx = analyzeComplexity(ast);
         else              dynamicCx = null;
 
-        // Use Web Worker for non-blocking execution
-        if (!interpWorker) interpWorker = createInterpreterWorker();
-        const result = await interpWorker.run(codeText, interpreterOptions);
-        if (result.error) {
-          errFriendly = result.friendly || friendlyError(result.error, codeText);
-          throw new Error(result.error);
-        }
+        const result = interpret(codeText, interpreterOptions);
+        if (result.error) throw new Error(result.error);
         rawSteps = result.steps;
       }
 
@@ -184,28 +189,32 @@
       total  = steps.length;
       step   = 0;
       hasRun = true;
-      mobileTab = 'visual'; // Auto-switch to visual tab on mobile after running
-      // Auto-start playback
-      if (playing) { clearInterval(timer); timer = null; playing = false; }
-      playing = true;
-      _startTimer(interval);
     } catch (e) {
       err = e.message;
-      if (!errFriendly) errFriendly = friendlyError(e.message, codeText);
     }
-    running = false;
   }
 
   // ── Controls ───────────────────────────────────────────────────────────────
   function goFirst() { if (hasRun) step = 0; }
   function goPrev()  { if (hasRun && step > 0) step--; }
-  function goNext()  { if (hasRun && step < total - 1) step++; }
+  function goNext() {
+    if (!hasRun || step >= total - 1) return;
+    if (!predictMode) { step++; return; }
+
+    const nextStep = steps[step + 1];
+    if (!shouldPredict(nextStep)) { step++; return; }
+
+    selectedOption = null;
+    predictOptions = generateOptions(steps[step], nextStep);
+    predictPending = true;
+    predictCorrect = null;
+  }
   function goLast()  { if (hasRun) step = total - 1; }
 
   function _startTimer(ms) {
     timer = setInterval(() => {
       if (step < total - 1) step++;
-      else { step = 0; }
+      else { clearInterval(timer); timer = null; playing = false; }
     }, ms);
   }
 
@@ -234,11 +243,12 @@
     _reset();
   }
 
-  function editCode() { _reset(); mobileTab = 'code'; }
+  function editCode() { _reset(); }
 
   function _reset() {
-    hasRun = false; step = -1; steps = []; err = ''; errFriendly = null; dynamicCx = null;
+    hasRun = false; step = -1; steps = []; err = ''; dynamicCx = null;
     if (playing) { clearInterval(timer); timer = null; playing = false; }
+    predictPending = false; predictOptions = []; predictScore = { correct: 0, total: 0 };
   }
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
@@ -259,148 +269,179 @@
     }
   }
 
-  // ── Timeline helpers (delegated to shell-logic.js) ────────────────────────
+  // ── Predict mode helpers ───────────────────────────────────────────────────
+  function shouldPredict(nextStep) {
+    const predictablePhases = [
+      'declare', 'assign', 'condition', 'loop-test',
+      'fn-call', 'fn-return', 'output', 'closure-create', 'closure-call'
+    ];
+    return predictablePhases.includes(nextStep?.phase) && !nextStep?.done;
+  }
+
+  function generateOptions(currentStep, nextStep) {
+    const phase    = nextStep.phase;
+    const vars     = nextStep.vars || {};
+    const prevVars = currentStep.vars || {};
+
+    let changedKey   = nextStep.highlight;
+    let correctValue = changedKey ? vars[changedKey] : null;
+
+    if (phase === 'condition' || phase === 'loop-test') {
+      const result = nextStep.cond;
+      return shuffle([
+        { label: 'TRUE — condition passes',  value: true,  correct: result === true  },
+        { label: 'FALSE — condition fails',  value: false, correct: result === false },
+      ]);
+    }
+
+    if (phase === 'output') {
+      const line   = nextStep.output[nextStep.output.length - 1];
+      const wrong1 = line + '0';
+      const wrong2 = '"' + line + '"';
+      return shuffle([
+        { label: String(line),   correct: true  },
+        { label: wrong1,         correct: false },
+        { label: wrong2,         correct: false },
+        { label: 'undefined',    correct: false },
+      ]);
+    }
+
+    if ((phase === 'declare' || phase === 'assign') && changedKey) {
+      const correct = fv(correctValue);
+      const wrongs  = generateWrongValues(correctValue, prevVars, changedKey);
+      return shuffle([
+        { label: `${changedKey} = ${correct}`, correct: true },
+        ...wrongs.map(w => ({ label: `${changedKey} = ${w}`, correct: false }))
+      ]).slice(0, 4);
+    }
+
+    if (phase === 'fn-return' || phase === 'fn-call') {
+      const retVal = changedKey ? fv(vars[changedKey]) : 'undefined';
+      const wrongs = changedKey
+        ? generateWrongValues(vars[changedKey], prevVars, changedKey)
+        : ['null', '0', 'undefined'];
+      return shuffle([
+        { label: retVal, correct: true },
+        ...wrongs.map(w => ({ label: String(w), correct: false }))
+      ]).slice(0, 4);
+    }
+
+    // Fallback — skip prediction
+    return [];
+  }
+
+  function generateWrongValues(correctVal, prevVars, key) {
+    const wrongs = [];
+    const t = typeof correctVal;
+
+    if (t === 'number') {
+      wrongs.push(fv(correctVal + 1));
+      wrongs.push(fv(correctVal - 1));
+      wrongs.push(fv(correctVal * 2));
+    } else if (t === 'boolean') {
+      wrongs.push(fv(!correctVal));
+      wrongs.push('undefined');
+    } else if (t === 'string') {
+      wrongs.push('"' + correctVal + correctVal + '"');
+      wrongs.push('undefined');
+      wrongs.push('null');
+    } else {
+      wrongs.push('undefined');
+      wrongs.push('null');
+      wrongs.push('0');
+    }
+
+    if (key in prevVars && fv(prevVars[key]) !== fv(correctVal)) {
+      wrongs.push(fv(prevVars[key]));
+    }
+
+    return [...new Set(wrongs)].filter(w => w !== fv(correctVal)).slice(0, 3);
+  }
+
+  function shuffle(arr) {
+    return [...arr].sort(() => Math.random() - 0.5);
+  }
+
+  function submitPrediction(option) {
+    const isCorrect = option.correct;
+    predictCorrect = isCorrect;
+    predictScore.total++;
+    if (isCorrect) predictScore.correct++;
+
+    setTimeout(() => {
+      predictPending = false;
+      predictCorrect = null;
+      predictOptions = [];
+      step++;
+    }, 900);
+  }
+
+  // ── Timeline helpers ───────────────────────────────────────────────────────
+  /** Marker position as a percentage (handles total=1 edge case) */
+  function markerPct(i) {
+    return total > 1 ? (i / (total - 1)) * 100 : 0;
+  }
+
   /** Fill width percentage up to current step */
-  let fillPct = $derived(computeFillPct(step, total));
+  let fillPct = $derived(total > 1 ? (step / (total - 1)) * 100 : 0);
 
   /** Whether to show icons inside markers (too many = just dots) */
   let showIcons = $derived(total <= 35);
 
-  // ── URL state: read on mount, auto-run if step param is present ──────────
-  let _urlApplied = false;
-
   onMount(() => {
     window.addEventListener('keydown', handleKey);
-
-    // Read URL params and apply initial state
-    if (!_urlApplied) {
-      _urlApplied = true;
-      const parsed = parseHashState();
-
-      // Apply example selection from URL
-      if (parsed.ex != null && parsed.ex >= 0 && parsed.ex < examples.length) {
-        selEx = parsed.ex;
-        codeText = examples[parsed.ex].code;
-      }
-
-      // Apply custom code from URL (overrides example code)
-      if (parsed.code) {
-        codeText = parsed.code;
-      }
-
-      // If step param is present, auto-run and seek to that step
-      if (parsed.step != null && parsed.step >= 0) {
-        const targetStep = parsed.step;
-        _runCode().then(() => {
-          if (targetStep < steps.length) {
-            step = targetStep;
-          }
-          // Don't auto-play when opening a shared link
-          if (playing) { clearInterval(timer); timer = null; playing = false; }
-        });
-      }
-    }
-
     return () => {
       window.removeEventListener('keydown', handleKey);
       if (timer) clearInterval(timer);
-      if (interpWorker) { interpWorker.terminate(); interpWorker = null; }
     };
   });
-
-  // ── Silently update URL when state changes ────────────────────────────────
-  $effect(() => {
-    if (!routeKey) return;
-    updateUrlSilent({
-      route: routeKey,
-      ex: selEx,
-      step: step,
-      code: codeText,
-      exampleCode: examples[selEx]?.code ?? '',
-    });
-  });
-
-  // ── Share button handler ──────────────────────────────────────────────────
-  async function shareUrl() {
-    const url = buildShareUrl({
-      route: routeKey,
-      ex: selEx,
-      step: step,
-      code: codeText,
-      exampleCode: examples[selEx]?.code ?? '',
-    });
-    try {
-      await navigator.clipboard.writeText(url);
-      shareToast = 'Link copied!';
-    } catch (e) {
-      shareToast = 'Copy failed';
-    }
-    setTimeout(() => { shareToast = ''; }, 2200);
-  }
 </script>
 
-<div class="mod" role="main" aria-label="{titlePrefix}{titleAccent} learning module">
+<div class="mod" style="--accent: {accent}">
   <!-- Header -->
   <header class="hdr">
-    <a href="#/" class="back" aria-label="Back to all modules">← modules</a>
+    <a href="#/" class="back">← modules</a>
     <div class="title-group">
       <h2>{titlePrefix}<span class="ac" style="color:{accent}">{titleAccent}</span>
         <span class="sub">{subtitle}</span></h2>
       {#if desc}<p class="desc">{desc}</p>{/if}
     </div>
-    <div class="hdr-spacer"></div>
-    <button class="share-btn" style="--acc:{accent}" onclick={shareUrl} aria-label="Copy shareable link">
-      <span class="share-icon">🔗</span> Share
-    </button>
-    {#if shareToast}
-      <div class="share-toast" style="--acc:{accent}">{shareToast}</div>
-    {/if}
   </header>
 
-  <!-- First-run hint -->
-  {#if !hasRun}
-    <p class="run-hint">Pick an example below, then click Visualize to step through it.</p>
-  {/if}
-
   <!-- Example picker -->
-  <nav class="ex-bar" aria-label="Example programs">
-    <span class="ex-lbl" id="ex-label">Examples:</span>
+  <div class="ex-bar">
+    <span class="ex-lbl">Examples:</span>
     {#each examples as ex, i}
       <button
         class="ex-btn"
         class:act={selEx === i}
         style="--acc:{accent}"
         onclick={() => loadEx(i)}
-        aria-pressed={selEx === i}
-        aria-describedby="ex-label"
       >{ex.label}</button>
     {/each}
-  </nav>
-
-  <!-- Mobile tab switcher (hidden on desktop via CSS) -->
-  {#if hasRun}
-    <div class="mob-tabs" style="--acc:{accent}">
-      <button class="mob-tab" class:mob-tab-act={mobileTab === 'code'} onclick={() => mobileTab = 'code'}>
-        <span class="mob-tab-icon">{'{ }'}</span> Code
-      </button>
-      <button class="mob-tab" class:mob-tab-act={mobileTab === 'visual'} onclick={() => mobileTab = 'visual'}>
-        <span class="mob-tab-icon">◉</span> Visual
-      </button>
-    </div>
-  {/if}
+    <button
+      class="predict-btn"
+      class:predict-active={predictMode}
+      onclick={() => { predictMode = !predictMode; predictPending = false; }}
+    >🎯 {predictMode ? 'Predicting' : 'Predict mode'}</button>
+    {#if predictMode && predictScore.total > 0}
+      <span class="predict-score">{predictScore.correct}/{predictScore.total}</span>
+    {/if}
+  </div>
 
   <!-- Main split layout -->
   <div class="main">
 
     <!-- ── LEFT: CODE PANEL ────────────────────────────────────────────────── -->
-    <div class="code-panel" class:mob-hidden={hasRun && mobileTab !== 'code'}>
+    <div class="code-panel">
       <div class="ph">
         <span class="pt">Source Code</span>
         <div class="pa">
-          <button class="eb" onclick={editCode} aria-label="Edit code">✎ Edit</button>
-          <button class="rb" style="background:{accent};color:var(--a11y-bg, #0a0a0f)" onclick={_runCode} disabled={running}
-            aria-label={running ? 'Running code' : 'Visualize code execution'}>
-            {running ? '⏳ Running…' : '▶ Visualize'}
+          {#if hasRun}
+            <button class="eb" onclick={editCode}>✎ Edit</button>
+          {/if}
+          <button class="rb" style="background:{accent};color:#0a0a0f" onclick={_runCode}>
+            ▶ Visualize
           </button>
         </div>
       </div>
@@ -429,32 +470,18 @@
         </div>
       {/if}
 
-      {#if err}
-        <div class="err-card">
-          <div class="err-head">
-            <span class="err-icon">!</span>
-            <span class="err-friendly">{errFriendly?.friendly ?? err}</span>
-          </div>
-          {#if errFriendly?.hint}
-            <pre class="err-hint">{errFriendly.hint}</pre>
-          {/if}
-          <details class="err-details">
-            <summary class="err-toggle">Show technical error</summary>
-            <code class="err-raw">{err}</code>
-          </details>
-        </div>
-      {/if}
+      {#if err}<div class="err">{err}</div>{/if}
 
       {#if hasRun}
         <!-- Step controls row -->
-        <div class="ctrls" role="toolbar" aria-label="Step controls">
-          <TapTooltip text="First (Home)"><button class="cb" onclick={goFirst} disabled={step <= 0} aria-label="First step">⟪</button></TapTooltip>
-          <TapTooltip text="Back (←)"><button class="cb" onclick={goPrev}  disabled={step <= 0} aria-label="Previous step">‹</button></TapTooltip>
-          <TapTooltip text="Play/Pause (Space)"><button class="cb abtn" style="color:{accent};border-color:{accent}33"
-            onclick={toggleAuto} aria-label={playing ? 'Pause auto-play' : 'Start auto-play'}>{playing ? '⏸' : '⏵'}</button></TapTooltip>
-          <TapTooltip text="Forward (→)"><button class="cb" onclick={goNext}  disabled={step >= total - 1} aria-label="Next step">›</button></TapTooltip>
-          <TapTooltip text="Last (End)"><button class="cb" onclick={goLast}  disabled={step >= total - 1} aria-label="Last step">⟫</button></TapTooltip>
-          <span class="sc" role="status" aria-live="polite" aria-label="Step {step + 1} of {total}">{step + 1}/{total}</span>
+        <div class="ctrls">
+          <button class="cb" onclick={goFirst} disabled={step <= 0} title="First (Home)">⟪</button>
+          <button class="cb" onclick={goPrev}  disabled={step <= 0} title="Back (←)">‹</button>
+          <button class="cb abtn" style="color:{accent};border-color:{accent}33"
+            onclick={toggleAuto} title="Play/Pause (Space)">{playing ? '⏸' : '⏵'}</button>
+          <button class="cb" onclick={goNext}  disabled={step >= total - 1} title="Forward (→)">›</button>
+          <button class="cb" onclick={goLast}  disabled={step >= total - 1} title="Last (End)">⟫</button>
+          <span class="sc">{step + 1}/{total}</span>
           <!-- Speed selector -->
           <div class="speed-row">
             {#each [0.5, 1, 2, 4] as s}
@@ -463,23 +490,14 @@
                 class:spd-act={speed === s}
                 style="--acc:{accent}"
                 onclick={() => setSpeed(s)}
-                aria-label="{s}x speed: {s === 0.5 ? '3600' : s === 1 ? '1800' : s === 2 ? '900' : '450'}ms per step"
+                title="{s === 0.5 ? '3600' : s === 1 ? '1800' : s === 2 ? '900' : '450'}ms per step"
               >{s}x</button>
             {/each}
           </div>
         </div>
 
-        <!-- Keyboard shortcut hints -->
-        <div class="kbd-hints" aria-hidden="true">
-          <span class="kbd-hint"><kbd>←</kbd> Prev</span>
-          <span class="kbd-hint"><kbd>→</kbd> Next</span>
-          <span class="kbd-hint"><kbd>Space</kbd> Play</span>
-          <span class="kbd-hint"><kbd>Home</kbd> First</span>
-          <span class="kbd-hint"><kbd>End</kbd> Last</span>
-        </div>
-
         <!-- Timeline scrubber -->
-        <div class="timeline" style="--acc:{accent}" role="slider" aria-label="Execution timeline" aria-valuemin="1" aria-valuemax={total} aria-valuenow={step + 1} aria-valuetext="Step {step + 1} of {total}: {sd?.phase ?? 'ready'}">
+        <div class="timeline" style="--acc:{accent}">
           <div class="tl-track">
             <!-- Progress fill -->
             <div class="tl-fill" style="width:{fillPct}%"></div>
@@ -491,9 +509,10 @@
                 class="tl-dot"
                 class:tl-active={isActive}
                 class:tl-past={isPast}
-                style="left:{markerPct(i, total)}%;--ph:{phColor(s.phase)}"
+                style="left:{markerPct(i)}%;--ph:{phColor(s.phase)}"
+                title="Step {i + 1}: {s.phase ?? 'exec'} — {s.brain ? s.brain.slice(0, 60) : ''}"
                 onclick={() => step = i}
-                aria-label="Step {i + 1}: {s.phase ?? 'exec'}"
+                aria-label="Step {i + 1}: {s.phase ?? 'exec'} — {s.brain ? s.brain.slice(0, 60) : ''}"
               >{#if showIcons || isActive}<span class="tl-icon">{phIcon(s.phase)}</span>{/if}</button>
             {/each}
           </div>
@@ -502,15 +521,43 @@
     </div>
 
     <!-- ── RIGHT: VISUAL STATE PANEL ──────────────────────────────────────── -->
-    <div class="vis-panel" class:mob-hidden={hasRun && mobileTab !== 'visual'}>
+    <div class="vis-panel">
+
+      {#if predictPending && predictOptions.length > 0}
+        <div class="predict-panel" use:gsapSlideIn>
+          <div class="predict-hdr">
+            <span class="predict-title">🎯 What happens next?</span>
+            <span class="predict-hint">
+              {#if sd}
+                <span class="predict-phase">{sd.phase}</span> on line {(sd.lineIndex ?? 0) + 1}
+              {/if}
+            </span>
+          </div>
+          <div class="predict-options">
+            {#each predictOptions as option}
+              <button
+                class="predict-option"
+                class:option-correct={predictCorrect === true && option.correct}
+                class:option-wrong={predictCorrect === false && !option.correct && option === selectedOption}
+                disabled={predictCorrect !== null}
+                onclick={() => { selectedOption = option; submitPrediction(option); }}
+              >{option.label}</button>
+            {/each}
+          </div>
+          {#if predictCorrect === false}
+            <div class="predict-explain">
+              {steps[step + 1]?.brain?.split('\n')[0] ?? 'Not quite — see the explanation below.'}
+            </div>
+          {/if}
+        </div>
+      {/if}
+
       {#if sd}
 
         <!-- CPU dashboard -->
         {#key step}
           <CpuDash
             {sd} {step} {total} {accent} {phColor}
-            {explainMode}
-            onToggleMode={() => { explainMode = explainMode === 'simple' ? 'advanced' : 'simple'; }}
             registers={cpuRegisters}
             gauge={cpuGauge}
             stack={cpuStack}
@@ -523,14 +570,14 @@
         <!-- Default heap memory card -->
         {#if showHeap && varArr.length > 0}
           <div class="heap-card">
-            <div class="heap-hdr" role="heading" aria-level="3">
+            <div class="heap-hdr">
               <svg width="14" height="14" viewBox="0 0 14 14">
                 <rect x="1" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.5"/>
                 <rect x="8" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.3"/>
                 <rect x="1" y="8" width="5" height="5" rx="1" fill={accent} opacity="0.3"/>
                 <rect x="8" y="8" width="5" height="5" rx="1" fill={accent} opacity="0.15"/>
               </svg>
-              <span class="heap-title">HEAP MEMORY<span class="panel-subtitle">where your variables live</span></span>
+              <span class="heap-title">HEAP MEMORY</span>
               <span class="heap-count">{varArr.length} var{varArr.length !== 1 ? 's' : ''}</span>
             </div>
             <div class="heap-grid">
@@ -565,12 +612,12 @@
         <!-- STDOUT -->
         {#if sd.output && sd.output.length > 0}
           <div class="out-card">
-            <div class="out-hdr" role="heading" aria-level="3">
+            <div class="out-hdr">
               <svg width="12" height="12" viewBox="0 0 12 12">
                 <rect x="0" y="0" width="12" height="12" rx="2" fill="#111"/>
                 <text x="3" y="9" fill={accent} font-size="8" font-family="monospace">$</text>
               </svg>
-              <span>STDOUT<span class="panel-subtitle">console output</span></span>
+              <span>STDOUT</span>
             </div>
             {#each sd.output as line}
               <div class="out-ln">› {line}</div>
@@ -581,7 +628,7 @@
         <!-- COMPLEXITY ANALYSIS -->
         <div class="cx-card">
           <div class="cx-hdr">
-            <span class="cx-title">COMPLEXITY ANALYSIS<span class="panel-subtitle">performance cost</span></span>
+            <span class="cx-title">COMPLEXITY ANALYSIS</span>
             {#if cx.dynamic}<span class="cx-live-badge">live</span>{/if}
           </div>
           <div class="cx-chart">
@@ -595,36 +642,49 @@
               </div>
             {/each}
           </div>
+
+          <!-- Growth curve: shows the actual shape of each complexity class -->
+          <svg class="cx-curve" viewBox="0 0 300 40" preserveAspectRatio="none">
+            <!-- Axes -->
+            <line x1="8" y1="34" x2="292" y2="34" stroke="#1a1a2e" stroke-width="0.5"/>
+            <line x1="8" y1="4"  x2="8"   y2="34" stroke="#1a1a2e" stroke-width="0.5"/>
+            <!-- O(1): flat -->
+            <path d="M 8 33 L 292 33" fill="none" stroke="#4ade80"
+              stroke-width={cx.time === 'O(1)' ? 2 : 0.7}
+              opacity={cx.time === 'O(1)' ? 0.85 : 0.15}/>
+            <!-- O(log n): slow rise -->
+            <path d="M 8 33 Q 60 28 292 18" fill="none" stroke="#a3e635"
+              stroke-width={cx.time === 'O(lg)' ? 2 : 0.7}
+              opacity={cx.time === 'O(lg)' ? 0.85 : 0.15}/>
+            <!-- O(n): linear -->
+            <path d="M 8 33 L 292 5" fill="none" stroke="#facc15"
+              stroke-width={cx.time === 'O(n)' ? 2 : 0.7}
+              opacity={cx.time === 'O(n)' ? 0.85 : 0.15}/>
+            <!-- O(n log n): slightly curved above O(n) -->
+            <path d="M 8 33 C 80 32 200 14 292 4" fill="none" stroke="#fb923c"
+              stroke-width={cx.time === 'O(n·lg)' ? 2 : 0.7}
+              opacity={cx.time === 'O(n·lg)' ? 0.85 : 0.15}/>
+            <!-- O(n²): parabola (slow start, steep finish) -->
+            <path d="M 8 33 C 140 33 240 18 292 4" fill="none" stroke="#f87171"
+              stroke-width={cx.time === 'O(n²)' ? 2 : 0.7}
+              opacity={cx.time === 'O(n²)' ? 0.85 : 0.15}/>
+            <!-- Axis labels -->
+            <text x="10" y="39" fill="#1e1e30" font-size="5" font-family="monospace">n=1</text>
+            <text x="290" y="39" text-anchor="end" fill="#2a2a44" font-size="5" font-family="monospace">n→∞</text>
+            <text x="3" y="7" fill="#2a2a44" font-size="5" font-family="monospace">ops</text>
+          </svg>
+
           <div class="cx-detail-grid">
             <div class="cx-row">
-              <div class="cx-label">
-                <svg width="12" height="12" viewBox="0 0 12 12" style="vertical-align:-1px;margin-right:4px">
-                  <circle cx="6" cy="6" r="5" fill="none" stroke={timeBadgeColor} stroke-width="1" opacity="0.5"/>
-                  <line x1="6" y1="3" x2="6" y2="6" stroke={timeBadgeColor} stroke-width="1.2" stroke-linecap="round"/>
-                  <line x1="6" y1="6" x2="8" y2="7.5" stroke={timeBadgeColor} stroke-width="1" stroke-linecap="round"/>
-                </svg>
-                Time Complexity
-              </div>
+              <div class="cx-label">Time Complexity</div>
               <div class="cx-badge" style="color:{timeBadgeColor};background:{timeBadgeColor}20">{cx.time}</div>
             </div>
-            <details class="cx-explain-toggle">
-              <summary class="cx-explain-summary">Why {cx.time}?</summary>
-              <div class="cx-why">{cx.timeWhy}</div>
-            </details>
+            <div class="cx-why">{cx.timeWhy}</div>
             <div class="cx-row">
-              <div class="cx-label">
-                <svg width="12" height="12" viewBox="0 0 12 12" style="vertical-align:-1px;margin-right:4px">
-                  <rect x="2" y="3" width="8" height="7" rx="1" fill="none" stroke={spaceBadgeColor} stroke-width="1" opacity="0.5"/>
-                  <rect x="4" y="1" width="4" height="3" rx="1" fill="none" stroke={spaceBadgeColor} stroke-width="0.8" opacity="0.4"/>
-                </svg>
-                Space Complexity
-              </div>
+              <div class="cx-label">Space Complexity</div>
               <div class="cx-badge" style="color:{spaceBadgeColor};background:{spaceBadgeColor}20">{cx.space}</div>
             </div>
-            <details class="cx-explain-toggle">
-              <summary class="cx-explain-summary">Why {cx.space}?</summary>
-              <div class="cx-why">{cx.spaceWhy}</div>
-            </details>
+            <div class="cx-why">{cx.spaceWhy}</div>
           </div>
           <div class="cx-stats">
             {#if liveStats}
@@ -653,153 +713,67 @@
     </div>
 
   </div>
-
-  <!-- First-run onboarding tour -->
-  <OnboardingTour {accent} />
 </div>
 
 <style>
   /* ── Outer layout ──────────────────────────────────────────────────────── */
-  .mod {
-    width:100%; height:100%; display:flex; flex-direction:column;
-    padding:14px 18px; gap:10px; overflow:hidden;
-    font-family:'Geist','Inter','SF Pro',system-ui,sans-serif;
-    color:var(--a11y-text-sec);
-    /* Module-identity atmosphere: accent color orb top-right, subtle opposite corner */
-    background-color: var(--a11y-bg);
-    background-image:
-      radial-gradient(ellipse 65% 50% at 100% 0%,   color-mix(in srgb, var(--acc) 10%, transparent) 0%, transparent 65%),
-      radial-gradient(ellipse 45% 35% at 0%   100%,  color-mix(in srgb, var(--acc) 6%,  transparent) 0%, transparent 60%);
-  }
-  .hdr { display:flex; align-items:center; gap:14px; flex-shrink:0; position:relative; }
-  .hdr-spacer { flex:1; }
-  .back { font-size:0.78rem; color:rgba(255,255,255,0.45); text-decoration:none; transition:color 0.2s; font-family:'Geist','Inter',system-ui,sans-serif; }
-  .back:hover { color:var(--acc); }
+  .mod { width:100%; height:100%; display:flex; flex-direction:column; padding:14px 18px; gap:10px; overflow:hidden; font-family:'Inter','SF Pro',system-ui,sans-serif; }
+  .hdr { display:flex; align-items:center; gap:14px; flex-shrink:0; }
+  .back { font-size:0.75rem; color:#555; text-decoration:none; }
+  .back:hover { color:#aaa; }
   .title-group { display:flex; flex-direction:column; }
-  h2  { font-size:1.3rem; font-weight:700; color:rgba(255,255,255,0.95); margin:0; font-family:'SF Mono','Fira Code',monospace; }
+  h2  { font-size:1.3rem; font-weight:700; color:#e0e0e0; margin:0; }
   .ac  { /* colour set inline */ }
-  .sub { font-weight:400; font-size:0.88rem; color:rgba(255,255,255,0.55); font-family:'Geist','Inter',system-ui,sans-serif; }
-  .desc { font-size:0.72rem; color:rgba(255,255,255,0.52); margin:2px 0 0; font-family:'Geist','Inter',system-ui,sans-serif; }
-
-  /* ── Share button + toast ────────────────────────────────────────────── */
-  .share-btn {
-    display:flex; align-items:center; gap:5px;
-    background:color-mix(in srgb, var(--acc) 8%, transparent);
-    border:1px solid color-mix(in srgb, var(--acc) 30%, transparent);
-    border-radius:6px; color:var(--acc);
-    font-size:0.72rem; font-weight:600; padding:5px 12px;
-    cursor:pointer; font-family:'Geist','Inter',system-ui,sans-serif;
-    transition:all 0.15s; white-space:nowrap; flex-shrink:0;
-  }
-  .share-btn:hover {
-    background:color-mix(in srgb, var(--acc) 16%, transparent);
-    border-color:color-mix(in srgb, var(--acc) 55%, transparent);
-  }
-  .share-btn:active { transform:scale(0.96); }
-  .share-icon { font-size:0.82rem; line-height:1; }
-  .share-toast {
-    position:absolute; top:100%; right:0; margin-top:6px;
-    background:color-mix(in srgb, var(--acc) 18%, #0a0a12);
-    border:1px solid color-mix(in srgb, var(--acc) 40%, transparent);
-    border-radius:6px; padding:5px 12px;
-    font-size:0.68rem; color:var(--acc); font-weight:600;
-    font-family:'Geist','Inter',system-ui,sans-serif;
-    white-space:nowrap; z-index:20;
-    animation:toast-in 0.2s ease-out;
-    box-shadow:0 4px 16px rgba(0,0,0,0.4);
-  }
-  @keyframes toast-in {
-    from { opacity:0; transform:translateY(-4px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
+  .sub { font-weight:400; font-size:0.85rem; color:#555; }
+  .desc { font-size:0.65rem; color:#444; margin:2px 0 0; }
 
   /* ── Example picker ────────────────────────────────────────────────────── */
-  .run-hint { margin:0; font-size:0.85rem; color:var(--a11y-text-muted); }
   .ex-bar  { display:flex; gap:6px; align-items:center; flex-wrap:wrap; flex-shrink:0; }
-  .ex-lbl  { font-size:0.68rem; color:rgba(255,255,255,0.42); font-family:'Geist','Inter',system-ui,sans-serif; }
-  .ex-btn  { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:rgba(255,255,255,0.58); font-size:0.72rem; padding:4px 11px; cursor:pointer; font-family:'Geist','Inter',system-ui,sans-serif; transition:all 0.2s; }
-  .ex-btn:hover { border-color:color-mix(in srgb, var(--acc) 45%, transparent); color:rgba(255,255,255,0.88); }
-  .ex-btn.act   { border-color:color-mix(in srgb, var(--acc) 65%, transparent); color:var(--acc); background:color-mix(in srgb, var(--acc) 12%, transparent); box-shadow:0 0 0 1px color-mix(in srgb, var(--acc) 25%, transparent); font-weight:600; }
+  .ex-lbl  { font-size:0.65rem; color:#444; }
+  .ex-btn  { background:#0d0d14; border:1px solid #1a1a2e; border-radius:4px; color:#666; font-size:0.7rem; padding:3px 10px; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+  .ex-btn:hover { border-color:color-mix(in srgb, var(--acc) 27%, transparent); color:#aaa; }
+  .ex-btn.act   { border-color:color-mix(in srgb, var(--acc) 40%, transparent); color:var(--acc); background:color-mix(in srgb, var(--acc) 6%, transparent); }
 
   /* ── Split main area ───────────────────────────────────────────────────── */
   .main { flex:1; display:flex; gap:14px; min-height:0; overflow:hidden; }
 
   /* ── Code panel (left) ─────────────────────────────────────────────────── */
   .code-panel { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
-  .ph  {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:5px 10px;
-    background:var(--a11y-surface2);
-    border:1px solid color-mix(in srgb, var(--acc) 18%, rgba(255,255,255,0.05));
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    border-radius:8px 8px 0 0;
-    /* Top accent stripe */
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-    position: relative;
-  }
-  .ph::before {
-    content:'';
-    position:absolute;
-    top:0; left:0; right:0;
-    height:1.5px;
-    border-radius:8px 8px 0 0;
-    background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 60%, transparent), transparent);
-  }
-  .pt  { font-size:0.62rem; color:rgba(255,255,255,0.3); letter-spacing:1px; text-transform:uppercase; font-weight:600; }
+  .ph  { display:flex; justify-content:space-between; align-items:center; padding:5px 10px; background:#111118; border:1px solid #1a1a2e; border-radius:6px 6px 0 0; }
+  .pt  { font-size:0.65rem; color:#555; letter-spacing:0.5px; text-transform:uppercase; }
   .pa  { display:flex; gap:6px; }
-  .rb  { border:none; border-radius:5px; padding:4px 14px; font-family:inherit; font-size:0.65rem; font-weight:700; cursor:pointer; transition:filter 0.15s, box-shadow 0.15s; }
-  .rb:hover { filter:brightness(1.12); box-shadow:0 0 12px color-mix(in srgb, var(--acc) 30%, transparent); }
-  .eb  { background:transparent; color:rgba(255,255,255,0.35); border:1px solid rgba(255,255,255,0.1); border-radius:5px; padding:3px 10px; font-family:inherit; font-size:0.65rem; cursor:pointer; transition:all 0.2s; }
-  .eb:hover { color:rgba(255,255,255,0.75); border-color:rgba(255,255,255,0.22); }
+  .rb  { border:none; border-radius:4px; padding:3px 12px; font-family:inherit; font-size:0.65rem; font-weight:700; cursor:pointer; }
+  .rb:hover { filter:brightness(0.88); }
+  .eb  { background:transparent; color:#666; border:1px solid #1a1a2e; border-radius:4px; padding:3px 10px; font-family:inherit; font-size:0.65rem; cursor:pointer; }
+  .eb:hover { color:#aaa; border-color:#333; }
 
-  .code-disp {
-    flex:1; background:var(--a11y-code-bg);
-    border:1px solid color-mix(in srgb, var(--acc) 12%, rgba(255,255,255,0.05));
-    border-top:none; border-radius:0 0 8px 8px;
-    padding:6px 0; overflow-y:auto;
-    font-family:'SF Mono','Fira Code','Consolas',monospace; font-size:0.85rem; line-height:1.8;
-  }
+  .code-disp { flex:1; background:#0a0a12; border:1px solid #1a1a2e; border-top:none; border-radius:0 0 6px 6px; padding:6px 0; overflow-y:auto; font-family:'SF Mono','Fira Code','Consolas',monospace; font-size:0.85rem; line-height:1.8; }
   .cl       { display:flex; align-items:center; padding:0 10px 0 0; transition:background 0.25s; min-height:1.8em; }
   .cl-exec  { background:color-mix(in srgb, var(--acc) 9%, transparent); }
   .cl-next  { background:#f59e0b0c; }
   .cl-true  { background:#4ade8014; }
   .cl-false { background:#f8717114; }
-  .ln      { width:30px; text-align:right; color:rgba(255,255,255,0.18); font-size:0.72rem; padding-right:4px; flex-shrink:0; user-select:none; }
+  .ln      { width:30px; text-align:right; color:#2a2a3e; font-size:0.72rem; padding-right:4px; flex-shrink:0; user-select:none; }
   .ac-col  { width:20px; text-align:center; flex-shrink:0; }
   .ae      { font-size:0.7rem; }
   .an      { color:#f59e0b; font-size:0.7rem; }
   .ax      { opacity:0; }
-  .lt      { white-space:pre; color:var(--a11y-text-sec); }
+  .lt      { white-space:pre; color:#ccc; }
 
   /* ── Step controls ─────────────────────────────────────────────────────── */
   .ctrls  { display:flex; gap:4px; align-items:center; flex-shrink:0; }
-  .cb     { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:rgba(255,255,255,0.65); font-size:0.82rem; padding:4px 11px; cursor:pointer; transition:all 0.15s; font-family:'Geist','Inter',system-ui,sans-serif; }
-  .cb:hover:not(:disabled) { border-color:rgba(255,255,255,0.25); color:rgba(255,255,255,0.92); background:rgba(255,255,255,0.07); }
-  .cb:disabled { opacity:0.22; cursor:default; }
+  .cb     { background:#0a0a12; border:1px solid #1a1a2e; border-radius:4px; color:#888; font-size:0.8rem; padding:3px 10px; cursor:pointer; }
+  .cb:hover:not(:disabled) { border-color:#333; color:#eee; }
+  .cb:disabled { opacity:0.2; cursor:default; }
   .abtn   { /* colour set inline */ }
-  .sc     { font-size:0.62rem; color:rgba(255,255,255,0.38); margin-left:6px; font-family:'Geist','Inter',system-ui,sans-serif; }
-  /* ── Error card ──────────────────────────────────────────────────────── */
-  .err-card     { background:#ef444410; border:1px solid #ef444433; border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .err-head     { display:flex; align-items:flex-start; gap:8px; padding:8px 12px; background:#ef44440a; border-bottom:1px solid #ef444418; }
-  .err-icon     { flex-shrink:0; width:20px; height:20px; display:flex; align-items:center; justify-content:center; background:#ef4444; color:var(--a11y-bg, #0a0a0f); font-size:0.7rem; font-weight:800; border-radius:50%; margin-top:1px; }
-  .err-friendly { font-size:0.78rem; color:#fca5a5; line-height:1.5; font-weight:600; }
-  .err-hint     { padding:8px 12px; font-size:0.7rem; color:#d4a0a0; line-height:1.65; white-space:pre-wrap; font-family:'SF Mono','Fira Code','Consolas',monospace; background:transparent; margin:0; border:none; }
-  .err-details  { border-top:1px solid #ef444418; }
-  .err-toggle   { padding:5px 12px; font-size:0.58rem; color:#ef444488; cursor:pointer; font-family:monospace; letter-spacing:0.3px; }
-  .err-toggle:hover { color:#ef4444cc; }
-  .err-raw      { display:block; padding:6px 12px; font-size:0.62rem; color:#ef4444aa; font-family:'SF Mono','Fira Code','Consolas',monospace; word-break:break-all; white-space:pre-wrap; }
+  .sc     { font-size:0.6rem; color:#333; margin-left:6px; font-family:monospace; }
+  .err    { background:#ef444412; border:1px solid #ef444433; border-radius:4px; color:#ef4444; font-size:0.72rem; padding:5px 10px; flex-shrink:0; }
 
   /* ── Speed selector ────────────────────────────────────────────────────── */
   .speed-row { display:flex; gap:2px; align-items:center; margin-left:auto; }
-  .spd-btn   { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.10); border-radius:4px; color:rgba(255,255,255,0.50); font-size:0.62rem; padding:3px 7px; cursor:pointer; font-family:'Geist','Inter',system-ui,sans-serif; letter-spacing:0.2px; transition:all 0.15s; }
-  .spd-btn:hover  { border-color:rgba(255,255,255,0.22); color:rgba(255,255,255,0.85); }
+  .spd-btn   { background:#0a0a12; border:1px solid #1a1a2e; border-radius:3px; color:#444; font-size:0.52rem; padding:2px 6px; cursor:pointer; font-family:monospace; letter-spacing:0.3px; transition:all 0.15s; }
+  .spd-btn:hover  { border-color:#333; color:#aaa; }
   .spd-btn.spd-act { border-color:color-mix(in srgb, var(--acc) 50%, transparent); color:var(--acc); background:color-mix(in srgb, var(--acc) 8%, transparent); }
-
-  /* ── Keyboard shortcut hints ──────────────────────────────────────────── */
-  .kbd-hints  { display:flex; gap:10px; justify-content:center; padding:3px 8px; flex-wrap:wrap; }
-  .kbd-hints  { display:flex; gap:10px; justify-content:center; padding:3px 8px; flex-wrap:wrap; }
-  .kbd-hint   { font-size:0.62rem; color:rgba(255,255,255,0.50); font-family:'Geist','Inter',system-ui,sans-serif; display:flex; align-items:center; gap:4px; }
-  .kbd-hint kbd { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:4px; padding:2px 6px; font-size:0.58rem; color:rgba(255,255,255,0.70); font-family:'SF Mono',monospace; }
 
   /* ── Timeline scrubber ─────────────────────────────────────────────────── */
   .timeline { flex-shrink:0; padding:6px 0 2px; }
@@ -877,260 +851,160 @@
     color:#555;
     pointer-events:none;
   }
-  .tl-active .tl-icon { color:var(--a11y-bg, #0a0a0f); font-size:0.6rem; font-weight:700; }
+  .tl-active .tl-icon { color:#0a0a0f; font-size:0.6rem; font-weight:700; }
   .tl-past .tl-icon { color:color-mix(in srgb, var(--acc) 60%, transparent); }
 
   /* ── Visual panel (right) ──────────────────────────────────────────────── */
-  .vis-panel { width:520px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; overflow-y:auto; overflow-x:hidden; padding-right:2px; }
+  .vis-panel { width:580px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; overflow-y:auto; overflow-x:hidden; padding-right:2px; }
 
   /* ── Heap memory card ──────────────────────────────────────────────────── */
-  .heap-card  {
-    background: color-mix(in srgb, var(--acc) 3%, var(--a11y-surface1));
-    border: 1px solid color-mix(in srgb, var(--acc) 18%, rgba(255,255,255,0.05));
-    border-radius:10px; overflow:hidden; flex-shrink:0;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 16px rgba(0,0,0,0.3);
-  }
-  .heap-hdr   {
-    display:flex; align-items:center; gap:6px; padding:7px 10px;
-    background: color-mix(in srgb, var(--acc) 5%, var(--a11y-surface2));
-    border-bottom: 1px solid color-mix(in srgb, var(--acc) 12%, rgba(255,255,255,0.04));
-    position: relative;
-  }
-  .heap-hdr::before {
-    content:'';
-    position:absolute;
-    top:0; left:0; right:0; height:1.5px;
-    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 50%, transparent), transparent);
-  }
-  .heap-title { font-size:0.72rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
-  .panel-subtitle { display:block; color:var(--a11y-text-muted); font-size:0.65rem; font-weight:400; letter-spacing:0; text-transform:none; margin-top:1px; }
-  .heap-count { margin-left:auto; font-size:0.65rem; color:rgba(255,255,255,0.2); font-family:monospace; }
-  .heap-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; padding:8px; }
-  .heap-box   {
-    background: color-mix(in srgb, var(--acc) 4%, #08080e);
-    border: 1px solid color-mix(in srgb, var(--acc) 20%, rgba(255,255,255,0.06));
-    border-radius:8px; overflow:hidden; transition:border-color .3s, box-shadow .3s;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-  }
-  .heap-box:hover {
-    border-color: color-mix(in srgb, var(--acc) 40%, transparent);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 12px color-mix(in srgb, var(--acc) 10%, transparent);
-  }
-  .heap-addr  { background:rgba(0,0,0,0.25); padding:2px 8px; font-size:0.42rem; color:rgba(255,255,255,0.2); font-family:monospace; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .heap-card  { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .heap-hdr   { display:flex; align-items:center; gap:6px; padding:6px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
+  .heap-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .heap-count { margin-left:auto; font-size:0.5rem; color:#333; font-family:monospace; }
+  .heap-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:8px; padding:8px; }
+  .heap-box   { background:#08080e; border:2px solid #1a1a2e; border-radius:8px; overflow:hidden; transition:border-color .3s; }
+  .heap-box:hover { border-color:#2a2a4e; }
+  .heap-addr  { background:#0d0d16; padding:2px 8px; font-size:0.42rem; color:#222; font-family:monospace; border-bottom:1px solid #1a1a2e; }
   .heap-head  { display:flex; justify-content:space-between; align-items:center; padding:6px 10px 2px; }
-  .heap-name  { font-size:0.82rem; color:var(--a11y-text); font-weight:700; font-family:'SF Mono',monospace; }
+  .heap-name  { font-size:0.95rem; color:#e0e0e0; font-weight:700; font-family:'SF Mono',monospace; }
   .heap-type  { font-size:0.45rem; padding:1px 5px; border-radius:3px; border:1px solid; font-family:monospace; letter-spacing:0.5px; font-weight:600; }
-  .heap-val   { padding:4px 10px 8px; font-size:1.3rem; font-weight:800; font-family:'SF Mono',monospace; display:inline-block; }
+  .heap-val   { padding:6px 12px 10px; font-size:1.6rem; font-weight:800; font-family:'SF Mono',monospace; display:inline-block; }
   .heap-change { display:flex; align-items:center; gap:4px; padding:2px 10px 6px; }
-  .heap-old   { font-size:0.55rem; color:rgba(255,255,255,0.30); font-family:monospace; text-decoration:line-through; }
+  .heap-old   { font-size:0.55rem; color:#555; font-family:monospace; text-decoration:line-through; }
   .heap-arrow { font-size:0.5rem; color:#f59e0b; }
   .heap-new   { font-size:0.55rem; font-family:monospace; font-weight:600; }
 
   /* ── STDOUT ────────────────────────────────────────────────────────────── */
-  .out-card {
-    background: color-mix(in srgb, var(--acc) 3%, #050508);
-    border: 1px solid color-mix(in srgb, var(--acc) 15%, rgba(255,255,255,0.05));
-    border-radius:10px; overflow:hidden; flex-shrink:0;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.3);
-  }
-  .out-hdr  {
-    display:flex; align-items:center; gap:6px; padding:5px 10px;
-    background: color-mix(in srgb, var(--acc) 5%, #0a0a12);
-    border-bottom: 1px solid color-mix(in srgb, var(--acc) 10%, rgba(255,255,255,0.04));
-    font-size:0.72rem; color:rgba(255,255,255,0.4); font-family:monospace; letter-spacing:1px; font-weight:700;
-    position:relative;
-  }
-  .out-hdr::before {
-    content:'';
-    position:absolute;
-    top:0; left:0; right:0; height:1.5px;
-    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 50%, transparent), transparent);
-  }
+  .out-card { background:#050508; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .out-hdr  { display:flex; align-items:center; gap:6px; padding:4px 10px; background:#0a0a12; border-bottom:1px solid #1a1a2e; font-size:0.55rem; color:#444; font-family:monospace; letter-spacing:1px; font-weight:700; }
   .out-ln   { padding:4px 12px; font-size:0.78rem; color:#e0e0e0; font-family:'SF Mono',monospace; }
 
   /* ── Complexity card ───────────────────────────────────────────────────── */
-  .cx-card       {
-    background: color-mix(in srgb, var(--acc) 3%, var(--a11y-surface1));
-    border: 1px solid color-mix(in srgb, var(--acc) 15%, rgba(255,255,255,0.05));
-    border-radius:10px; overflow:hidden; flex-shrink:0;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 16px rgba(0,0,0,0.3);
-  }
-  .cx-hdr        {
-    display:flex; align-items:center; justify-content:space-between; padding:6px 10px;
-    background: color-mix(in srgb, var(--acc) 5%, var(--a11y-surface2));
-    border-bottom: 1px solid color-mix(in srgb, var(--acc) 12%, rgba(255,255,255,0.04));
-    position:relative;
-  }
-  .cx-hdr::before {
-    content:'';
-    position:absolute;
-    top:0; left:0; right:0; height:1.5px;
-    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 50%, transparent), transparent);
-  }
-  .cx-title      { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .cx-card       { background:#0a0a12; border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .cx-hdr        { display:flex; align-items:center; justify-content:space-between; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
+  .cx-title      { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
   .cx-live-badge { font-size:0.42rem; color:#4ade80; border:1px solid #4ade8044; border-radius:3px; padding:1px 5px; font-family:monospace; letter-spacing:0.5px; }
-  .cx-chart      { display:flex; align-items:flex-end; gap:4px; height:76px; padding:8px 10px 0; }
+  .cx-chart      { display:flex; align-items:flex-end; gap:4px; height:90px; padding:8px 10px 0; }
   .cx-col        { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; }
   .cx-bar        { width:100%; border-radius:3px 3px 0 0; min-height:2px; }
   .cx-lbl        { font-family:monospace; font-size:0.42rem; text-align:center; margin-top:2px; font-weight:600; }
+  .cx-curve      { width:100%; height:auto; display:block; padding:0 10px; opacity:0.9; }
   .cx-detail-grid { padding:8px 10px; border-top:1px solid #1a1a2e; display:flex; flex-direction:column; gap:4px; }
   .cx-row        { display:flex; justify-content:space-between; align-items:center; }
-  .cx-label      { font-size:0.68rem; color:rgba(255,255,255,0.60); font-family:monospace; }
+  .cx-label      { font-size:0.68rem; color:#888; font-family:monospace; }
   .cx-badge      { font-size:0.65rem; font-family:monospace; font-weight:800; padding:2px 10px; border-radius:4px; }
-  .cx-explain-toggle  { margin-bottom:4px; }
-  .cx-explain-summary { font-size:0.6rem; color:rgba(255,255,255,0.38); cursor:pointer; font-family:monospace; letter-spacing:0.3px; padding:2px 0; user-select:none; transition:color 0.15s; }
-  .cx-explain-summary:hover { color:rgba(255,255,255,0.70); }
-  .cx-why        { font-size:0.68rem; color:rgba(255,255,255,0.55); line-height:1.55; margin-bottom:6px; }
+  .cx-why        { font-size:0.68rem; color:#999; line-height:1.5; margin-bottom:6px; }
   .cx-stats      { display:flex; gap:14px; padding:5px 10px; border-top:1px solid #1a1a2e; }
-  .cx-s          { display:flex; align-items:center; gap:4px; font-size:0.58rem; color:rgba(255,255,255,0.45); font-family:monospace; }
+  .cx-s          { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
 
   /* ── Placeholder ───────────────────────────────────────────────────────── */
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
-  .ph-text         { font-size:0.8rem; color:rgba(255,255,255,0.45); text-align:center; }
+  .ph-text         { font-size:0.75rem; color:#333; text-align:center; }
 
-  /* ── Mobile tab switcher (hidden on desktop) ─────────────────────────── */
-  .mob-tabs { display:none; }
-
-  /* ── Responsive: tablet ≤768px ────────────────────────────────────────── */
-  @media (max-width: 768px) {
-    .mod        { padding:10px 12px; gap:8px; height:auto; min-height:100vh; min-height:100dvh; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
-    .hdr        { gap:10px; }
-    h2          { font-size:1.1rem; }
-    .sub        { font-size:0.75rem; }
-    .desc       { font-size:0.58rem; }
-    .ex-bar     { gap:4px; overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; }
-    .ex-bar::-webkit-scrollbar { display:none; }
-    .ex-btn     { font-size:0.62rem; padding:6px 12px; white-space:nowrap; flex-shrink:0; min-height:44px; min-width:44px; display:inline-flex; align-items:center; justify-content:center; }
-    .main       { flex-direction:column; overflow:visible; min-height:0; flex:1; gap:10px; }
-    .code-panel { min-height:auto; flex:1; }
-    .vis-panel  { width:100%; flex:1; max-height:none; overflow-y:auto; }
-    .code-disp  { max-height:260px; min-height:180px; }
-    .ctrls      { flex-wrap:wrap; gap:4px; justify-content:center; }
-    .cb         { padding:6px 12px; font-size:0.75rem; min-height:44px; min-width:44px; display:flex; align-items:center; justify-content:center; }
-    .sc         { font-size:0.58rem; width:100%; text-align:center; order:10; margin:2px 0 0; }
-    .speed-row  { margin-left:0; gap:3px; }
-    .spd-btn    { padding:4px 8px; font-size:0.55rem; min-height:44px; min-width:44px; display:inline-flex; align-items:center; justify-content:center; }
-    .kbd-hints  { display:none; }
-    .timeline   { padding:4px 0 2px; }
-    .tl-track   { margin:0 6px; height:24px; }
-    .tl-dot     { width:10px; height:10px; }
-    .tl-dot.tl-active { width:16px; height:16px; }
-    .tl-icon    { font-size:0.35rem; }
-    .tl-active .tl-icon { font-size:0.5rem; }
-    .heap-grid  { grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:4px; padding:6px; }
-    .heap-val   { font-size:1rem; }
-    .cx-chart   { height:56px; }
-    .cx-why     { font-size:0.6rem; }
-    .cx-stats   { flex-wrap:wrap; gap:8px; }
-    .err-friendly { font-size:0.7rem; }
-    .err-hint     { font-size:0.62rem; padding:6px 10px; }
-    .err-raw      { font-size:0.55rem; }
-    .vis-placeholder { padding:16px 12px; gap:14px; }
-    .ph-text    { font-size:0.75rem; }
-
-    /* ── Mobile tab switcher ── */
-    .mob-tabs {
-      display:flex; gap:0; flex-shrink:0;
-      background:rgba(255,255,255,0.03);
-      border:1px solid rgba(255,255,255,0.08);
-      border-radius:8px; overflow:hidden;
-    }
-    .mob-tab {
-      flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
-      padding:10px 0; border:none; background:transparent;
-      color:rgba(255,255,255,0.45); font-size:0.72rem; font-weight:600;
-      font-family:'Geist','Inter',system-ui,sans-serif;
-      cursor:pointer; transition:all 0.15s;
-    }
-    .mob-tab-act {
-      background:color-mix(in srgb, var(--acc) 12%, transparent);
-      color:var(--acc);
-      box-shadow:inset 0 -2px 0 var(--acc);
-    }
-    .mob-tab-icon { font-size:0.8rem; }
-
-    /* ── Panel visibility on mobile ── */
-    .mob-hidden { display:none !important; }
-
-    /* ── Share button compact ── */
-    .share-btn { padding:4px 10px; font-size:0.65rem; }
+  /* ── Predict mode ──────────────────────────────────────────────────────── */
+  .predict-btn {
+    background: #0d0d14;
+    border: 1px solid #1a1a2e;
+    border-radius: 4px;
+    color: #666;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    margin-left: auto;
+  }
+  .predict-btn:hover { color: #aaa; border-color: #333; }
+  .predict-btn.predict-active {
+    border-color: var(--accent, #00ff88);
+    color: var(--accent, #00ff88);
+    background: color-mix(in srgb, var(--accent, #00ff88) 8%, transparent);
+  }
+  .predict-score {
+    font-size: 0.65rem;
+    color: var(--accent, #00ff88);
+    font-family: monospace;
+    padding: 2px 8px;
+    background: color-mix(in srgb, var(--accent, #00ff88) 10%, transparent);
+    border-radius: 4px;
+    border: 1px solid color-mix(in srgb, var(--accent, #00ff88) 25%, transparent);
+  }
+  .predict-panel {
+    background: #0a0a12;
+    border: 1px solid #1a1a2e;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .predict-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #0d0d16;
+    border-bottom: 1px solid #1a1a2e;
+  }
+  .predict-title {
+    font-size: 0.75rem;
+    color: #e0e0e0;
+    font-weight: 700;
+    font-family: monospace;
+  }
+  .predict-hint { font-size: 0.6rem; color: #444; font-family: monospace; }
+  .predict-phase {
+    color: #888;
+    background: #ffffff08;
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .predict-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+  }
+  .predict-option {
+    background: #08080e;
+    border: 1px solid #1a1a2e;
+    border-radius: 6px;
+    color: #ccc;
+    font-size: 0.8rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    padding: 8px 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .predict-option:hover:not(:disabled) {
+    border-color: #333;
+    color: #fff;
+    background: #0d0d18;
+  }
+  .predict-option:disabled { cursor: default; }
+  .predict-option.option-correct {
+    border-color: #4ade8066;
+    background: #4ade8015;
+    color: #4ade80;
+  }
+  .predict-option.option-wrong {
+    border-color: #f8717166;
+    background: #f8717115;
+    color: #f87171;
+  }
+  .predict-explain {
+    padding: 8px 12px;
+    font-size: 0.7rem;
+    color: #888;
+    border-top: 1px solid #1a1a2e;
+    font-family: monospace;
+    line-height: 1.5;
   }
 
-  /* ── Responsive: phone ≤480px ────────────────────────────────────────── */
-  @media (max-width: 480px) {
-    .mod        { padding:6px 8px; gap:6px; padding-bottom:72px; } /* padding-bottom for fixed bottom bar */
-    .hdr        { flex-direction:row; align-items:center; gap:6px; flex-wrap:wrap; }
-    .hdr-spacer { flex:1; min-width:0; }
-    .title-group { flex:1; min-width:0; }
-    h2          { font-size:0.95rem; }
-    .sub        { font-size:0.68rem; }
-    .desc       { display:none; }
-    .ex-btn     { font-size:0.6rem; padding:5px 10px; min-height:44px; min-width:44px; display:inline-flex; align-items:center; justify-content:center; }
-    .code-disp  { max-height:200px; min-height:140px; font-size:0.75rem; line-height:1.6; }
-    .ln         { width:22px; font-size:0.62rem; }
-    .ac-col     { width:16px; }
-
-    /* ── Fixed bottom bar for step controls ── */
-    .ctrls {
-      position:fixed; bottom:0; left:0; right:0; z-index:50;
-      background:var(--a11y-bg, #0a0a0f);
-      border-top:1px solid rgba(255,255,255,0.1);
-      padding:6px 12px; gap:6px;
-      display:flex; align-items:center; justify-content:center;
-      flex-wrap:nowrap;
-      box-shadow:0 -4px 20px rgba(0,0,0,0.6);
-      -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
-    }
-    .cb         { padding:6px 10px; font-size:0.8rem; min-height:44px; min-width:44px; }
-    .abtn       { min-width:48px; min-height:44px; }
-    .sc         { font-size:0.62rem; width:auto; order:0; margin:0; white-space:nowrap; }
-    .speed-row  { display:none; } /* hide speed on small phones — simplify */
-
-    .heap-grid  { grid-template-columns:1fr 1fr; gap:4px; padding:4px; }
-    .heap-name  { font-size:0.72rem; }
-    .heap-val   { font-size:0.9rem; padding:3px 8px 6px; }
-    .heap-addr  { font-size:0.38rem; }
-    .cx-chart   { height:42px; }
-    .cx-lbl     { font-size:0.38rem; }
-    .cx-label   { font-size:0.6rem; }
-    .cx-badge   { font-size:0.58rem; padding:2px 8px; }
-    .cx-why     { font-size:0.55rem; }
-    .out-ln     { font-size:0.7rem; padding:3px 8px; }
-    .ph         { padding:4px 8px; }
-    .pt         { font-size:0.58rem; }
-    .rb         { font-size:0.62rem; padding:5px 14px; min-height:44px; }
-    .eb         { font-size:0.62rem; padding:5px 10px; min-height:44px; }
-    .err-head   { padding:6px 8px; gap:6px; }
-    .err-icon   { width:16px; height:16px; font-size:0.58rem; }
-    .err-friendly { font-size:0.65rem; }
-    .err-hint   { font-size:0.58rem; padding:5px 8px; }
-    .err-raw    { font-size:0.5rem; padding:4px 8px; }
-    .tl-track   { margin:0 4px; height:20px; }
-    .tl-dot     { width:8px; height:8px; }
-    .tl-dot.tl-active { width:14px; height:14px; }
-    .tl-icon    { font-size:0.3rem; }
-    .tl-active .tl-icon { font-size:0.42rem; }
-    .vis-placeholder { padding:10px 8px; gap:8px; min-height:180px; }
-    .ph-text    { font-size:0.68rem; padding:0 6px; }
-
-    /* ── Share button even more compact ── */
-    .share-btn  { padding:3px 8px; font-size:0.6rem; }
-    .share-icon { font-size:0.7rem; }
-
-    /* ── Mobile tabs tighter ── */
-    .mob-tab { padding:8px 0; font-size:0.68rem; }
-  }
-
-  /* ── Responsive: very small phone ≤360px ─────────────────────────────── */
-  @media (max-width: 360px) {
-    .mod        { padding:4px 6px; gap:4px; }
-    h2          { font-size:0.85rem; }
-    .code-disp  { max-height:160px; min-height:120px; font-size:0.7rem; }
-    .heap-grid  { grid-template-columns:1fr; }
-    .heap-val   { font-size:0.8rem; }
-    .cx-chart   { height:36px; }
-    .cb         { padding:5px 8px; font-size:0.65rem; min-height:36px; min-width:36px; }
-    .vis-placeholder { padding:8px 6px; gap:6px; }
-    .ph-text    { font-size:0.62rem; }
+  /* ── Responsive ────────────────────────────────────────────────────────── */
+  @media (max-width: 800px) {
+    .main       { flex-direction:column; overflow-y:auto; }
+    .vis-panel  { width:100%; }
+    .mod        { padding:10px; }
   }
 </style>
