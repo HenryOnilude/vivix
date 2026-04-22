@@ -151,23 +151,23 @@
   {#snippet cpuRegisters(sd)}
     <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
       stroke={sd.scopeDepth > 1 ? `${ACCENT}44` : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">SCOPES</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.scopeDepth > 1 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="monospace">{sd.scopeDepth}</text>
+    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">SCOPES</text>
+    <text x="272" y="29" text-anchor="end" fill={sd.scopeDepth > 1 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.scopeDepth}</text>
 
     <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="290" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">CAPTURED</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.capturedCount > 0 ? '#a78bfa' : '#222'} font-size="12" font-weight="800" font-family="monospace">{sd.capturedCount}</text>
+    <text x="290" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">CAPTURED</text>
+    <text x="344" y="29" text-anchor="end" fill={sd.capturedCount > 0 ? '#a78bfa' : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.capturedCount}</text>
 
     <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">FRAME</text>
-    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="9" font-weight="700" font-family="monospace">{sd.currentFrame.slice(0, 18)}</text>
+    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">FRAME</text>
+    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace">{sd.currentFrame.slice(0, 18)}</text>
   {/snippet}
 
   <!-- CPU gauge: captured var fill bar -->
   {#snippet cpuGauge(sd)}
     <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
     <rect x="247" y="69" width={Math.min(102, sd.capturedCount * 30)} height="14" rx="2" fill={ACCENT} opacity="0.25"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">CAPTURED {sd.capturedCount}</text>
+    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">CAPTURED {sd.capturedCount}</text>
   {/snippet}
 
   <!-- Nested scope diagram -->
@@ -293,7 +293,7 @@
           <div class="closure-explain">
             <svg width="10" height="10" viewBox="0 0 10 10">
               <circle cx="5" cy="5" r="4" fill="none" stroke={ACCENT} stroke-width="1" opacity="0.6"/>
-              <text x="5" y="8" text-anchor="middle" fill={ACCENT} font-size="7" font-family="monospace">!</text>
+              <text x="5" y="8" text-anchor="middle" fill={ACCENT} font-size="7" font-family="'Geist Mono', monospace">!</text>
             </svg>
             <span>Closure scopes (🔒) stay in memory even after their outer function returns — because an inner function holds a reference to their variables.</span>
           </div>
@@ -347,14 +347,14 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
         <rect x="16" y="10" width="368" height="200" rx="8" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2.5"/>
-        <text x="32" y="34" fill="rgba(255,255,255,0.80)" font-size="16" font-family="monospace" font-weight="700">Global</text>
+        <text x="32" y="34" fill="rgba(255,255,255,0.80)" font-size="16" font-family="'Geist Mono', monospace" font-weight="700">Global</text>
         <rect x="36" y="44" width="328" height="154" rx="6" fill="none" stroke="rgba(255,255,255,0.30)" stroke-width="2"/>
-        <text x="52" y="68" fill="rgba(255,255,255,0.75)" font-size="16" font-family="monospace" font-weight="600">makeCounter()</text>
+        <text x="52" y="68" fill="rgba(255,255,255,0.75)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">makeCounter()</text>
         <rect x="56" y="78" width="288" height="108" rx="5" fill="rgba(0,212,170,0.06)" stroke="#00d4aa" stroke-width="2" stroke-dasharray="6 4"/>
-        <text x="74" y="104" fill="#00d4aa" font-size="15" font-family="monospace" font-weight="700">🔒 closure scope</text>
-        <text x="74" y="128" fill="#00d4aa" font-size="15" font-family="monospace" font-weight="600">count: 0  ← captured</text>
-        <text x="74" y="154" fill="rgba(255,255,255,0.65)" font-size="13" font-family="monospace">persists after outer fn returns</text>
-        <text x="74" y="174" fill="rgba(255,255,255,0.65)" font-size="13" font-family="monospace">inner fn holds a reference</text>
+        <text x="74" y="104" fill="#00d4aa" font-size="15" font-family="'Geist Mono', monospace" font-weight="700">🔒 closure scope</text>
+        <text x="74" y="128" fill="#00d4aa" font-size="15" font-family="'Geist Mono', monospace" font-weight="600">count: 0  ← captured</text>
+        <text x="74" y="154" fill="rgba(255,255,255,0.65)" font-size="13" font-family="'Geist Mono', monospace">persists after outer fn returns</text>
+        <text x="74" y="174" fill="rgba(255,255,255,0.65)" font-size="13" font-family="'Geist Mono', monospace">inner fn holds a reference</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see closure scopes</p>
     </div>
@@ -366,8 +366,8 @@
   /* ── Scope chain card ──────────────────────────────────────────────────── */
   .scope-card       { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scope-card-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .scope-card-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1px; font-weight:700; }
-  .scope-card-depth { margin-left:auto; font-size:0.5rem; color:#00d4aa; font-family:monospace; }
+  .scope-card-title { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
+  .scope-card-depth { margin-left:auto; font-size:0.5rem; color:#00d4aa; font-family: var(--font-code); }
 
   /* ── Scope tree ─────────────────────────────────────────────────────────── */
   .scope-tree  { padding:8px; display:flex; flex-direction:column; gap:4px; }
@@ -415,7 +415,7 @@
     border-bottom:1px solid #1a1a2e;
     font-size:0.65rem;
     color:#555;
-    font-family:monospace;
+    font-family: var(--font-code);
   }
   .scope-icon    { flex-shrink:0; }
   .scope-name    { color:#888; font-weight:700; }
@@ -426,7 +426,7 @@
   .closure-badge       { margin-left:auto; font-size:0.42rem; color:#00d4aa; letter-spacing:0.3px; }
 
   .scope-vars  { display:flex; flex-direction:column; gap:3px; padding:6px 8px; }
-  .scope-empty { padding:5px 10px; font-size:0.55rem; color:#222; font-family:monospace; font-style:italic; }
+  .scope-empty { padding:5px 10px; font-size:0.55rem; color:#222; font-family: var(--font-code); font-style:italic; }
 
   .scope-var {
     display:flex;
@@ -443,9 +443,9 @@
 
   .var-dot       { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
   .capture-icon  { flex-shrink:0; }
-  .var-name      { font-size:0.72rem; color:#88aaff; font-family:'SF Mono',monospace; font-weight:600; min-width:55px; }
-  .var-type      { font-size:0.42rem; padding:1px 4px; border-radius:2px; border:1px solid; font-family:monospace; letter-spacing:0.3px; }
-  .var-value     { font-size:0.72rem; font-weight:700; font-family:'SF Mono',monospace; margin-left:auto; min-width:40px; text-align:right; }
+  .var-name      { font-size:0.72rem; color:#88aaff; font-family: var(--font-code); font-weight:600; min-width:55px; }
+  .var-type      { font-size:0.42rem; padding:1px 4px; border-radius:2px; border:1px solid; font-family: var(--font-code); letter-spacing:0.3px; }
+  .var-value     { font-size:0.72rem; font-weight:700; font-family: var(--font-code); margin-left:auto; min-width:40px; text-align:right; }
   .captured-tag  { font-size:0.4rem; color:#00d4aa; background:#00d4aa15; padding:1px 4px; border-radius:2px; border:1px solid #00d4aa33; white-space:nowrap; }
 
   /* Capture bridge: shows captured vars flowing down from outer scope into closure */
@@ -480,7 +480,7 @@
   .bridge-label {
     font-size: 0.42rem;
     color: #00d4aa55;
-    font-family: monospace;
+    font-family: var(--font-code);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     white-space: nowrap;
@@ -493,14 +493,14 @@
     border: 1px solid #00d4aa33;
     border-radius: 3px;
     padding: 1px 6px;
-    font-family: 'SF Mono', monospace;
+    font-family: var(--font-code);
     font-weight: 600;
     font-style: normal;
   }
   .bridge-note {
     font-size: 0.38rem;
     color: #00d4aa33;
-    font-family: monospace;
+    font-family: var(--font-code);
     white-space: nowrap;
     margin-left: auto;
   }
@@ -519,22 +519,22 @@
   .closure-explain span {
     font-size:0.48rem;
     color:#00d4aa66;
-    font-family:monospace;
+    font-family: var(--font-code);
     line-height:1.5;
   }
 
   /* ── Scalar result vars card ───────────────────────────────────────────── */
   .scalar-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scalar-hdr   { display:flex; align-items:center; gap:6px; padding:4px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .scalar-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .scalar-title { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .scalar-grid  { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; }
   .scalar-item  { display:flex; align-items:center; gap:4px; background:#08080e; border:1px solid #1a1a2e; border-radius:5px; padding:3px 8px; }
-  .scalar-name  { font-size:0.65rem; color:#88aaff; font-family:'SF Mono',monospace; font-weight:600; }
+  .scalar-name  { font-size:0.65rem; color:#88aaff; font-family: var(--font-code); font-weight:600; }
   .scalar-sep   { font-size:0.55rem; color:#333; }
-  .scalar-val   { font-size:0.65rem; font-weight:700; font-family:'SF Mono',monospace; }
+  .scalar-val   { font-size:0.65rem; font-weight:700; font-family: var(--font-code); }
 
   /* ── Complexity live stats ─────────────────────────────────────────────── */
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
 
   /* ── Placeholder ───────────────────────────────────────────────────────── */
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }

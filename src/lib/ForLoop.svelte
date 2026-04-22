@@ -57,31 +57,32 @@
   desc="Watch the CPU execute loops iteration by iteration"
   interpreterOptions={{ trackLoops: true }}
   {mapStep}
+  dataFlow
 >
 
   {#snippet cpuRegisters(sd)}
     <rect x="210" y="14" width="140" height="22" rx="4" fill="#08080e"
       stroke={sd.loopIterations > 0 ? '#ffcc6633' : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">ITER</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.loopIterations > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="monospace">{sd.loopIterations}</text>
+    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">ITER</text>
+    <text x="344" y="29" text-anchor="end" fill={sd.loopIterations > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.loopIterations}</text>
 
     <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">COND</text>
+    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">COND</text>
     {#if sd.conditionResult === true}
       <circle cx="338" cy="51" r="5" fill="#4ade80"/>
-      <text x="330" y="55" text-anchor="end" fill="#4ade80" font-size="9" font-weight="700" font-family="monospace">TRUE</text>
+      <text x="330" y="55" text-anchor="end" fill="#4ade80" font-size="9" font-weight="700" font-family="'Geist Mono', monospace">TRUE</text>
     {:else if sd.conditionResult === false}
       <circle cx="338" cy="51" r="5" fill="#f87171"/>
-      <text x="330" y="55" text-anchor="end" fill="#f87171" font-size="9" font-weight="700" font-family="monospace">FALSE</text>
+      <text x="330" y="55" text-anchor="end" fill="#f87171" font-size="9" font-weight="700" font-family="'Geist Mono', monospace">FALSE</text>
     {:else}
-      <text x="344" y="55" text-anchor="end" fill="#222" font-size="9" font-family="monospace">—</text>
+      <text x="344" y="55" text-anchor="end" fill="#222" font-size="9" font-family="'Geist Mono', monospace">—</text>
     {/if}
   {/snippet}
 
   {#snippet cpuGauge(sd)}
     <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
     <rect x="247" y="69" width={Math.min(102, (sd.comps || 0) * 10)} height="14" rx="2" fill="#a78bfa" opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">{sd.comps || 0} CHECKS</text>
+    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.comps || 0} CHECKS</text>
   {/snippet}
 
   {#snippet topPanel(sd)}
@@ -161,18 +162,18 @@
             <!-- hero iteration number with pulse -->
             <g use:animateLoopPulse={{ active: phase === 'body' || phase === 'update' }}>
               <text x={cx} y={cy - 8} text-anchor="middle" fill={ACCENT}
-                font-size="38" font-weight="900" font-family="monospace">{iters}</text>
+                font-size="38" font-weight="900" font-family="'Geist Mono', monospace">{iters}</text>
             </g>
             <text x={cx} y={cy + 12} text-anchor="middle" fill="#3a3a55"
-              font-size="7" font-family="monospace" letter-spacing="2">ITERATIONS</text>
+              font-size="7" font-family="'Geist Mono', monospace" letter-spacing="2">ITERATIONS</text>
 
             <!-- running / done badge -->
             {#if isDone}
               <circle cx={cx} cy={cy + 28} r="4" fill="#f87171" opacity="0.9"/>
-              <text x={cx + 8} y={cy + 32} fill="#f87171" font-size="7" font-weight="700" font-family="monospace">DONE</text>
+              <text x={cx + 8} y={cy + 32} fill="#f87171" font-size="7" font-weight="700" font-family="'Geist Mono', monospace">DONE</text>
             {:else if sd.conditionResult === true}
               <circle cx={cx} cy={cy + 28} r="4" fill="#4ade80" opacity="0.9"/>
-              <text x={cx + 8} y={cy + 32} fill="#4ade80" font-size="7" font-weight="700" font-family="monospace">RUNNING</text>
+              <text x={cx + 8} y={cy + 32} fill="#4ade80" font-size="7" font-weight="700" font-family="'Geist Mono', monospace">RUNNING</text>
             {/if}
 
             <!-- variable tiles — right column -->
@@ -186,10 +187,10 @@
               {#if isActive}
                 <rect x="158" y={ty} width="3" height="32" rx="1.5" fill={ACCENT} opacity="0.8"/>
               {/if}
-              <text x="170" y={ty + 12} fill="#3a3a55" font-size="6" font-family="monospace" letter-spacing="0.5">{name}</text>
+              <text x="170" y={ty + 12} fill="#3a3a55" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">{name}</text>
               <text x="288" y={ty + 27} text-anchor="end"
                 fill={isActive ? ACCENT : tc(val)}
-                font-size="16" font-weight="900" font-family="monospace">{fv(val)}</text>
+                font-size="16" font-weight="900" font-family="'Geist Mono', monospace">{fv(val)}</text>
             {/each}
 
           </svg>
@@ -243,8 +244,8 @@
                     <polyline points={pts} fill="none" stroke={ACCENT} stroke-width="1.2" opacity="0.5" stroke-linecap="round" stroke-linejoin="round"/>
                   {/if}
                   <!-- labels -->
-                  <text x="12"  y="43" fill="#333" font-size="5.5" font-family="monospace">{vals[0]}</text>
-                  <text x="288" y="43" text-anchor="end" fill={ACCENT} font-size="5.5" font-family="monospace" font-weight="700">{vals[vals.length - 1]}</text>
+                  <text x="12"  y="43" fill="#333" font-size="5.5" font-family="'Geist Mono', monospace">{vals[0]}</text>
+                  <text x="288" y="43" text-anchor="end" fill={ACCENT} font-size="5.5" font-family="'Geist Mono', monospace" font-weight="700">{vals[vals.length - 1]}</text>
                 </svg>
               </div>
             {/if}
@@ -275,9 +276,9 @@
         <circle cx="200" cy="100" r="68" fill="none" stroke="rgba(251,191,36,0.50)" stroke-width="3.5" stroke-dasharray="8 4"/>
         <circle cx="200" cy="100" r="68" fill="none" stroke="rgba(251,191,36,0.12)" stroke-width="14"/>
         <path d="M 240 68 L 258 100 L 240 132" fill="none" stroke="rgba(251,191,36,0.65)" stroke-width="3" stroke-linecap="round"/>
-        <text x="200" y="94" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="40" font-weight="900" font-family="monospace">0</text>
-        <text x="200" y="118" text-anchor="middle" fill="rgba(251,191,36,0.75)" font-size="15" font-family="monospace" font-weight="700">ITERS</text>
-        <text x="200" y="192" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="15" font-family="monospace">iteration loop</text>
+        <text x="200" y="94" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="40" font-weight="900" font-family="'Geist Mono', monospace">0</text>
+        <text x="200" y="118" text-anchor="middle" fill="rgba(251,191,36,0.75)" font-size="15" font-family="'Geist Mono', monospace" font-weight="700">ITERS</text>
+        <text x="200" y="192" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="15" font-family="'Geist Mono', monospace">iteration loop</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see loops execute step by step</p>
     </div>
@@ -288,12 +289,12 @@
 <style>
   .loop-vis     { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
   .loop-vis-hdr { display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
-  .loop-title   { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
-  .loop-count   { margin-left:auto; font-size:0.5rem; color:#ffcc66; font-family:monospace; }
+  .loop-title   { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
+  .loop-count   { margin-left:auto; font-size:0.5rem; color:#ffcc66; font-family: var(--font-code); }
   .loop-svg     { width:100%; height:auto; display:block; }
 
   .sparkline-wrap { padding:4px 10px 8px; background:#08080e; border-top:1px solid #1a1a2e; }
-  .spark-label    { font-size:0.45rem; color:#333; font-family:monospace; letter-spacing:0.5px; text-transform:uppercase; display:block; margin-bottom:2px; }
+  .spark-label    { font-size:0.45rem; color:#333; font-family: var(--font-code); letter-spacing:0.5px; text-transform:uppercase; display:block; margin-bottom:2px; }
   .sparkline-svg  { width:100%; height:auto; display:block; }
 
   /* ── Phase indicator row ─────────────────────────────── */
@@ -302,7 +303,7 @@
   .phase-active     { opacity:1; }
   .phase-done       { opacity:0.6; }
   .phase-dot        { width:6px; height:6px; border-radius:50%; background:#333; flex-shrink:0; }
-  .phase-name       { font-size:0.5rem; color:#888; font-family:monospace; text-transform:uppercase; letter-spacing:0.5px; }
+  .phase-name       { font-size:0.5rem; color:#888; font-family: var(--font-code); text-transform:uppercase; letter-spacing:0.5px; }
   .phase-active .phase-name { color:#ffcc66; font-weight:700; }
   .phase-arrow      { font-size:0.45rem; color:#222; }
   .phase-arrow-active { color:#555; }
@@ -310,20 +311,20 @@
   /* ── Loop body code card ───────────────────────────── */
   .body-card  { margin:0; border-top:1px solid #1a1a2e; overflow:hidden; }
   .body-hdr   { display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:var(--a11y-bg, #0a0a12); }
-  .body-label { font-size:0.5rem; color:#555; font-family:monospace; letter-spacing:1px; font-weight:700; }
-  .body-phase { font-size:0.45rem; font-family:monospace; }
+  .body-label { font-size:0.5rem; color:#555; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
+  .body-phase { font-size:0.45rem; font-family: var(--font-code); }
   .body-lines { padding:4px 8px 6px; background:#08080e; }
   .body-line  { display:flex; align-items:center; gap:8px; padding:2px 4px; border-radius:3px; opacity:0.4; transition:opacity 0.3s, background 0.3s; }
   .body-line-active { opacity:1; background:#ffcc6608; }
-  .body-ln    { font-size:0.5rem; color:#333; font-family:monospace; min-width:12px; text-align:right; }
-  .body-code  { font-size:0.65rem; color:#bbb; font-family:'SF Mono',monospace; }
+  .body-ln    { font-size:0.5rem; color:#333; font-family: var(--font-code); min-width:12px; text-align:right; }
+  .body-code  { font-size:0.65rem; color:#bbb; font-family: var(--font-code); }
   .body-line-active .body-code { color:#ffcc66; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
 
   @media (max-width: 480px) {
     .phase-row  { padding:4px 6px; gap:2px; }

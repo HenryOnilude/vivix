@@ -229,24 +229,24 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
-        <text x="20" y="30" fill="rgba(248,113,113,0.80)" font-size="14" font-family="monospace" font-weight="700">sequential:</text>
+        <text x="20" y="30" fill="rgba(248,113,113,0.80)" font-size="14" font-family="'Geist Mono', monospace" font-weight="700">sequential:</text>
         <rect x="20" y="38" width="72" height="28" rx="3" fill="rgba(248,113,113,0.08)" stroke="rgba(248,113,113,0.50)" stroke-width="2"/>
-        <text x="56" y="57" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="monospace" font-weight="600">task 1</text>
+        <text x="56" y="57" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="'Geist Mono', monospace" font-weight="600">task 1</text>
         <rect x="98" y="38" width="72" height="28" rx="3" fill="rgba(248,113,113,0.08)" stroke="rgba(248,113,113,0.50)" stroke-width="2"/>
-        <text x="134" y="57" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="monospace" font-weight="600">task 2</text>
+        <text x="134" y="57" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="'Geist Mono', monospace" font-weight="600">task 2</text>
         <rect x="176" y="38" width="72" height="28" rx="3" fill="rgba(248,113,113,0.08)" stroke="rgba(248,113,113,0.50)" stroke-width="2"/>
-        <text x="212" y="57" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="monospace" font-weight="600">task 3</text>
-        <text x="258" y="57" fill="rgba(248,113,113,0.70)" font-size="13" font-family="monospace" font-weight="600">T=t₁+t₂+t₃</text>
-        <text x="20" y="96" fill="rgba(74,222,128,0.80)" font-size="14" font-family="monospace" font-weight="700">parallel:</text>
+        <text x="212" y="57" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="'Geist Mono', monospace" font-weight="600">task 3</text>
+        <text x="258" y="57" fill="rgba(248,113,113,0.70)" font-size="13" font-family="'Geist Mono', monospace" font-weight="600">T=t₁+t₂+t₃</text>
+        <text x="20" y="96" fill="rgba(74,222,128,0.80)" font-size="14" font-family="'Geist Mono', monospace" font-weight="700">parallel:</text>
         <rect x="20" y="104" width="72" height="28" rx="3" fill="rgba(74,222,128,0.08)" stroke="rgba(74,222,128,0.50)" stroke-width="2"/>
-        <text x="56" y="123" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="monospace" font-weight="600">task 1</text>
+        <text x="56" y="123" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="'Geist Mono', monospace" font-weight="600">task 1</text>
         <rect x="20" y="136" width="72" height="28" rx="3" fill="rgba(74,222,128,0.08)" stroke="rgba(74,222,128,0.50)" stroke-width="2"/>
-        <text x="56" y="155" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="monospace" font-weight="600">task 2</text>
+        <text x="56" y="155" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="'Geist Mono', monospace" font-weight="600">task 2</text>
         <rect x="20" y="168" width="72" height="28" rx="3" fill="rgba(74,222,128,0.08)" stroke="rgba(74,222,128,0.50)" stroke-width="2"/>
-        <text x="56" y="187" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="monospace" font-weight="600">task 3</text>
-        <text x="104" y="155" fill="rgba(74,222,128,0.70)" font-size="13" font-family="monospace" font-weight="600">T=max(t₁,t₂,t₃)</text>
+        <text x="56" y="187" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="13" font-family="'Geist Mono', monospace" font-weight="600">task 3</text>
+        <text x="104" y="155" fill="rgba(74,222,128,0.70)" font-size="13" font-family="'Geist Mono', monospace" font-weight="600">T=max(t₁,t₂,t₃)</text>
         <rect x="20" y="196" width="360" height="20" rx="3" fill="rgba(167,139,250,0.06)" stroke="rgba(167,139,250,0.35)" stroke-width="1.5"/>
-        <text x="200" y="210" text-anchor="middle" fill="rgba(167,139,250,0.80)" font-size="12" font-family="monospace" font-weight="600">call stack → event loop → microtasks</text>
+        <text x="200" y="210" text-anchor="middle" fill="rgba(167,139,250,0.80)" font-size="12" font-family="'Geist Mono', monospace" font-weight="600">call stack → event loop → microtasks</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to trace async execution</p>
     </div>
@@ -258,7 +258,7 @@
   /* Brain panel */
   .brain-panel  { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
   .brain-hdr    { display:flex; align-items:center; justify-content:space-between; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
-  .brain-title  { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .brain-title  { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .async-badge  { font-size:0.55rem; padding:1px 6px; border-radius:3px; }
   .suspended    { color:#ffcc66; background:#ffcc6615; }
   .awaiting     { color:#cc88ff; background:#cc88ff15; }
@@ -269,48 +269,48 @@
   .brain-await  { border-color:#ffcc6633; background:#ffcc6608; }
   .brain-resume { border-color:#00ff8833; background:#00ff8808; }
   .brain-async  { border-color:#cc88ff33; background:#cc88ff08; }
-  .brain-text   { font-size:0.75rem; line-height:1.6; color:#bbb; white-space:pre-wrap; word-wrap:break-word; font-family:'Inter',system-ui,sans-serif; margin:0; }
+  .brain-text   { font-size:0.75rem; line-height:1.6; color:#bbb; white-space:pre-wrap; word-wrap:break-word; font-family: var(--font-ui); margin:0; }
   .brain-done .brain-text   { color:#aabbff; }
   .brain-await .brain-text  { color:#ffe099; }
   .brain-resume .brain-text { color:#88ffbb; }
   .brain-async .brain-text  { color:#ddaaff; }
-  .mem-label    { background:#08080e; border-top:1px solid #1a1a2e; padding:5px 10px; font-size:0.6rem; color:#555; font-family:'SF Mono',monospace; letter-spacing:0.3px; }
+  .mem-label    { background:#08080e; border-top:1px solid #1a1a2e; padding:5px 10px; font-size:0.6rem; color:#555; font-family: var(--font-code); letter-spacing:0.3px; }
 
   /* Call Stack + Event Loop */
   .runtime-row   { display:flex; gap:6px; }
   .runtime-panel { flex:1; min-width:0; background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:8px; overflow:hidden; flex-shrink:0; }
   .frames-panel  { background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .runtime-hdr   { padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .runtime-hdr   { padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .stack-box     { padding:6px 8px; display:flex; flex-direction:column; gap:3px; min-height:40px; }
   .stack-frame   { display:flex; justify-content:space-between; align-items:center; padding:3px 6px; border-radius:3px; border:1px solid #1a1a2e; font-size:0.65rem; transition:all 0.3s; }
   .stack-top     { border-color:#cc88ff44; background:#cc88ff10; }
-  .stack-name    { color:#ccc; font-weight:600; font-family:'SF Mono',monospace; font-size:0.65rem; }
+  .stack-name    { color:#ccc; font-weight:600; font-family: var(--font-code); font-size:0.65rem; }
   .stack-arrow   { font-size:0.5rem; color:#cc88ff; }
   .stack-empty   { font-size:0.6rem; color:#2a2a3e; padding:4px; }
   .event-box     { padding:6px 8px; min-height:40px; }
-  .event-item    { font-size:0.6rem; color:#ffcc66; padding:2px 6px; background:#ffcc6610; border-radius:3px; margin-bottom:2px; font-family:'SF Mono',monospace; }
+  .event-item    { font-size:0.6rem; color:#ffcc66; padding:2px 6px; background:#ffcc6610; border-radius:3px; margin-bottom:2px; font-family: var(--font-code); }
   .event-empty   { font-size:0.6rem; color:#2a2a3e; padding:4px; }
   .micro-label   { font-size:0.5rem; color:#444; text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
-  .micro-item    { font-size:0.6rem; color:#cc88ff; padding:2px 6px; background:#cc88ff10; border-radius:3px; margin-bottom:2px; font-family:'SF Mono',monospace; }
+  .micro-item    { font-size:0.6rem; color:#cc88ff; padding:2px 6px; background:#cc88ff10; border-radius:3px; margin-bottom:2px; font-family: var(--font-code); }
 
   /* Variable frame */
   .frame-box   { padding:8px 10px; }
   .var-row     { display:flex; justify-content:space-between; align-items:center; padding:4px 8px; border-radius:4px; transition:all 0.35s; margin-bottom:2px; }
   .var-flash   { background:#cc88ff18; box-shadow:inset 3px 0 0 #cc88ff; }
   .var-left    { display:flex; align-items:center; gap:6px; }
-  .var-name    { font-size:0.8rem; color:#88aaff; font-weight:600; font-family:'SF Mono',monospace; }
+  .var-name    { font-size:0.8rem; color:#88aaff; font-weight:600; font-family: var(--font-code); }
   .var-type    { font-size:0.55rem; padding:1px 5px; border-radius:3px; background:#ffffff08; }
-  .var-value   { font-size:0.8rem; font-weight:600; font-family:'SF Mono',monospace; }
+  .var-value   { font-size:0.8rem; font-weight:600; font-family: var(--font-code); }
   .var-empty   { font-size:0.72rem; color:#2a2a3e; padding:10px 4px; }
 
   /* Timeline */
   .timeline-panel  { background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:8px; overflow:hidden; flex-shrink:0; }
   .timeline-hdr    { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .timeline-title  { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .timeline-title  { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .timeline-body   { padding:8px; display:flex; flex-direction:column; gap:6px; }
 
   .tl-row        { display:flex; align-items:center; gap:8px; }
-  .tl-row-label  { font-size:0.45rem; color:#444; font-family:monospace; min-width:52px; text-align:right; }
+  .tl-row-label  { font-size:0.45rem; color:#444; font-family: var(--font-code); min-width:52px; text-align:right; }
   .tl-bars       { display:flex; gap:2px; align-items:center; flex:1; }
   .tl-bars-par   { flex-direction:column; gap:2px; }
   .tl-bar        { padding:3px 8px; border-radius:3px; min-width:50px; transition:all 0.3s; border:1px solid transparent; }
@@ -318,17 +318,17 @@
   .tl-par        { background:#4ade8018; border-color:#4ade8033; width:100%; }
   .tl-done.tl-seq { background:#cc88ff30; border-color:#cc88ff66; }
   .tl-done.tl-par { background:#4ade8030; border-color:#4ade8066; }
-  .tl-bar-label  { font-size:0.5rem; color:#888; font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+  .tl-bar-label  { font-size:0.5rem; color:#888; font-family: var(--font-code); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
   .tl-done .tl-bar-label { color:#ccc; }
   .tl-sep        { font-size:0.6rem; color:#333; }
-  .tl-cost       { font-size:0.45rem; font-family:monospace; white-space:nowrap; }
+  .tl-cost       { font-size:0.45rem; font-family: var(--font-code); white-space:nowrap; }
   .tl-cost-slow  { color:#f87171; }
   .tl-cost-fast  { color:#4ade80; }
-  .tl-insight    { padding:4px 10px 6px; background:#4ade8008; border-top:1px solid #4ade8018; font-size:0.48rem; color:#4ade8077; font-family:monospace; }
+  .tl-insight    { padding:4px 10px 6px; background:#4ade8008; border-top:1px solid #4ade8018; font-size:0.48rem; color:#4ade8077; font-family: var(--font-code); }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
 </style>

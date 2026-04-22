@@ -33,6 +33,8 @@
  * @property {boolean} [trackObjects]
  * @property {boolean} [trackDS]
  * @property {boolean} [trackClosures]
+ * @property {boolean} [trackIf]
+ * @property {boolean} [trackVar]
  */
 
 import { dc, fv, byteSize, totalBytes } from './utils.js';
@@ -48,7 +50,7 @@ import {
   detectClosureVarNames, isConsoleLog, detectPhase,
   nodeLine, findNextLine, setGlobalTrackClosures
 } from './evaluator.js';
-import { buildDeclBrain, buildDoneBrain } from './brain-text.js';
+import { buildDeclBrain, buildDoneBrain, buildClosureStartBrain, buildClosureFnDeclareBrain, buildClosureCreateBrain, buildClosureCallBrain, buildClosureDoneBrain, buildFnCallStartBrain, buildFnCallFnDeclareBrain, buildFnCallCallBrain, buildFnCallReturnBrain, buildFnCallDoneBrain, buildLoopStartBrain, buildLoopTestBrain, buildWhileTestBrain, buildDoWhileTestBrain, buildForOfInitBrain, buildForOfIterBrain, buildLoopDoneBrain, buildArrayStartBrain, buildArrayDeclareBrain, buildArrayPushBrain, buildArrayPopBrain, buildArrayShiftBrain, buildArraySortBrain, buildArraySetBrain, buildArrayDoneBrain, buildObjStartBrain, buildObjDeclareBrain, buildObjSetBrain, buildObjDestructBrain, buildObjMethodBrain, buildObjDoneBrain, buildDSStartBrain, buildDSDeclareBrain, buildDSPushBrain, buildDSPopBrain, buildDSDequeueBrain, buildDSSortBrain, buildDSDoneBrain, buildIfStartBrain, buildIfConditionBrain, buildIfSkipBrain, buildIfElseEnterBrain, buildIfDoneBrain, buildVarStartBrain, buildVarDeclareBrain, buildVarAssignBrain, buildVarUpdateBrain, buildVarDoneBrain } from './brain-text.js';
 
 // ═══════════════════════════════════════════════════════
 // STEP LIMIT
@@ -97,15 +99,34 @@ export function interpret(code, options = {}) {
   if (options.trackObjects) state.extra.objOps = 0;
   if (options.trackDS) state.extra.dsOps = 0;
   if (options.trackClosures) { state.extra.closureRegistry = {}; state.extra.closureVars = {}; }
+  if (options.trackIf) { state.extra.ifEvals = 0; state.extra.lastCondType = null; }
+  if (options.trackVar) { state.extra.varDecls = 0; }
 
   // Start step
+  const startBrain = options.trackClosures
+    ? buildClosureStartBrain()
+    : options.trackCalls
+    ? buildFnCallStartBrain()
+    : options.trackLoops
+    ? buildLoopStartBrain()
+    : options.trackArrays
+    ? buildArrayStartBrain()
+    : options.trackObjects
+    ? buildObjStartBrain()
+    : options.trackDS
+    ? buildDSStartBrain()
+    : options.trackIf
+    ? buildIfStartBrain()
+    : options.trackVar
+    ? buildVarStartBrain()
+    : 'V8 ENGINE STARTUP:\n\n' +
+      '1. PARSING — V8\'s parser (similar to Acorn) reads your source code and builds an Abstract Syntax Tree (AST).\n' +
+      '2. IGNITION — V8\'s bytecode interpreter compiles the AST into compact bytecode. This is fast to generate but runs slower than machine code.\n' +
+      '3. EXECUTION — Ignition begins executing bytecode line by line. The Program Counter (PC) is set to the first instruction.\n\n' +
+      'If a function or loop becomes "hot" (runs many times), V8\'s TurboFan JIT compiler will optimize it into native machine code for maximum speed.\n\n' +
+      'The call stack starts with a single Global frame. All top-level variables live here.';
   steps.push(makeStep(-1, findNextLine(lines, -1), vars, output, null, 'start',
-    'V8 ENGINE STARTUP:\n\n' +
-    '1. PARSING — V8\'s parser (similar to Acorn) reads your source code and builds an Abstract Syntax Tree (AST).\n' +
-    '2. IGNITION — V8\'s bytecode interpreter compiles the AST into compact bytecode. This is fast to generate but runs slower than machine code.\n' +
-    '3. EXECUTION — Ignition begins executing bytecode line by line. The Program Counter (PC) is set to the first instruction.\n\n' +
-    'If a function or loop becomes "hot" (runs many times), V8\'s TurboFan JIT compiler will optimize it into native machine code for maximum speed.\n\n' +
-    'The call stack starts with a single Global frame. All top-level variables live here.',
+    startBrain,
     'PC → line 1 | Ignition start', state, options));
 
   // Walk top-level statements (with runtime error recovery)
@@ -141,8 +162,25 @@ export function interpret(code, options = {}) {
   }
 
   // Done step
+  const doneBrain = options.trackClosures
+    ? buildClosureDoneBrain(vars, state)
+    : options.trackCalls
+    ? buildFnCallDoneBrain(vars, state)
+    : options.trackLoops
+    ? buildLoopDoneBrain(vars, state)
+    : options.trackArrays
+    ? buildArrayDoneBrain(vars, state)
+    : options.trackObjects
+    ? buildObjDoneBrain(vars, state)
+    : options.trackDS
+    ? buildDSDoneBrain(vars, state)
+    : options.trackIf
+    ? buildIfDoneBrain(vars, state)
+    : options.trackVar
+    ? buildVarDoneBrain(vars, state)
+    : buildDoneBrain(vars, output, state);
   steps.push(makeStep(-1, -1, vars, output, null, 'done',
-    buildDoneBrain(vars, output, state),
+    doneBrain,
     `DONE | ${state.memOps} writes`, state, options, true));
 
   setGlobalTrackClosures(false);
@@ -296,8 +334,38 @@ function walkVarDeclaration(stmt, nextLi, vars, output, lines, steps, state, opt
         }
       }
 
+      // Select brain text: closure-specific when applicable, generic otherwise
+      let brain;
+      if (phase === 'closure-create') {
+        // Gather captured var names from registry
+        const regEntry = state.extra.closureRegistry[name] || Object.values(state.extra.closureRegistry).find(e => e.created);
+        const capturedNames = regEntry ? regEntry.capturedVarNames : [];
+        brain = buildClosureCreateBrain(name, capturedNames, val);
+      } else if (phase === 'closure-call') {
+        // Find which closure was called and its captured names
+        const callee = decl.init && decl.init.callee;
+        let calledName = callee && callee.type === 'Identifier' ? callee.name : null;
+        if (!calledName && callee && callee.type === 'MemberExpression' && !callee.computed) {
+          const on = callee.object.type === 'Identifier' ? callee.object.name : null;
+          if (on) calledName = `${on}.${callee.property.name}`;
+        }
+        const info = calledName && state.extra.closureRegistry[calledName];
+        const capturedNames = info ? info.capturedVarNames : [];
+        brain = buildClosureCallBrain(name, calledName || '?', capturedNames, val);
+      } else if (options.trackArrays && Array.isArray(val)) {
+        brain = buildArrayDeclareBrain(name, val);
+      } else if (options.trackObjects && typeof val === 'object' && val !== null && !Array.isArray(val)) {
+        brain = buildObjDeclareBrain(name, val);
+      } else if (options.trackDS && (Array.isArray(val) || (typeof val === 'object' && val !== null))) {
+        brain = buildDSDeclareBrain(name, val);
+      } else if (options.trackVar) {
+        state.extra.varDecls++;
+        brain = buildVarDeclareBrain(name, val, stmt.kind, state.extra.varDecls);
+      } else {
+        brain = buildDeclBrain(name, val, stmt.kind, vars);
+      }
       steps.push(makeStep(nodeLine(stmt), nextLi, vars, output, name, phase,
-        buildDeclBrain(name, val, stmt.kind, vars),
+        brain,
         `${stmt.kind.toUpperCase()}: ${name} = ${fv(val)}`, state, options));
     }
     else if (decl.id.type === 'ObjectPattern') {
@@ -313,8 +381,11 @@ function walkVarDeclaration(stmt, nextLi, vars, output, lines, steps, state, opt
       }
       if (options.trackObjects) state.extra.objOps++;
 
+      const destructBrain = options.trackObjects
+        ? buildObjDestructBrain(names, srcVal)
+        : `DESTRUCTURING:\n\n${names.map(n => `  ${n} = ${fv(vars[n])}`).join('\n')}\n\nEach destructured key is an O(1) hash lookup.\n\nV8 Internal — Inline Caches for Destructuring:\nV8 creates an inline cache (IC) for each destructured property. Since all properties are accessed from the same object with the same hidden class, V8 can use a monomorphic IC — the fastest access pattern. Each lookup becomes a direct memory offset read.`;
       steps.push(makeStep(nodeLine(stmt), nextLi, vars, output, names[0], 'obj-destruct',
-        `DESTRUCTURING:\n\n${names.map(n => `  ${n} = ${fv(vars[n])}`).join('\n')}\n\nEach destructured key is an O(1) hash lookup.\n\nV8 Internal — Inline Caches for Destructuring:\nV8 creates an inline cache (IC) for each destructured property. Since all properties are accessed from the same object with the same hidden class, V8 can use a monomorphic IC — the fastest access pattern. Each lookup becomes a direct memory offset read.`,
+        destructBrain,
         `DESTRUCT: ${names.length} keys`, state, options));
     }
     else if (decl.id.type === 'ArrayPattern') {
@@ -363,8 +434,11 @@ function walkExpressionStatement(stmt, nextLi, vars, output, lines, steps, state
     const old = vars[name];
     evalNode(expr, vars);
     state.memOps++;
+    const updateBrain = options.trackVar
+      ? buildVarUpdateBrain(name, old, vars[name], expr.operator)
+      : `UPDATE: ${name}${expr.operator}\n\nBefore: ${fv(old)}\nAfter: ${fv(vars[name])}\n\nV8 Internal — SMI Fast Path:\n${typeof vars[name] === 'number' && Number.isInteger(vars[name]) && vars[name] >= -1073741824 && vars[name] <= 1073741823 ? `The result (${vars[name]}) fits in a 31-bit SMI. V8 handles this increment entirely in the pointer tag — no heap allocation, no boxing. This is the fastest possible numeric operation in V8.` : `The result overflows the SMI range or is a double. V8 must allocate a HeapNumber on the heap to store it. This is slower than the SMI fast path.`}`;
     steps.push(makeStep(li, nextLi, vars, output, name, 'assign',
-      `UPDATE: ${name}${expr.operator}\n\nBefore: ${fv(old)}\nAfter: ${fv(vars[name])}\n\nV8 Internal — SMI Fast Path:\n${typeof vars[name] === 'number' && Number.isInteger(vars[name]) && vars[name] >= -1073741824 && vars[name] <= 1073741823 ? `The result (${vars[name]}) fits in a 31-bit SMI. V8 handles this increment entirely in the pointer tag — no heap allocation, no boxing. This is the fastest possible numeric operation in V8.` : `The result overflows the SMI range or is a double. V8 must allocate a HeapNumber on the heap to store it. This is slower than the SMI fast path.`}`,
+      updateBrain,
       `${name}${expr.operator} → ${fv(vars[name])}`, state, options));
     return;
   }
@@ -386,8 +460,11 @@ function walkAssignmentExpr(expr, li, nextLi, vars, output, lines, steps, state,
     evalNode(expr, vars);
     state.memOps++;
 
+    const assignBrain = options.trackVar
+      ? buildVarAssignBrain(name, old, vars[name])
+      : `REASSIGNMENT: ${name}\n\nBefore: ${fv(old)}\nAfter: ${fv(vars[name])}\n\nThe old value is overwritten in place.\n\nV8 Internal — Inline Cache (IC):\nV8 remembers the type of "${name}" from previous accesses. ${typeof old === typeof vars[name] ? `The type hasn't changed (${typeof vars[name]}), so V8's IC stays "monomorphic" — the fastest state. The next read of "${name}" is a single pointer dereference.` : `The type CHANGED (${typeof old} → ${typeof vars[name]}), which makes V8's IC "polymorphic" or "megamorphic" — slower because V8 must now check multiple types. This can prevent TurboFan optimization.`}`;
     steps.push(makeStep(li, nextLi, vars, output, name, 'assign',
-      `REASSIGNMENT: ${name}\n\nBefore: ${fv(old)}\nAfter: ${fv(vars[name])}\n\nThe old value is overwritten in place.\n\nV8 Internal — Inline Cache (IC):\nV8 remembers the type of "${name}" from previous accesses. ${typeof old === typeof vars[name] ? `The type hasn't changed (${typeof vars[name]}), so V8's IC stays "monomorphic" — the fastest state. The next read of "${name}" is a single pointer dereference.` : `The type CHANGED (${typeof old} → ${typeof vars[name]}), which makes V8's IC "polymorphic" or "megamorphic" — slower because V8 must now check multiple types. This can prevent TurboFan optimization.`}`,
+      assignBrain,
       `${name}: ${fv(old)} → ${fv(vars[name])}`, state, options));
   }
   else if (expr.left.type === 'MemberExpression') {
@@ -400,8 +477,16 @@ function walkAssignmentExpr(expr, li, nextLi, vars, output, lines, steps, state,
     if (options.trackDS) state.extra.dsOps++;
 
     const phase = Array.isArray(vars[objName]) ? 'arr-set' : 'obj-set';
+    let setBrain;
+    if (phase === 'arr-set' && options.trackArrays) {
+      setBrain = buildArraySetBrain(objName, prop, Array.isArray(old) ? old : [], vars[objName]);
+    } else if (phase === 'obj-set' && options.trackObjects) {
+      setBrain = buildObjSetBrain(objName, prop, old, vars[objName]);
+    } else {
+      setBrain = `PROPERTY SET: ${objName}[${fv(prop)}] = ${fv(vars[objName]?.[prop])}\n\nO(1) hash map operation.\n\nV8 Internal — Hidden Class Transition:\nAdding a new property causes V8 to transition the object's hidden class (Map). Each unique property addition creates a new Map in the transition tree. Objects that add properties in the SAME ORDER share Maps, enabling fast inline-cached access.\n\nIf you add properties in inconsistent orders across similar objects, V8 falls into "dictionary mode" (slow properties) — losing the fast-path optimization.`;
+    }
     steps.push(makeStep(li, nextLi, vars, output, objName, phase,
-      `PROPERTY SET: ${objName}[${fv(prop)}] = ${fv(vars[objName]?.[prop])}\n\nO(1) hash map operation.\n\nV8 Internal — Hidden Class Transition:\nAdding a new property causes V8 to transition the object's hidden class (Map). Each unique property addition creates a new Map in the transition tree. Objects that add properties in the SAME ORDER share Maps, enabling fast inline-cached access.\n\nIf you add properties in inconsistent orders across similar objects, V8 falls into "dictionary mode" (slow properties) — losing the fast-path optimization.`,
+      setBrain,
       `SET: ${objName}[${fv(prop)}]`, state, options,
       false, { highlightKey: String(prop) }));
   }
@@ -424,8 +509,13 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
         state.memOps++;
         if (options.trackArrays) state.extra.arrOps++;
         if (options.trackDS) state.extra.dsOps++;
+        const pushBrain = options.trackArrays
+          ? buildArrayPushBrain(objName, oldArr, obj, args[0])
+          : options.trackDS
+          ? buildDSPushBrain(objName, args[0], obj.length - 1, obj.length)
+          : `PUSH: ${objName}.push(${args.map(fv).join(', ')})\n\nElement added at index ${obj.length - 1}.\nNo other elements move — O(1).\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nV8 Internal — Backing Store:\nArrays in V8 have a backing store (FixedArray) with extra capacity. Push appends to the end — if capacity remains, it's a single memory write. If the backing store is full, V8 allocates a new one ~1.5× larger and copies elements over (amortized O(1)).\n\nElements kind: ${obj.every(v => typeof v === 'number' && Number.isInteger(v)) ? 'PACKED_SMI — fastest, unboxed integers' : obj.every(v => typeof v === 'number') ? 'PACKED_DOUBLE — fast, unboxed doubles' : 'PACKED_ELEMENTS — tagged pointers (mixed types)'}`;
         steps.push(makeStep(li, nextLi, vars, output, objName, 'ds-push',
-          `PUSH: ${objName}.push(${args.map(fv).join(', ')})\n\nElement added at index ${obj.length - 1}.\nNo other elements move — O(1).\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nV8 Internal — Backing Store:\nArrays in V8 have a backing store (FixedArray) with extra capacity. Push appends to the end — if capacity remains, it's a single memory write. If the backing store is full, V8 allocates a new one ~1.5× larger and copies elements over (amortized O(1)).\n\nElements kind: ${obj.every(v => typeof v === 'number' && Number.isInteger(v)) ? 'PACKED_SMI — fastest, unboxed integers' : obj.every(v => typeof v === 'number') ? 'PACKED_DOUBLE — fast, unboxed doubles' : 'PACKED_ELEMENTS — tagged pointers (mixed types)'}`,
+          pushBrain,
           `PUSH: ${objName}[${obj.length - 1}] ← ${fv(args[0])} | O(1)`, state, options,
           false, { highlightIndex: obj.length - 1 }));
         return;
@@ -436,8 +526,13 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
         state.memOps++;
         if (options.trackArrays) state.extra.arrOps++;
         if (options.trackDS) state.extra.dsOps++;
+        const popBrain = options.trackArrays
+          ? buildArrayPopBrain(objName, oldArr, obj, result)
+          : options.trackDS
+          ? buildDSPopBrain(objName, result, obj.length)
+          : `POP: ${objName}.pop() → ${fv(result)}\n\nRemoves last element. O(1).\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nV8 Internal:\nPop sets the last element slot to "the_hole" (V8's internal marker for deleted elements) and decrements the length. The backing store is NOT immediately shrunk — V8 avoids frequent reallocation. The removed value becomes eligible for GC if no other references exist.`;
         steps.push(makeStep(li, nextLi, vars, output, objName, 'ds-pop',
-          `POP: ${objName}.pop() → ${fv(result)}\n\nRemoves last element. O(1).\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nV8 Internal:\nPop sets the last element slot to "the_hole" (V8's internal marker for deleted elements) and decrements the length. The backing store is NOT immediately shrunk — V8 avoids frequent reallocation. The removed value becomes eligible for GC if no other references exist.`,
+          popBrain,
           `POP: ${fv(result)} | O(1)`, state, options));
         return;
       }
@@ -447,8 +542,13 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
         state.memOps++;
         if (options.trackArrays) state.extra.arrOps++;
         if (options.trackDS) state.extra.dsOps++;
+        const shiftBrain = options.trackArrays
+          ? buildArrayShiftBrain(objName, oldArr, obj, result)
+          : options.trackDS
+          ? buildDSDequeueBrain(objName, result, obj.length)
+          : `SHIFT: ${objName}.shift() → ${fv(result)}\n\nRemoves first element. All remaining elements shift left.\nThis is O(n) — ${obj.length} element${obj.length !== 1 ? 's' : ''} moved.\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nV8 Internal — Expensive Operation:\nShift must copy every remaining element one position left in the backing store. Unlike pop (O(1)), shift touches every element — this is why queues built on arrays are slow.\n\nFor a proper O(1) queue, use a circular buffer or linked list. V8 cannot optimize away the element copying because shift fundamentally changes every element's index.`;
         steps.push(makeStep(li, nextLi, vars, output, objName, 'ds-dequeue',
-          `SHIFT: ${objName}.shift() → ${fv(result)}\n\nRemoves first element. All remaining elements shift left.\nThis is O(n) — ${obj.length} element${obj.length !== 1 ? 's' : ''} moved.\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nV8 Internal — Expensive Operation:\nShift must copy every remaining element one position left in the backing store. Unlike pop (O(1)), shift touches every element — this is why queues built on arrays are slow.\n\nFor a proper O(1) queue, use a circular buffer or linked list. V8 cannot optimize away the element copying because shift fundamentally changes every element's index.`,
+          shiftBrain,
           `SHIFT: ${fv(result)} | O(n)`, state, options));
         return;
       }
@@ -458,8 +558,13 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
         else obj.sort();
         state.comps += Math.ceil(obj.length * Math.log2(obj.length || 1));
         if (options.trackDS) state.extra.dsOps++;
+        const sortBrain = options.trackArrays
+          ? buildArraySortBrain(objName, oldArr, obj)
+          : options.trackDS
+          ? buildDSSortBrain(objName, obj.length)
+          : `SORT: ${objName}.sort() — in-place\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nTime: O(n log n). ~${Math.ceil(obj.length * Math.log2(obj.length || 1))} comparisons estimated.\n\nV8 Internal — TimSort:\nV8 uses TimSort (since 2019, implemented in Torque — V8's internal language). TimSort is a hybrid merge-sort + insertion-sort that exploits existing order in the data.\n\nKey details:\n  • Finds natural "runs" of already-sorted elements\n  • Small runs are extended with binary insertion sort\n  • Runs are merged with a modified merge sort\n  • Best case: O(n) if already sorted\n  • Worst case: O(n log n)\n  • Stable sort — equal elements keep their original order`;
         steps.push(makeStep(li, nextLi, vars, output, objName, 'ds-sort',
-          `SORT: ${objName}.sort() — in-place\n\nBefore: [${oldArr.map(fv).join(', ')}]\nAfter: [${obj.map(fv).join(', ')}]\n\nTime: O(n log n). ~${Math.ceil(obj.length * Math.log2(obj.length || 1))} comparisons estimated.\n\nV8 Internal — TimSort:\nV8 uses TimSort (since 2019, implemented in Torque — V8's internal language). TimSort is a hybrid merge-sort + insertion-sort that exploits existing order in the data.\n\nKey details:\n  • Finds natural "runs" of already-sorted elements\n  • Small runs are extended with binary insertion sort\n  • Runs are merged with a modified merge sort\n  • Best case: O(n) if already sorted\n  • Worst case: O(n log n)\n  • Stable sort — equal elements keep their original order`,
+          sortBrain,
           `SORT: ${objName} | O(n log n)`, state, options));
         return;
       }
@@ -478,8 +583,11 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
     // Object static methods
     if (expr.callee.object.type === 'Identifier' && expr.callee.object.name === 'Object') {
       const result = evalCall(expr, vars);
+      const objMethodBrain = options.trackObjects
+        ? buildObjMethodBrain(method)
+        : `Object.${method}() — iterates all properties.\n\nResult: ${fv(result)}`;
       steps.push(makeStep(li, nextLi, vars, output, null, 'obj-method',
-        `Object.${method}() — iterates all properties.\n\nResult: ${fv(result)}`,
+        objMethodBrain,
         `Object.${method}()`, state, options));
       return;
     }
@@ -508,8 +616,20 @@ function walkCallExpr(expr, li, nextLi, vars, output, lines, steps, state, optio
       state.extra.closureVars = cVars;
     }
 
+    // Select brain text: closure-call, fnCall, or generic
+    let callBrain;
+    if (callPhase === 'closure-call') {
+      const info = state.extra.closureRegistry[fnName];
+      const capturedNames = info ? info.capturedVarNames : [];
+      callBrain = buildClosureCallBrain('(expression)', fnName, capturedNames, result);
+    } else if (options.trackCalls) {
+      const depth = state.extra.stack ? state.extra.stack.length : 1;
+      callBrain = buildFnCallCallBrain(fnName, expr.arguments.length, result, depth);
+    } else {
+      callBrain = `FUNCTION CALL: ${fnName}(${expr.arguments.map(a => fv(evalNode(a, vars))).join(', ')})\n\nResult: ${fv(result)}\n\nV8 Internal — Call Stack Frame:\nV8 pushes a new frame onto the call stack containing:\n  • Return address — where to resume in the caller\n  • Arguments — ${expr.arguments.length} arg${expr.arguments.length !== 1 ? 's' : ''} passed\n  • Local variables — allocated as the function body executes\n  • Context pointer — link to outer scope for closure access\n\nV8 uses an inline cache (IC) at this call site. If ${fnName}() is always the same function, the IC is "monomorphic" and V8 can skip the lookup — jumping directly to the function's code.`;
+    }
     steps.push(makeStep(li, nextLi, vars, output, null, callPhase,
-      `FUNCTION CALL: ${fnName}(${expr.arguments.map(a => fv(evalNode(a, vars))).join(', ')})\n\nResult: ${fv(result)}\n\nV8 Internal — Call Stack Frame:\nV8 pushes a new frame onto the call stack containing:\n  • Return address — where to resume in the caller\n  • Arguments — ${expr.arguments.length} arg${expr.arguments.length !== 1 ? 's' : ''} passed\n  • Local variables — allocated as the function body executes\n  • Context pointer — link to outer scope for closure access\n\nV8 uses an inline cache (IC) at this call site. If ${fnName}() is always the same function, the IC is "monomorphic" and V8 can skip the lookup — jumping directly to the function's code.`,
+      callBrain,
       `CALL: ${fnName}()`, state, options));
 
     if (options.trackCalls && state.extra.stack.length > 1) {
@@ -531,8 +651,17 @@ function walkIfStatement(stmt, nextLi, vars, output, lines, steps, state, option
   // Build substituted condition string
   const condStr = lines[li] ? lines[li].trim() : '';
 
+  let ifPrevType = null;
+  if (options.trackIf) {
+    ifPrevType = state.extra.lastCondType;
+    state.extra.ifEvals++;
+    state.extra.lastCondType = typeof condVal;
+  }
+  const condBrain = options.trackIf
+    ? buildIfConditionBrain(!!condVal, condVal, ifPrevType, state.extra.ifEvals)
+    : `CONDITION: ${condStr}\n\nEvaluated: ${condVal ? 'TRUE' : 'FALSE'}\n\nThe CPU ${condVal ? 'enters the if-block' : 'skips the if-block'}.\n\nV8 Internal — Branch Prediction & Speculation:\nModern CPUs predict which branch will be taken BEFORE evaluating the condition. V8's TurboFan compiler uses type feedback from Ignition to speculate on the likely path.\n\n${condVal ? 'The TRUE branch is taken. If this pattern repeats, TurboFan will optimize by assuming TRUE and generating faster code for this path.' : 'The FALSE branch is taken. The if-block code is skipped entirely — those bytecodes are never executed.'}\n\nIf the prediction is wrong (the branch flips), V8 must "deoptimize" — discard the optimized machine code and fall back to Ignition bytecode. This is called a "deopt" and is expensive.`;
   steps.push(makeStep(li, null, vars, output, null, 'condition',
-    `CONDITION: ${condStr}\n\nEvaluated: ${condVal ? 'TRUE' : 'FALSE'}\n\nThe CPU ${condVal ? 'enters the if-block' : 'skips the if-block'}.\n\nV8 Internal — Branch Prediction & Speculation:\nModern CPUs predict which branch will be taken BEFORE evaluating the condition. V8's TurboFan compiler uses type feedback from Ignition to speculate on the likely path.\n\n${condVal ? 'The TRUE branch is taken. If this pattern repeats, TurboFan will optimize by assuming TRUE and generating faster code for this path.' : 'The FALSE branch is taken. The if-block code is skipped entirely — those bytecodes are never executed.'}\n\nIf the prediction is wrong (the branch flips), V8 must "deoptimize" — discard the optimized machine code and fall back to Ignition bytecode. This is called a "deopt" and is expensive.`,
+    condBrain,
     `CMP: ${condVal ? 'TRUE → enter' : 'FALSE → skip'}`, state, options,
     false, { cond: !!condVal }));
 
@@ -548,15 +677,21 @@ function walkIfStatement(stmt, nextLi, vars, output, lines, steps, state, option
     // Skip else
     if (stmt.alternate) {
       const elseLi = nodeLine(stmt.alternate);
+      const skipElseBrain = options.trackIf
+        ? buildIfSkipBrain(true)
+        : 'TRUE path was taken — skipping else block entirely.';
       steps.push(makeStep(elseLi, nextLi, vars, output, null, 'skip',
-        'TRUE path was taken — skipping else block entirely.',
+        skipElseBrain,
         'SKIP: else block', state, options));
     }
   } else {
     // Skip if block
     if (stmt.consequent) {
+      const skipIfBrain = options.trackIf
+        ? buildIfSkipBrain(false)
+        : 'Condition was FALSE — skipping if-block.';
       steps.push(makeStep(li, null, vars, output, null, 'skip',
-        'Condition was FALSE — skipping if-block.',
+        skipIfBrain,
         'SKIP: if-block', state, options));
     }
     if (stmt.alternate) {
@@ -564,8 +699,11 @@ function walkIfStatement(stmt, nextLi, vars, output, lines, steps, state, option
         walkIfStatement(stmt.alternate, nextLi, vars, output, lines, steps, state, options, depth);
       } else {
         const elseLi = nodeLine(stmt.alternate);
+        const elseEnterBrain = options.trackIf
+          ? buildIfElseEnterBrain()
+          : 'Condition was FALSE — entering else block.';
         steps.push(makeStep(elseLi, null, vars, output, null, 'else-enter',
-          'Condition was FALSE — entering else block.',
+          elseEnterBrain,
           'ENTER: else block', state, options));
         if (stmt.alternate.type === 'BlockStatement') {
           for (let i = 0; i < stmt.alternate.body.length; i++) {
@@ -583,6 +721,13 @@ function walkIfStatement(stmt, nextLi, vars, output, lines, steps, state, option
 function walkForStatement(stmt, nextLi, vars, output, lines, steps, state, options, depth) {
   const li = nodeLine(stmt);
 
+  // Extract counter name from init (e.g. "i" from "let i = 0")
+  let counterName = null;
+  if (stmt.init && stmt.init.type === 'VariableDeclaration' && stmt.init.declarations[0]) {
+    const d = stmt.init.declarations[0];
+    if (d.id && d.id.type === 'Identifier') counterName = d.id.name;
+  }
+
   // Init
   if (stmt.init) {
     if (stmt.init.type === 'VariableDeclaration') {
@@ -593,29 +738,39 @@ function walkForStatement(stmt, nextLi, vars, output, lines, steps, state, optio
   }
 
   let guard = 0;
+  let prevCounterVal = null;
   while (guard++ < 500) {
     // Test
     if (stmt.test) {
+      const counterVal = counterName ? vars[counterName] : null;
       const testVal = evalNode(stmt.test, vars);
       state.comps++;
       if (options.trackLoops) state.extra.loopIters++;
 
       const iterNum = options.trackLoops ? state.extra.loopIters : guard;
       const isHot = iterNum >= 3;
+
+      let loopBrain;
+      if (options.trackLoops) {
+        loopBrain = buildLoopTestBrain(!!testVal, iterNum, counterName, counterVal, prevCounterVal);
+      } else {
+        loopBrain = `LOOP TEST: ${testVal ? 'TRUE → execute body' : 'FALSE → exit loop'}\n\nIteration ${iterNum}` +
+          `\n\nV8 Internal — ${isHot ? 'HOT LOOP DETECTED:' : 'Loop Profiling:'}\n` +
+          (isHot ?
+            `This loop has run ${iterNum} times. V8's Ignition interpreter has been collecting type feedback on every iteration — tracking what types the variables hold and which branches are taken.\n\n` +
+            `At this point, TurboFan (V8's optimizing JIT compiler) would kick in and compile this loop into optimized machine code using On-Stack Replacement (OSR) — the running bytecode is swapped out for native code MID-EXECUTION without restarting the loop.\n\n` +
+            `TurboFan optimizations applied:\n` +
+            `  • Loop-invariant code motion — expressions that don't change are hoisted out\n` +
+            `  • Bounds check elimination — array index checks are removed if proven safe\n` +
+            `  • Inlining — small function calls inside the loop are expanded inline` :
+            `V8's Ignition is still interpreting this loop as bytecode. Each iteration adds type feedback to the FeedbackVector. After enough iterations (~2-4 in practice), TurboFan will consider this loop "hot" and JIT-compile it.`);
+      }
       steps.push(makeStep(li, null, vars, output, null, 'loop-test',
-        `LOOP TEST: ${testVal ? 'TRUE → execute body' : 'FALSE → exit loop'}\n\nIteration ${iterNum}` +
-        `\n\nV8 Internal — ${isHot ? 'HOT LOOP DETECTED:' : 'Loop Profiling:'}\n` +
-        (isHot ?
-          `This loop has run ${iterNum} times. V8's Ignition interpreter has been collecting type feedback on every iteration — tracking what types the variables hold and which branches are taken.\n\n` +
-          `At this point, TurboFan (V8's optimizing JIT compiler) would kick in and compile this loop into optimized machine code using On-Stack Replacement (OSR) — the running bytecode is swapped out for native code MID-EXECUTION without restarting the loop.\n\n` +
-          `TurboFan optimizations applied:\n` +
-          `  • Loop-invariant code motion — expressions that don't change are hoisted out\n` +
-          `  • Bounds check elimination — array index checks are removed if proven safe\n` +
-          `  • Inlining — small function calls inside the loop are expanded inline` :
-          `V8's Ignition is still interpreting this loop as bytecode. Each iteration adds type feedback to the FeedbackVector. After enough iterations (~2-4 in practice), TurboFan will consider this loop "hot" and JIT-compile it.`),
+        loopBrain,
         `LOOP: ${testVal ? 'continue' : 'exit'}${isHot ? ' | JIT' : ''}`, state, options,
         false, { loopIter: iterNum }));
 
+      prevCounterVal = counterVal;
       if (!testVal) break;
     }
 
@@ -656,9 +811,12 @@ function walkWhileStatement(stmt, nextLi, vars, output, lines, steps, state, opt
 
     const whileIter = options.trackLoops ? state.extra.loopIters : guard;
     const whileHot = whileIter >= 3;
+    const whileBrain = options.trackLoops
+      ? buildWhileTestBrain(!!testVal, whileIter)
+      : `WHILE TEST: ${testVal ? 'TRUE → execute body' : 'FALSE → exit loop'}\n\nIteration ${whileIter}` +
+        `\n\nV8 Internal — ${whileHot ? 'HOT LOOP → TurboFan JIT compiles this into native machine code via OSR.' : 'Ignition is collecting type feedback. TurboFan will optimize after ~2-4 iterations.'}`;
     steps.push(makeStep(li, null, vars, output, null, 'loop-test',
-      `WHILE TEST: ${testVal ? 'TRUE → execute body' : 'FALSE → exit loop'}\n\nIteration ${whileIter}` +
-      `\n\nV8 Internal — ${whileHot ? 'HOT LOOP → TurboFan JIT compiles this into native machine code via OSR.' : 'Ignition is collecting type feedback. TurboFan will optimize after ~2-4 iterations.'}`,
+      whileBrain,
       `WHILE: ${testVal ? 'continue' : 'exit'}${whileHot ? ' | JIT' : ''}`, state, options));
 
     if (!testVal) break;
@@ -706,15 +864,25 @@ function walkFunctionDeclaration(stmt, nextLi, vars, output, lines, steps, state
   }
 
   const params = stmt.params.map(p => p.type === 'Identifier' ? p.name : '...').join(', ');
+  let fnBrain;
+  if (fnPhase === 'closure-create') {
+    const regEntry = state.extra.closureRegistry[name];
+    const capturedNames = regEntry ? regEntry.capturedVarNames : [];
+    fnBrain = buildClosureFnDeclareBrain(name, params, capturedNames);
+  } else if (options.trackCalls) {
+    fnBrain = buildFnCallFnDeclareBrain(name, params);
+  } else {
+    fnBrain = `FUNCTION DECLARATION: ${name}(${params})\n\nThe function is stored as a value in memory. It is NOT executed yet — it will run when called.\n\nParameters: ${params || '(none)'}` +
+      `\n\nV8 Internal — Lazy Compilation:\n` +
+      `V8 uses "lazy parsing" — it only fully parses and compiles a function when it's first CALLED, not when it's declared. Right now, V8 does a quick "pre-parse" to check for syntax errors and find the function boundaries, but doesn't generate bytecode yet.\n\n` +
+      `When ${name}() is called:\n` +
+      `  1. Full parse → AST for the function body\n` +
+      `  2. Ignition → bytecode generation\n` +
+      `  3. FeedbackVector created → tracks argument types for future optimization\n` +
+      `  4. If called often → TurboFan JIT compiles to native machine code`;
+  }
   steps.push(makeStep(li, nextLi, vars, output, name, fnPhase,
-    `FUNCTION DECLARATION: ${name}(${params})\n\nThe function is stored as a value in memory. It is NOT executed yet — it will run when called.\n\nParameters: ${params || '(none)'}` +
-    `\n\nV8 Internal — Lazy Compilation:\n` +
-    `V8 uses "lazy parsing" — it only fully parses and compiles a function when it's first CALLED, not when it's declared. Right now, V8 does a quick "pre-parse" to check for syntax errors and find the function boundaries, but doesn't generate bytecode yet.\n\n` +
-    `When ${name}() is called:\n` +
-    `  1. Full parse → AST for the function body\n` +
-    `  2. Ignition → bytecode generation\n` +
-    `  3. FeedbackVector created → tracks argument types for future optimization\n` +
-    `  4. If called often → TurboFan JIT compiles to native machine code`,
+    fnBrain,
     `FUNC: ${name}(${params})`, state, options));
 }
 
@@ -722,8 +890,15 @@ function walkFunctionDeclaration(stmt, nextLi, vars, output, lines, steps, state
 function walkReturnStatement(stmt, nextLi, vars, output, lines, steps, state, options) {
   const li = nodeLine(stmt);
   const val = stmt.argument ? evalNode(stmt.argument, vars) : undefined;
+  let returnBrain;
+  if (options.trackCalls) {
+    const currentFn = state.extra.stack && state.extra.stack.length > 1 ? state.extra.stack[state.extra.stack.length - 1] : null;
+    returnBrain = buildFnCallReturnBrain(val, currentFn);
+  } else {
+    returnBrain = `RETURN: ${fv(val)}\n\nThe function exits and returns this value to the caller.\n\nV8 Internal — Stack Frame Teardown:\nWhen a function returns, V8:\n  1. Places the return value in the accumulator register\n  2. Restores the caller's frame pointer (FP) and stack pointer (SP)\n  3. Pops the current frame off the call stack\n  4. Jumps back to the return address saved when the function was called\n\nAll local variables in this frame become unreachable and eligible for garbage collection.`;
+  }
   steps.push(makeStep(li, nextLi, vars, output, null, 'fn-return',
-    `RETURN: ${fv(val)}\n\nThe function exits and returns this value to the caller.\n\nV8 Internal — Stack Frame Teardown:\nWhen a function returns, V8:\n  1. Places the return value in the accumulator register\n  2. Restores the caller's frame pointer (FP) and stack pointer (SP)\n  3. Pops the current frame off the call stack\n  4. Jumps back to the return address saved when the function was called\n\nAll local variables in this frame become unreachable and eligible for garbage collection.`,
+    returnBrain,
     `RETURN: ${fv(val)}`, state, options));
 }
 
@@ -794,9 +969,12 @@ function walkForOfStatement(stmt, nextLi, vars, output, lines, steps, state, opt
     ? stmt.left.declarations[0].id.name
     : (stmt.left.type === 'Identifier' ? stmt.left.name : '_');
 
+  const initBrain = options.trackLoops
+    ? buildForOfInitBrain(isForIn, iterable)
+    : `${isForIn ? 'FOR...IN' : 'FOR...OF'}: iterating over ${fv(iterable)}\n\n${isForIn ? 'for...in iterates over enumerable property KEYS (strings).' : 'for...of iterates over iterable VALUES (arrays, strings, Maps, Sets).'}\n\n` +
+      `V8 Internal — Iterator Protocol:\n${isForIn ? 'V8 collects all enumerable keys from the object and its prototype chain using EnumCache (a cached list of keys attached to the hidden class). If the object\'s Map hasn\'t changed, this cache is reused — O(1) to start iteration.' : 'V8 calls the [Symbol.iterator]() method on the iterable to get an iterator object. Each iteration calls iterator.next(), which returns {value, done}. Arrays use a fast-path ArrayIterator that avoids creating intermediate objects.'}`;
   steps.push(makeStep(li, null, vars, output, null, 'loop-init',
-    `${isForIn ? 'FOR...IN' : 'FOR...OF'}: iterating over ${fv(iterable)}\n\n${isForIn ? 'for...in iterates over enumerable property KEYS (strings).' : 'for...of iterates over iterable VALUES (arrays, strings, Maps, Sets).'}\n\n` +
-    `V8 Internal — Iterator Protocol:\n${isForIn ? 'V8 collects all enumerable keys from the object and its prototype chain using EnumCache (a cached list of keys attached to the hidden class). If the object\'s Map hasn\'t changed, this cache is reused — O(1) to start iteration.' : 'V8 calls the [Symbol.iterator]() method on the iterable to get an iterator object. Each iteration calls iterator.next(), which returns {value, done}. Arrays use a fast-path ArrayIterator that avoids creating intermediate objects.'}`,
+    initBrain,
     `${isForIn ? 'FOR-IN' : 'FOR-OF'}: ${Array.isArray(items) ? items.length : '?'} items`, state, options));
 
   let guard = 0;
@@ -807,9 +985,12 @@ function walkForOfStatement(stmt, nextLi, vars, output, lines, steps, state, opt
     if (options.trackLoops) state.extra.loopIters++;
 
     const iterNum = options.trackLoops ? state.extra.loopIters : guard;
+    const forOfBrain = options.trackLoops
+      ? buildForOfIterBrain(isForIn, varName, item, iterNum)
+      : `${isForIn ? 'FOR...IN' : 'FOR...OF'} iteration ${iterNum}: ${varName} = ${fv(item)}` +
+        `\n\nV8 Internal — ${iterNum >= 3 ? 'HOT LOOP → TurboFan JIT via OSR.' : 'Ignition collecting type feedback.'}`;
     steps.push(makeStep(li, null, vars, output, varName, 'loop-test',
-      `${isForIn ? 'FOR...IN' : 'FOR...OF'} iteration ${iterNum}: ${varName} = ${fv(item)}` +
-      `\n\nV8 Internal — ${iterNum >= 3 ? 'HOT LOOP → TurboFan JIT via OSR.' : 'Ignition collecting type feedback.'}`,
+      forOfBrain,
       `${isForIn ? 'FOR-IN' : 'FOR-OF'}: ${varName}=${fv(item)}`, state, options,
       false, { loopIter: iterNum }));
 
@@ -852,8 +1033,11 @@ function walkDoWhileStatement(stmt, nextLi, vars, output, lines, steps, state, o
     if (options.trackLoops) state.extra.loopIters++;
 
     const doIter = options.trackLoops ? state.extra.loopIters : guard;
+    const doWhileBrain = options.trackLoops
+      ? buildDoWhileTestBrain(!!testVal, doIter)
+      : `DO...WHILE TEST: ${testVal ? 'TRUE → repeat body' : 'FALSE → exit loop'}\n\nIteration ${doIter}\n\ndo...while always executes the body at least once before checking the condition.\n\nV8 Internal — ${doIter >= 3 ? 'HOT LOOP → TurboFan JIT via OSR.' : 'Ignition collecting type feedback.'}`;
     steps.push(makeStep(li, null, vars, output, null, 'loop-test',
-      `DO...WHILE TEST: ${testVal ? 'TRUE → repeat body' : 'FALSE → exit loop'}\n\nIteration ${doIter}\n\ndo...while always executes the body at least once before checking the condition.\n\nV8 Internal — ${doIter >= 3 ? 'HOT LOOP → TurboFan JIT via OSR.' : 'Ignition collecting type feedback.'}`,
+      doWhileBrain,
       `DO-WHILE: ${testVal ? 'continue' : 'exit'}`, state, options));
 
     if (!testVal) break;

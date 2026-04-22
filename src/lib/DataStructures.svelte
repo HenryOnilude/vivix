@@ -48,22 +48,22 @@
   {#snippet cpuRegisters(sd)}
     <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
       stroke={sd.dsOps > 0 ? '#f472b633' : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">DS-OPS</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.dsOps > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="monospace">{sd.dsOps}</text>
+    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">DS-OPS</text>
+    <text x="272" y="29" text-anchor="end" fill={sd.dsOps > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.dsOps}</text>
 
     <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="290" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">COMPS</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.comps > 0 ? '#a78bfa' : '#222'} font-size="12" font-weight="800" font-family="monospace">{sd.comps}</text>
+    <text x="290" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">COMPS</text>
+    <text x="344" y="29" text-anchor="end" fill={sd.comps > 0 ? '#a78bfa' : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.comps}</text>
 
     <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">TARGET</text>
-    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="10" font-weight="700" font-family="monospace">{sd.highlight || '—'}</text>
+    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
+    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="10" font-weight="700" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
   {/snippet}
 
   {#snippet cpuGauge(sd)}
     <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
     <rect x="247" y="69" width={Math.min(102, sd.dsOps * 12)} height="14" rx="2" fill={ACCENT} opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">{sd.dsOps} DS OPS</text>
+    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.dsOps} DS OPS</text>
   {/snippet}
 
   {#snippet topPanel(sd)}
@@ -189,7 +189,7 @@
       <div class="ds-card">
         <div class="ds-card-hdr">
           <svg width="14" height="14" viewBox="0 0 14 14">
-            <text x="1" y="11" fill={ACCENT} font-size="11" font-family="monospace" font-weight="700">#</text>
+            <text x="1" y="11" fill={ACCENT} font-size="11" font-family="'Geist Mono', monospace" font-weight="700">#</text>
           </svg>
           <span class="ds-card-title">{objName}</span>
           <span class="ds-type-badge">HASH MAP · O(1) lookup</span>
@@ -266,14 +266,14 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
         <rect x="130" y="28" width="140" height="36" rx="4" fill="rgba(244,114,182,0.10)" stroke="rgba(244,114,182,0.60)" stroke-width="2.5"/>
-        <text x="200" y="52" text-anchor="middle" fill="rgba(244,114,182,0.90)" font-size="15" font-family="monospace" font-weight="700">push → top</text>
+        <text x="200" y="52" text-anchor="middle" fill="rgba(244,114,182,0.90)" font-size="15" font-family="'Geist Mono', monospace" font-weight="700">push → top</text>
         <rect x="130" y="70" width="140" height="36" rx="4" fill="rgba(244,114,182,0.07)" stroke="rgba(244,114,182,0.45)" stroke-width="2.5"/>
-        <text x="200" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="15" font-family="monospace" font-weight="600">item 2</text>
+        <text x="200" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="15" font-family="'Geist Mono', monospace" font-weight="600">item 2</text>
         <rect x="130" y="112" width="140" height="36" rx="4" fill="rgba(244,114,182,0.05)" stroke="rgba(244,114,182,0.35)" stroke-width="2.5"/>
-        <text x="200" y="136" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="15" font-family="monospace" font-weight="600">item 1</text>
+        <text x="200" y="136" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="15" font-family="'Geist Mono', monospace" font-weight="600">item 1</text>
         <rect x="130" y="154" width="140" height="36" rx="4" fill="rgba(244,114,182,0.03)" stroke="rgba(244,114,182,0.25)" stroke-width="2.5"/>
-        <text x="200" y="178" text-anchor="middle" fill="rgba(255,255,255,0.60)" font-size="15" font-family="monospace" font-weight="600">bottom</text>
-        <text x="200" y="210" text-anchor="middle" fill="rgba(244,114,182,0.65)" font-size="14" font-family="monospace" font-weight="600">stack • queue • map • set</text>
+        <text x="200" y="178" text-anchor="middle" fill="rgba(255,255,255,0.60)" font-size="15" font-family="'Geist Mono', monospace" font-weight="600">bottom</text>
+        <text x="200" y="210" text-anchor="middle" fill="rgba(244,114,182,0.65)" font-size="14" font-family="'Geist Mono', monospace" font-weight="600">stack • queue • map • set</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see data structures in action</p>
     </div>
@@ -285,87 +285,87 @@
   /* ── DS card shell ────────────────────────────────────────────────────── */
   .ds-card      { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .ds-card-hdr  { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; flex-wrap:wrap; }
-  .ds-card-title { font-size:0.65rem; color:#f472b6; font-family:'SF Mono',monospace; font-weight:700; }
-  .ds-card-len  { margin-left:auto; font-size:0.5rem; color:#444; font-family:monospace; }
-  .ds-type-badge { font-size:0.45rem; color:#f472b6; background:#f472b614; padding:1px 6px; border-radius:3px; border:1px solid #f472b633; font-family:monospace; letter-spacing:0.3px; }
+  .ds-card-title { font-size:0.65rem; color:#f472b6; font-family: var(--font-code); font-weight:700; }
+  .ds-card-len  { margin-left:auto; font-size:0.5rem; color:#444; font-family: var(--font-code); }
+  .ds-type-badge { font-size:0.45rem; color:#f472b6; background:#f472b614; padding:1px 6px; border-radius:3px; border:1px solid #f472b633; font-family: var(--font-code); letter-spacing:0.3px; }
   .queue-badge   { color:#4ade80; background:#4ade8014; border-color:#4ade8033; }
 
   /* ── STACK visual ─────────────────────────────────────────────────────── */
   .stack-visual     { padding:8px; }
   .stack-arrow-top  { display:flex; justify-content:space-between; padding:0 4px 4px; }
-  .op-arrow         { font-size:0.5rem; color:#4ade80; font-family:monospace; letter-spacing:0.3px; }
+  .op-arrow         { font-size:0.5rem; color:#4ade80; font-family: var(--font-code); letter-spacing:0.3px; }
   .op-pop           { color:#f87171; }
   .stack-tower      { display:flex; flex-direction:column; gap:3px; }
   .tower-item       { display:flex; align-items:center; gap:8px; padding:6px 10px;
                       background:#08080e; border:1px solid #1a1a2e; border-radius:5px; transition:all 0.3s; }
   .tower-top        { border-color:#f472b644; background:#f472b60a; box-shadow:0 -2px 0 #f472b633; }
   .tower-hl         { border-color:#f472b688; background:#f472b614; box-shadow:inset 3px 0 0 #f472b6; }
-  .tower-idx        { font-size:0.5rem; color:#333; font-family:monospace; min-width:22px; }
-  .tower-val        { font-size:0.85rem; font-weight:800; font-family:'SF Mono',monospace; flex:1; }
-  .tower-tag        { font-size:0.5rem; color:#f472b6; font-family:monospace; letter-spacing:0.5px; font-weight:700; }
-  .stack-floor      { text-align:center; font-size:0.42rem; color:#2a2a3e; font-family:monospace; letter-spacing:2px; padding:4px 0 0; border-top:2px solid #1a1a2e; margin-top:3px; }
-  .tower-empty      { font-size:0.6rem; color:#2a2a3e; padding:12px; text-align:center; font-family:monospace; }
+  .tower-idx        { font-size:0.5rem; color:#333; font-family: var(--font-code); min-width:22px; }
+  .tower-val        { font-size:0.85rem; font-weight:800; font-family: var(--font-code); flex:1; }
+  .tower-tag        { font-size:0.5rem; color:#f472b6; font-family: var(--font-code); letter-spacing:0.5px; font-weight:700; }
+  .stack-floor      { text-align:center; font-size:0.42rem; color:#2a2a3e; font-family: var(--font-code); letter-spacing:2px; padding:4px 0 0; border-top:2px solid #1a1a2e; margin-top:3px; }
+  .tower-empty      { font-size:0.6rem; color:#2a2a3e; padding:12px; text-align:center; font-family: var(--font-code); }
 
   /* ── QUEUE visual ─────────────────────────────────────────────────────── */
   .queue-visual     { padding:8px; }
   .queue-label-row  { display:flex; justify-content:space-between; margin-bottom:5px; }
-  .q-label-left     { font-size:0.45rem; color:#4ade80; font-family:monospace; }
-  .q-label-right    { font-size:0.45rem; color:#f472b6; font-family:monospace; }
+  .q-label-left     { font-size:0.45rem; color:#4ade80; font-family: var(--font-code); }
+  .q-label-right    { font-size:0.45rem; color:#f472b6; font-family: var(--font-code); }
   .queue-lane       { display:flex; align-items:center; gap:4px; }
-  .q-end-left       { font-size:0.5rem; color:#4ade80; font-family:monospace; font-weight:700; background:#4ade8018; padding:4px 6px; border-radius:4px; border:1px solid #4ade8033; flex-shrink:0; }
-  .q-end-right      { font-size:0.5rem; color:#f472b6; font-family:monospace; font-weight:700; background:#f472b618; padding:4px 6px; border-radius:4px; border:1px solid #f472b633; flex-shrink:0; }
+  .q-end-left       { font-size:0.5rem; color:#4ade80; font-family: var(--font-code); font-weight:700; background:#4ade8018; padding:4px 6px; border-radius:4px; border:1px solid #4ade8033; flex-shrink:0; }
+  .q-end-right      { font-size:0.5rem; color:#f472b6; font-family: var(--font-code); font-weight:700; background:#f472b618; padding:4px 6px; border-radius:4px; border:1px solid #f472b633; flex-shrink:0; }
   .queue-cells      { display:flex; gap:3px; flex:1; flex-wrap:wrap; }
   .q-cell           { display:flex; flex-direction:column; align-items:center; background:#08080e; border:1px solid #1a1a2e; border-radius:5px; padding:5px 8px; min-width:46px; transition:all 0.3s; position:relative; }
   .q-front          { border-color:#4ade8044; background:#4ade800a; }
   .q-back           { border-color:#f472b644; background:#f472b60a; }
   .q-hl             { border-color:#f472b688; background:#f472b614; box-shadow:0 0 8px #f472b622; }
-  .q-cell-idx       { font-size:0.42rem; color:#333; font-family:monospace; }
-  .q-cell-val       { font-size:0.78rem; font-weight:800; font-family:'SF Mono',monospace; }
-  .q-tag            { font-size:0.38rem; font-family:monospace; letter-spacing:0.3px; font-weight:700; margin-top:2px; }
+  .q-cell-idx       { font-size:0.42rem; color:#333; font-family: var(--font-code); }
+  .q-cell-val       { font-size:0.78rem; font-weight:800; font-family: var(--font-code); }
+  .q-tag            { font-size:0.38rem; font-family: var(--font-code); letter-spacing:0.3px; font-weight:700; margin-top:2px; }
   .q-tag.front      { color:#4ade80; }
   .q-tag.back       { color:#f472b6; }
-  .q-empty          { font-size:0.6rem; color:#2a2a3e; padding:8px; font-family:monospace; }
+  .q-empty          { font-size:0.6rem; color:#2a2a3e; padding:8px; font-family: var(--font-code); }
 
   /* ── Hash map bucket visualization ────────────────────────────────────── */
   .hash-map-vis  { display:flex; flex-direction:column; gap:2px; padding:6px 8px; }
   .hash-row      { display:flex; align-items:center; gap:6px; padding:5px 6px; border-radius:5px; background:#08080e; border:1px solid #1a1a2e; transition:all 0.3s; }
   .hash-hl       { border-color:#f472b644; background:#f472b60a; box-shadow:inset 3px 0 0 #f472b6; }
-  .hash-bucket-num { font-size:0.55rem; color:#2a2a3e; font-family:monospace; min-width:14px; text-align:center; background:#0d0d16; padding:2px 3px; border-radius:3px; }
+  .hash-bucket-num { font-size:0.55rem; color:#2a2a3e; font-family: var(--font-code); min-width:14px; text-align:center; background:#0d0d16; padding:2px 3px; border-radius:3px; }
   .hash-key-box  { display:flex; flex-direction:column; background:#0d0d16; border-radius:4px; padding:2px 6px; min-width:60px; }
-  .hash-key-label { font-size:0.38rem; color:#444; font-family:monospace; letter-spacing:0.5px; text-transform:uppercase; }
-  .hash-key-val   { font-size:0.65rem; color:#e0e0e0; font-family:'SF Mono',monospace; font-weight:600; }
+  .hash-key-label { font-size:0.38rem; color:#444; font-family: var(--font-code); letter-spacing:0.5px; text-transform:uppercase; }
+  .hash-key-val   { font-size:0.65rem; color:#e0e0e0; font-family: var(--font-code); font-weight:600; }
   .hash-arrow    { font-size:0.7rem; color:#333; }
   .hash-val-box  { display:flex; flex-direction:column; background:#0d0d16; border-radius:4px; padding:2px 8px; flex:1; border:1px solid; }
-  .hash-val-label { font-size:0.38rem; color:#444; font-family:monospace; letter-spacing:0.5px; text-transform:uppercase; }
-  .hash-val      { font-weight:800; font-family:'SF Mono',monospace; }
-  .hash-type-tag { font-size:0.42rem; color:#444; font-family:monospace; }
+  .hash-val-label { font-size:0.38rem; color:#444; font-family: var(--font-code); letter-spacing:0.5px; text-transform:uppercase; }
+  .hash-val      { font-weight:800; font-family: var(--font-code); }
+  .hash-type-tag { font-size:0.42rem; color:#444; font-family: var(--font-code); }
 
   /* ── Generic DS elements ──────────────────────────────────────────────── */
   .ds-elements  { display:flex; flex-direction:column; gap:2px; padding:6px 8px; }
   .ds-elem      { display:flex; align-items:center; gap:6px; padding:4px 8px; border-radius:4px; background:#08080e; border:1px solid #1a1a2e; transition:all 0.3s; }
   .ds-elem-top  { border-color:#f472b644; }
   .ds-elem-hl   { background:#f472b612; box-shadow:inset 3px 0 0 #f472b6; }
-  .ds-idx       { font-size:0.5rem; color:#333; font-family:monospace; min-width:20px; }
-  .ds-val       { font-size:0.72rem; font-weight:700; font-family:'SF Mono',monospace; }
-  .ds-tag       { font-size:0.42rem; color:#f472b6; font-family:monospace; margin-left:auto; letter-spacing:0.5px; }
+  .ds-idx       { font-size:0.5rem; color:#333; font-family: var(--font-code); min-width:20px; }
+  .ds-val       { font-size:0.72rem; font-weight:700; font-family: var(--font-code); }
+  .ds-tag       { font-size:0.42rem; color:#f472b6; font-family: var(--font-code); margin-left:auto; letter-spacing:0.5px; }
   .ds-tag.front { color:#4ade80; }
-  .ds-empty     { font-size:0.6rem; color:#2a2a3e; padding:6px; font-family:monospace; }
+  .ds-empty     { font-size:0.6rem; color:#2a2a3e; padding:6px; font-family: var(--font-code); }
 
   /* ── Scalar vars ──────────────────────────────────────────────────────── */
   .scalars-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scalars-hdr   { display:flex; align-items:center; gap:6px; padding:6px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .scalars-label { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .scalars-label { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .scalars-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; padding:8px; }
   .sc-box        { background:#08080e; border:1px solid #1a1a2e; border-radius:6px; padding:8px; display:flex; flex-direction:column; gap:3px; transition:all 0.3s; }
   .sc-flash      { border-color:#f472b644; background:#f472b608; box-shadow:inset 3px 0 0 #f472b6; }
   .sc-hdr        { display:flex; justify-content:space-between; align-items:center; }
-  .sc-name       { font-size:0.8rem; color:#e0e0e0; font-weight:700; font-family:'SF Mono',monospace; }
-  .sc-type       { font-size:0.5rem; font-weight:600; padding:1px 5px; border-radius:3px; background:#ffffff08; font-family:monospace; }
-  .sc-val        { font-size:0.85rem; font-weight:700; font-family:'SF Mono',monospace; }
+  .sc-name       { font-size:0.8rem; color:#e0e0e0; font-weight:700; font-family: var(--font-code); }
+  .sc-type       { font-size:0.5rem; font-weight:600; padding:1px 5px; border-radius:3px; background:#ffffff08; font-family: var(--font-code); }
+  .sc-val        { font-size:0.85rem; font-weight:700; font-family: var(--font-code); }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
 </style>

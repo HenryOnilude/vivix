@@ -75,10 +75,10 @@ describe('AsyncAwait: Promise.all (parallel)', () => {
     expect(vars.results[0]).toEqual({ id: 1, name: 'Alice' });
   });
 
-  it('brain text mentions "SIMULTANEOUSLY"', () => {
+  it('brain text mentions simultaneous dispatch', () => {
     const { steps } = run(code);
     const allStep = steps.find(s => s.phase === 'promise-all-start');
-    expect(allStep.brain).toContain('SIMULTANEOUSLY');
+    expect(allStep.brain).toContain('simultaneously');
   });
 
   it('microtasks show all 3 promises during promise-all-start', () => {
@@ -100,10 +100,10 @@ describe('AsyncAwait: Promise.race', () => {
     expect(vars.winner).toEqual({ data: 'slow-result', ms: 800 });
   });
 
-  it('brain mentions "first one wins"', () => {
+  it('brain mentions race settlement', () => {
     const { steps } = run(code);
     const raceStep = steps.find(s => s.phase === 'promise-all-start');
-    expect(raceStep.brain).toContain('first one wins');
+    expect(raceStep.brain).toContain('instant any child promise completes');
   });
 });
 
@@ -130,7 +130,7 @@ describe('AsyncAwait: try/catch error handling', () => {
   it('brain explains error handling concept', () => {
     const { steps } = run(code);
     const tryStep = steps.find(s => s.phase === 'try-enter');
-    expect(tryStep.brain).toContain('protected region');
+    expect(tryStep.brain).toContain('exception handler');
   });
 });
 
@@ -244,32 +244,32 @@ describe('AsyncAwait: _fv formatter', () => {
 // Explanation accuracy fact-checks
 // ═══════════════════════════════════════
 describe('AsyncAwait: Explanation accuracy', () => {
-  it('start brain: mentions single-threaded and event loop', () => {
+  it('start brain: mentions single-threaded runtime and event loop', () => {
     const code = 'async function f() {\n  let x = await getUser();\n}';
     const { steps } = run(code);
-    expect(steps[0].brain).toContain('SINGLE-THREADED');
+    expect(steps[0].brain).toContain('single-threaded');
     expect(steps[0].brain).toContain('event loop');
   });
 
-  it('async-declare brain: mentions Promise return', () => {
+  it('async-declare brain: mentions Promise wrapping', () => {
     const code = 'async function f() {\n  let x = await getUser();\n}';
     const { steps } = run(code);
     const decl = steps.find(s => s.phase === 'async-declare');
-    expect(decl.brain).toContain('always returns a Promise');
+    expect(decl.brain).toContain('wrapped in a Promise');
   });
 
-  it('await brain: mentions suspension and microtask queue', () => {
+  it('await brain: mentions heap-resident coroutine and suspension', () => {
     const code = 'async function f() {\n  let x = await getUser();\n}';
     const { steps } = run(code);
     const awaitStep = steps.find(s => s.phase === 'await-start');
-    expect(awaitStep.brain).toContain('SUSPENDED');
-    expect(awaitStep.brain).toContain('microtask queue');
+    expect(awaitStep.brain).toContain('heap-resident coroutine');
+    expect(awaitStep.brain).toContain('instruction pointer');
   });
 
   it('Promise.all brain: correctly says total time = slowest', () => {
     const code = 'async function f() {\n  let r = await Promise.all([\n    getUser(),\n    getPosts(1)\n  ]);\n}';
     const { steps } = run(code);
     const allStep = steps.find(s => s.phase === 'promise-all-start');
-    expect(allStep.brain).toContain('slowest promise');
+    expect(allStep.brain).toContain('slowest operation');
   });
 });

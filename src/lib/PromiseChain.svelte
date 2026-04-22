@@ -182,17 +182,17 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 200" class="ph-svg">
         <rect x="20"  y="80" width="80" height="44" rx="6" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.5)" stroke-width="2" stroke-dasharray="5 3"/>
-        <text x="60"  y="98"  text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9"  font-family="monospace">P1</text>
-        <text x="60"  y="112" text-anchor="middle" fill="#4ade80"              font-size="8"  font-family="monospace">✓ resolved</text>
-        <text x="60"  y="124" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="8"  font-family="monospace">value: 1</text>
+        <text x="60"  y="98"  text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9"  font-family="'Geist Mono', monospace">P1</text>
+        <text x="60"  y="112" text-anchor="middle" fill="#4ade80"              font-size="8"  font-family="'Geist Mono', monospace">✓ resolved</text>
+        <text x="60"  y="124" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="8"  font-family="'Geist Mono', monospace">value: 1</text>
         <line x1="100" y1="102" x2="130" y2="102" stroke="rgba(245,158,11,0.4)" stroke-width="1.5" marker-end="url(#arr)"/>
         <rect x="130" y="80" width="80" height="44" rx="6" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.35)" stroke-width="1.5" stroke-dasharray="5 3"/>
-        <text x="170" y="98"  text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9"  font-family="monospace">P2</text>
-        <text x="170" y="112" text-anchor="middle" fill="rgba(74,222,128,0.5)" font-size="8"  font-family="monospace">⏳ pending</text>
+        <text x="170" y="98"  text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9"  font-family="'Geist Mono', monospace">P2</text>
+        <text x="170" y="112" text-anchor="middle" fill="rgba(74,222,128,0.5)" font-size="8"  font-family="'Geist Mono', monospace">⏳ pending</text>
         <line x1="210" y1="102" x2="240" y2="102" stroke="rgba(245,158,11,0.2)" stroke-width="1.5"/>
         <rect x="240" y="80" width="80" height="44" rx="6" fill="rgba(245,158,11,0.04)" stroke="rgba(245,158,11,0.2)" stroke-width="1" stroke-dasharray="5 3"/>
-        <text x="280" y="98"  text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="9"  font-family="monospace">P3</text>
-        <text x="280" y="112" text-anchor="middle" fill="rgba(74,222,128,0.3)" font-size="8"  font-family="monospace">⏳ pending</text>
+        <text x="280" y="98"  text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="9"  font-family="'Geist Mono', monospace">P3</text>
+        <text x="280" y="112" text-anchor="middle" fill="rgba(74,222,128,0.3)" font-size="8"  font-family="'Geist Mono', monospace">⏳ pending</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see the promise chain</p>
     </div>
@@ -203,14 +203,14 @@
 <style>
   .brain-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .brain-hdr   { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
-  .brain-title { font-size: 0.55rem; color: #555; font-family: monospace; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
+  .brain-title { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
   .brain-box   { padding: 8px 10px; transition: background 0.3s; }
   .brain-box.brain-reject { background: rgba(248,113,113,0.05); }
   .brain-box.brain-catch  { background: rgba(251,191,36,0.05); }
   .brain-box.brain-fire   { background: rgba(245,158,11,0.06); }
-  .brain-text  { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: 'Geist Mono', monospace; }
+  .brain-text  { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: var(--font-code); }
 
-  .pc-badge   { font-size: 0.5rem; font-weight: 700; font-family: monospace; padding: 2px 7px; border-radius: 8px; }
+  .pc-badge   { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius: 8px; }
   .pc-badge.resolved { background: rgba(74,222,128,0.15); color: #4ade80; }
   .pc-badge.rejected { background: rgba(248,113,113,0.15); color: #f87171; }
   .pc-badge.queued   { background: rgba(245,158,11,0.15); color: #f59e0b; }
@@ -220,37 +220,37 @@
 
   /* ── Chain visualization ─────────────────────────────────────────── */
   .chain-panel  { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
-  .chain-hdr    { font-size: 0.55rem; color: #555; font-family: monospace; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
+  .chain-hdr    { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .chain-nodes  { display: flex; align-items: center; gap: 4px; padding: 10px 12px; flex-wrap: wrap; }
-  .chain-empty  { font-size: 0.6rem; color: #333; font-family: monospace; }
+  .chain-empty  { font-size: 0.6rem; color: #333; font-family: var(--font-code); }
 
   .chain-node   { display: flex; flex-direction: column; align-items: center; gap: 2px; background: color-mix(in srgb, var(--node-color) 8%, transparent); border: 1px solid color-mix(in srgb, var(--node-color) 35%, transparent); border-radius: 6px; padding: 6px 10px; min-width: 72px; transition: all 0.3s; }
-  .node-label   { font-size: 0.65rem; font-weight: 800; font-family: monospace; color: var(--node-color); }
-  .node-state   { font-size: 0.48rem; font-family: monospace; color: var(--node-color); opacity: 0.85; }
-  .node-value   { font-size: 0.58rem; font-family: monospace; color: rgba(255,255,255,0.7); max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .node-method  { font-size: 0.44rem; font-family: monospace; color: rgba(255,255,255,0.3); }
+  .node-label   { font-size: 0.65rem; font-weight: 800; font-family: var(--font-code); color: var(--node-color); }
+  .node-state   { font-size: 0.48rem; font-family: var(--font-code); color: var(--node-color); opacity: 0.85; }
+  .node-value   { font-size: 0.58rem; font-family: var(--font-code); color: rgba(255,255,255,0.7); max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .node-method  { font-size: 0.44rem; font-family: var(--font-code); color: rgba(255,255,255,0.3); }
 
   .chain-arrow  { font-size: 0.75rem; color: rgba(245,158,11,0.4); }
 
   /* ── Runtime row ─────────────────────────────────────────────────── */
   .runtime-row    { display: flex; gap: 6px; flex-shrink: 0; }
   .runtime-panel  { flex: 1; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; }
-  .runtime-hdr    { font-size: 0.55rem; color: #555; font-family: monospace; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
+  .runtime-hdr    { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
 
   .mt-box   { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; min-height: 48px; }
-  .mt-item  { display: flex; align-items: center; gap: 5px; font-size: 0.55rem; font-family: monospace; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.03); border-radius: 4px; padding: 3px 7px; }
+  .mt-item  { display: flex; align-items: center; gap: 5px; font-size: 0.55rem; font-family: var(--font-code); color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.03); border-radius: 4px; padding: 3px 7px; }
   .mt-item.mt-next { color: #f59e0b; background: rgba(245,158,11,0.08); }
   .mt-arrow { color: #f59e0b; font-size: 0.55rem; }
-  .mt-empty { font-size: 0.55rem; color: #333; font-family: monospace; }
+  .mt-empty { font-size: 0.55rem; color: #333; font-family: var(--font-code); }
 
   .cv-box   { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; min-height: 48px; }
-  .cv-value { font-size: 1rem; font-weight: 800; font-family: monospace; }
-  .cv-state { font-size: 0.5rem; font-family: monospace; }
-  .cv-empty { font-size: 0.6rem; color: #333; font-family: monospace; }
+  .cv-value { font-size: 1rem; font-weight: 800; font-family: var(--font-code); }
+  .cv-state { font-size: 0.5rem; font-family: var(--font-code); }
+  .cv-empty { font-size: 0.6rem; color: #333; font-family: var(--font-code); }
 
   .vis-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
   .ph-svg   { width: 360px; height: auto; }
   .ph-text  { font-size: 0.78rem; color: rgba(255,255,255,0.45); text-align: center; }
 
-  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #444; font-family: monospace; }
+  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #444; font-family: var(--font-code); }
 </style>

@@ -80,7 +80,7 @@
     background: #1a1a2e;
     color: #e0e0e0;
     font-size: 0.62rem;
-    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-family: var(--font-code);
     padding: 6px 10px;
     border-radius: 6px;
     border: 1px solid #2a2a44;

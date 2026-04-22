@@ -567,7 +567,7 @@ describe('Edge cases — error resilience', () => {
 // ═══════════════════════════════════════
 import { parseCode as parseCodeDirect, friendlyError, checkSupported } from './parser.js';
 import { evalNode, detectPhase, isConsoleLog } from './evaluator.js';
-import { buildDeclBrain, buildDoneBrain } from './brain-text.js';
+import { buildDeclBrain, buildDoneBrain, buildClosureStartBrain, buildClosureFnDeclareBrain, buildClosureCreateBrain, buildClosureCallBrain, buildClosureDoneBrain, buildFnCallStartBrain, buildFnCallFnDeclareBrain, buildFnCallCallBrain, buildFnCallReturnBrain, buildFnCallDoneBrain, buildLoopStartBrain, buildLoopTestBrain, buildWhileTestBrain, buildDoWhileTestBrain, buildForOfInitBrain, buildForOfIterBrain, buildLoopDoneBrain, buildArrayStartBrain, buildArrayDeclareBrain, buildArrayPushBrain, buildArrayPopBrain, buildArrayShiftBrain, buildArraySortBrain, buildArraySetBrain, buildArrayDoneBrain, buildObjStartBrain, buildObjDeclareBrain, buildObjSetBrain, buildObjDestructBrain, buildObjMethodBrain, buildObjDoneBrain, buildDSStartBrain, buildDSDeclareBrain, buildDSPushBrain, buildDSPopBrain, buildDSDequeueBrain, buildDSSortBrain, buildDSDoneBrain, buildIfStartBrain, buildIfConditionBrain, buildIfSkipBrain, buildIfElseEnterBrain, buildIfDoneBrain, buildVarStartBrain, buildVarDeclareBrain, buildVarAssignBrain, buildVarUpdateBrain, buildVarDoneBrain } from './brain-text.js';
 
 describe('parser.js — parseCode', () => {
   it('parses valid code and returns AST', () => {
@@ -686,6 +686,782 @@ describe('brain-text.js — buildDoneBrain', () => {
   it('includes loop iterations when present', () => {
     const text = buildDoneBrain({}, [], { memOps: 0, comps: 5, extra: { loopIters: 10 } });
     expect(text).toContain('Loop iterations: 10');
+  });
+});
+
+// ═══════════════════════════════════════
+// Closure brain text (three-layer)
+// ═══════════════════════════════════════
+describe('brain-text.js — closure brain text', () => {
+  it('buildClosureStartBrain mentions heap-resident record and back-link', () => {
+    const text = buildClosureStartBrain();
+    expect(text).toContain('heap-resident record');
+    expect(text).toContain('back-link');
+  });
+
+  it('buildClosureFnDeclareBrain mentions back-link, lexical environment persistence, and captured vars', () => {
+    const text = buildClosureFnDeclareBrain('inner', 'x', ['count']);
+    expect(text).toContain('back-link');
+    expect(text).toContain('lexical environment persistence');
+    expect(text).toContain('count');
+  });
+
+  it('buildClosureCreateBrain (function) mentions back-link and heap record', () => {
+    const fn = function() {};
+    const text = buildClosureCreateBrain('counter', ['count'], fn);
+    expect(text).toContain('back-link');
+    expect(text).toContain('heap record');
+    expect(text).toContain('counter');
+    expect(text).toContain('count');
+  });
+
+  it('buildClosureCreateBrain (object with methods) mentions methods and back-link', () => {
+    const obj = { deposit: function(){}, getBalance: function(){} };
+    const text = buildClosureCreateBrain('wallet', ['balance'], obj);
+    expect(text).toContain('back-link');
+    expect(text).toContain('deposit');
+    expect(text).toContain('getBalance');
+    expect(text).toContain('lexical environment persistence');
+  });
+
+  it('buildClosureCallBrain mentions back-link, heap record, and result', () => {
+    const text = buildClosureCallBrain('a', 'counter', ['count'], 1);
+    expect(text).toContain('back-link');
+    expect(text).toContain('heap record');
+    expect(text).toContain('counter()');
+    expect(text).toContain('count');
+  });
+
+  it('buildClosureDoneBrain mentions lifecycle and lexical environment persistence', () => {
+    const text = buildClosureDoneBrain({ a: 1, b: 2 }, { extra: { closureRegistry: { counter: {} } } });
+    expect(text).toContain('lexical environment persistence');
+    expect(text).toContain('back-link');
+    expect(text).toContain('1 closure');
+  });
+});
+
+describe('Closure brain text integration', () => {
+  it('start step uses closure brain when trackClosures is on', () => {
+    const code = 'function makeCounter() {\n  let count = 0;\n  return function() {\n    count = count + 1;\n    return count;\n  };\n}\n\nlet counter = makeCounter();\nlet a = counter();';
+    const { steps } = run(code, { trackCalls: true, trackClosures: true });
+    expect(steps[0].brain).toContain('heap-resident record');
+    expect(steps[0].brain).toContain('back-link');
+  });
+
+  it('closure-create step mentions back-link and heap record', () => {
+    const code = 'function makeCounter() {\n  let count = 0;\n  return function() {\n    count = count + 1;\n    return count;\n  };\n}\n\nlet counter = makeCounter();';
+    const { steps } = run(code, { trackCalls: true, trackClosures: true });
+    const createStep = steps.find(s => s.phase === 'closure-create');
+    expect(createStep).toBeTruthy();
+    expect(createStep.brain).toContain('back-link');
+    expect(createStep.brain).toContain('heap record');
+  });
+
+  it('closure-call step mentions back-link and heap record', () => {
+    const code = 'function makeCounter() {\n  let count = 0;\n  return function() {\n    count = count + 1;\n    return count;\n  };\n}\n\nlet counter = makeCounter();\nlet a = counter();';
+    const { steps } = run(code, { trackCalls: true, trackClosures: true });
+    const callStep = steps.find(s => s.phase === 'closure-call');
+    expect(callStep).toBeTruthy();
+    expect(callStep.brain).toContain('back-link');
+    expect(callStep.brain).toContain('heap record');
+  });
+
+  it('done step uses closure brain when trackClosures is on', () => {
+    const code = 'function makeCounter() {\n  let count = 0;\n  return function() {\n    count = count + 1;\n    return count;\n  };\n}\n\nlet counter = makeCounter();\nlet a = counter();';
+    const { steps } = run(code, { trackCalls: true, trackClosures: true });
+    const doneStep = steps[steps.length - 1];
+    expect(doneStep.brain).toContain('lexical environment persistence');
+    expect(doneStep.brain).toContain('back-link');
+  });
+
+  it('non-closure modules still use generic brain text', () => {
+    const { steps } = run('let x = 42;');
+    expect(steps[0].brain).toContain('V8 ENGINE STARTUP');
+  });
+});
+
+// ═══════════════════════════════════════
+// FnCall brain text (three-layer)
+// ═══════════════════════════════════════
+describe('brain-text.js — fnCall brain text', () => {
+  it('buildFnCallStartBrain mentions Global frame, LIFO, and return', () => {
+    const text = buildFnCallStartBrain();
+    expect(text).toContain('Global frame');
+    expect(text).toContain('LIFO');
+  });
+
+  it('buildFnCallFnDeclareBrain mentions LIFO, return address, and frame', () => {
+    const text = buildFnCallFnDeclareBrain('double', 'x');
+    expect(text).toContain('LIFO');
+    expect(text).toContain('return address');
+    expect(text).toContain('double');
+  });
+
+  it('buildFnCallCallBrain mentions stack frame, LIFO, return address, and depth', () => {
+    const text = buildFnCallCallBrain('double', 1, 42, 2);
+    expect(text).toContain('stack frame');
+    expect(text).toContain('LIFO');
+    expect(text).toContain('return address');
+    expect(text).toContain('double()');
+    expect(text).toContain('depth is now 2');
+  });
+
+  it('buildFnCallReturnBrain mentions frame pop, LIFO, and return address', () => {
+    const text = buildFnCallReturnBrain(42, 'double');
+    expect(text).toContain('pops');
+    expect(text).toContain('LIFO');
+    expect(text).toContain('return address');
+    expect(text).toContain('42');
+  });
+
+  it('buildFnCallDoneBrain mentions LIFO, stack depth, and lifecycle', () => {
+    const text = buildFnCallDoneBrain({ answer: 42 }, { extra: { calls: 1, maxDepth: 2 } });
+    expect(text).toContain('LIFO');
+    expect(text).toContain('return address');
+    expect(text).toContain('1 function call');
+    expect(text).toContain('stack depth of 2');
+  });
+});
+
+describe('FnCall brain text integration', () => {
+  it('start step uses fnCall brain when trackCalls is on', () => {
+    const code = 'function double(x) {\n  return x * 2;\n}\n\nlet answer = double(21);';
+    const { steps } = run(code, { trackCalls: true });
+    expect(steps[0].brain).toContain('Global frame');
+    expect(steps[0].brain).toContain('LIFO');
+  });
+
+  it('fn-declare step mentions LIFO and return address', () => {
+    const code = 'function double(x) {\n  return x * 2;\n}\n\nlet answer = double(21);';
+    const { steps } = run(code, { trackCalls: true });
+    const declStep = steps.find(s => s.phase === 'fn-declare');
+    expect(declStep).toBeTruthy();
+    expect(declStep.brain).toContain('LIFO');
+    expect(declStep.brain).toContain('return address');
+  });
+
+  it('fn-call step mentions stack frame and LIFO', () => {
+    const code = 'function double(x) {\n  return x * 2;\n}\n\nlet answer = double(21);';
+    const { steps } = run(code, { trackCalls: true });
+    const callStep = steps.find(s => s.phase === 'fn-call');
+    expect(callStep).toBeTruthy();
+    expect(callStep.brain).toContain('stack frame');
+    expect(callStep.brain).toContain('LIFO');
+  });
+
+  it('fn-return step mentions frame pop and LIFO', () => {
+    const code = 'function double(x) {\n  return x * 2;\n}\n\nlet answer = double(21);';
+    const { steps } = run(code, { trackCalls: true });
+    const retStep = steps.find(s => s.phase === 'fn-return');
+    expect(retStep).toBeTruthy();
+    expect(retStep.brain).toContain('pops');
+    expect(retStep.brain).toContain('LIFO');
+  });
+
+  it('done step uses fnCall brain when trackCalls is on', () => {
+    const code = 'function double(x) {\n  return x * 2;\n}\n\nlet answer = double(21);';
+    const { steps } = run(code, { trackCalls: true });
+    const doneStep = steps[steps.length - 1];
+    expect(doneStep.brain).toContain('LIFO');
+    expect(doneStep.brain).toContain('return address');
+  });
+});
+
+// ═══════════════════════════════════════
+// ForLoop brain text (three-layer)
+// ═══════════════════════════════════════
+describe('brain-text.js — forLoop brain text', () => {
+  it('buildLoopStartBrain mentions TurboFan and on-stack replacement', () => {
+    const text = buildLoopStartBrain();
+    expect(text).toContain('TurboFan');
+    expect(text).toContain('on-stack replacement');
+  });
+
+  it('buildLoopTestBrain (hot, TRUE) mentions TurboFan, counter mutation, and flat-scope note', () => {
+    const text = buildLoopTestBrain(true, 4, 'i', 4, 3);
+    expect(text).toContain('TurboFan');
+    expect(text).toContain('mutates from');
+    expect(text).toContain('outer scope in this visualiser');
+  });
+
+  it('buildLoopTestBrain (cold, TRUE) mentions Ignition and FeedbackVector', () => {
+    const text = buildLoopTestBrain(true, 1, 'i', 0, null);
+    expect(text).toContain('Ignition');
+    expect(text).toContain('FeedbackVector');
+  });
+
+  it('buildLoopTestBrain (FALSE exit) mentions exit and connects back to iteration one', () => {
+    const text = buildLoopTestBrain(false, 5, 'i', 5, 4);
+    expect(text).toContain('FALSE');
+    expect(text).toContain('iteration one');
+  });
+
+  it('buildWhileTestBrain (hot) mentions TurboFan and flat-scope note', () => {
+    const text = buildWhileTestBrain(true, 4);
+    expect(text).toContain('TurboFan');
+    expect(text).toContain('outer scope in this visualiser');
+  });
+
+  it('buildDoWhileTestBrain mentions body-first execution trait', () => {
+    const text = buildDoWhileTestBrain(true, 2);
+    expect(text).toContain('body executed before this check');
+  });
+
+  it('buildForOfInitBrain (for-of) mentions Symbol.iterator and TurboFan', () => {
+    const text = buildForOfInitBrain(false, [1, 2, 3]);
+    expect(text).toContain('Symbol.iterator');
+    expect(text).toContain('TurboFan');
+  });
+
+  it('buildForOfInitBrain (for-in) mentions enumerable keys and TurboFan', () => {
+    const text = buildForOfInitBrain(true, { a: 1 });
+    expect(text).toContain('enumerable keys');
+    expect(text).toContain('TurboFan');
+  });
+
+  it('buildForOfIterBrain mentions iteration number and type feedback', () => {
+    const text = buildForOfIterBrain(false, 'val', 10, 1);
+    expect(text).toContain('iteration 1');
+    expect(text).toContain('val = 10');
+  });
+
+  it('buildLoopDoneBrain mentions iteration count and lifecycle', () => {
+    const text = buildLoopDoneBrain({ sum: 15 }, { extra: { loopIters: 5 } });
+    expect(text).toContain('5 loop iterations');
+    expect(text).toContain('lifecycle');
+  });
+});
+
+describe('ForLoop brain text integration', () => {
+  it('start step uses loop brain when trackLoops is on', () => {
+    const code = 'let sum = 0;\nfor (let i = 1; i <= 3; i++) {\n  sum = sum + i;\n}';
+    const { steps } = run(code, { trackLoops: true });
+    expect(steps[0].brain).toContain('TurboFan');
+    expect(steps[0].brain).toContain('on-stack replacement');
+  });
+
+  it('loop-test step mentions TurboFan or Ignition', () => {
+    const code = 'let sum = 0;\nfor (let i = 1; i <= 5; i++) {\n  sum = sum + i;\n}';
+    const { steps } = run(code, { trackLoops: true });
+    const loopSteps = steps.filter(s => s.phase === 'loop-test');
+    expect(loopSteps.length).toBeGreaterThan(0);
+    // Early iterations mention Ignition, later ones mention TurboFan
+    expect(loopSteps[0].brain).toContain('Ignition');
+    const hotStep = loopSteps.find(s => s.brain.includes('TurboFan'));
+    expect(hotStep).toBeTruthy();
+  });
+
+  it('loop-test step includes flat-scope disclaimer', () => {
+    const code = 'let sum = 0;\nfor (let i = 1; i <= 3; i++) {\n  sum = sum + i;\n}';
+    const { steps } = run(code, { trackLoops: true });
+    const loopStep = steps.find(s => s.phase === 'loop-test' && s.brain.includes('TRUE'));
+    expect(loopStep).toBeTruthy();
+    expect(loopStep.brain).toContain('outer scope in this visualiser');
+  });
+
+  it('loop-test tracks counter mutation', () => {
+    const code = 'let sum = 0;\nfor (let i = 0; i < 3; i++) {\n  sum = sum + i;\n}';
+    const { steps } = run(code, { trackLoops: true });
+    const loopSteps = steps.filter(s => s.phase === 'loop-test');
+    // After first iteration, should mention mutation
+    const mutStep = loopSteps.find(s => s.brain.includes('mutates from'));
+    expect(mutStep).toBeTruthy();
+  });
+
+  it('done step uses loop brain when trackLoops is on', () => {
+    const code = 'let sum = 0;\nfor (let i = 1; i <= 3; i++) {\n  sum = sum + i;\n}';
+    const { steps } = run(code, { trackLoops: true });
+    const doneStep = steps[steps.length - 1];
+    expect(doneStep.brain).toContain('loop iteration');
+    expect(doneStep.brain).toContain('lifecycle');
+  });
+});
+
+// ═══════════════════════════════════════
+// ArrayFlow brain text (three-layer)
+// ═══════════════════════════════════════
+describe('brain-text.js — arrayFlow brain text', () => {
+  it('buildArrayStartBrain mentions Elements Kind and one-directional', () => {
+    const text = buildArrayStartBrain();
+    expect(text).toContain('Elements Kind');
+    expect(text).toContain('PACKED_SMI_ELEMENTS');
+    expect(text).toContain('one-directional');
+  });
+
+  it('buildArrayDeclareBrain identifies PACKED_SMI_ELEMENTS for integer array', () => {
+    const text = buildArrayDeclareBrain('nums', [1, 2, 3]);
+    expect(text).toContain('PACKED_SMI_ELEMENTS');
+    expect(text).toContain('Elements Kind');
+    expect(text).toContain('type consistency');
+  });
+
+  it('buildArrayDeclareBrain identifies PACKED_ELEMENTS for mixed array', () => {
+    const text = buildArrayDeclareBrain('mix', [1, 'two', 3]);
+    expect(text).toContain('PACKED_ELEMENTS');
+  });
+
+  it('buildArrayPushBrain detects kind transition on type change', () => {
+    const oldArr = [1, 2, 3];
+    const newArr = [1, 2, 3, 'four'];
+    const text = buildArrayPushBrain('nums', oldArr, newArr, 'four');
+    expect(text).toContain('transitions from');
+    expect(text).toContain('permanent');
+    expect(text).toContain('PACKED_ELEMENTS');
+  });
+
+  it('buildArrayPushBrain reports stable kind when type consistent', () => {
+    const oldArr = [1, 2, 3];
+    const newArr = [1, 2, 3, 4];
+    const text = buildArrayPushBrain('nums', oldArr, newArr, 4);
+    expect(text).toContain('remains PACKED_SMI_ELEMENTS');
+  });
+
+  it('buildArrayPopBrain mentions the_hole and Elements Kind', () => {
+    const text = buildArrayPopBrain('nums', [1, 2, 3], [1, 2], 3);
+    expect(text).toContain('the_hole');
+    expect(text).toContain('Elements Kind');
+  });
+
+  it('buildArrayShiftBrain mentions O(n) and backing store', () => {
+    const text = buildArrayShiftBrain('nums', [1, 2, 3], [2, 3], 1);
+    expect(text).toContain('O(n)');
+    expect(text).toContain('backing store');
+  });
+
+  it('buildArraySortBrain mentions TimSort and Elements Kind', () => {
+    const text = buildArraySortBrain('nums', [3, 1, 2], [1, 2, 3]);
+    expect(text).toContain('TimSort');
+    expect(text).toContain('Elements Kind');
+  });
+
+  it('buildArraySetBrain detects kind transition', () => {
+    const text = buildArraySetBrain('nums', 0, [1, 2, 3], ['a', 2, 3]);
+    expect(text).toContain('transitions from');
+    expect(text).toContain('permanent');
+  });
+
+  it('buildArrayDoneBrain mentions array operations and Elements Kinds', () => {
+    const text = buildArrayDoneBrain({ nums: [1, 2, 3] }, { extra: { arrOps: 3 } });
+    expect(text).toContain('3 array operations');
+    expect(text).toContain('Elements Kinds');
+    expect(text).toContain('PACKED_SMI_ELEMENTS');
+  });
+});
+
+describe('ArrayFlow brain text integration', () => {
+  it('start step uses array brain when trackArrays is on', () => {
+    const code = 'let nums = [1, 2, 3];\nnums.push(4);';
+    const { steps } = run(code, { trackArrays: true });
+    expect(steps[0].brain).toContain('Elements Kind');
+    expect(steps[0].brain).toContain('one-directional');
+  });
+
+  it('array declaration step mentions Elements Kind', () => {
+    const code = 'let nums = [1, 2, 3];';
+    const { steps } = run(code, { trackArrays: true });
+    const declStep = steps.find(s => s.phase === 'ds-create');
+    expect(declStep).toBeTruthy();
+    expect(declStep.brain).toContain('Elements Kind');
+    expect(declStep.brain).toContain('PACKED_SMI_ELEMENTS');
+  });
+
+  it('push step mentions Elements Kind and backing store', () => {
+    const code = 'let nums = [1, 2, 3];\nnums.push(4);';
+    const { steps } = run(code, { trackArrays: true });
+    const pushStep = steps.find(s => s.phase === 'ds-push');
+    expect(pushStep).toBeTruthy();
+    expect(pushStep.brain).toContain('Elements Kind');
+    expect(pushStep.brain).toContain('backing store');
+  });
+
+  it('done step uses array brain when trackArrays is on', () => {
+    const code = 'let nums = [1, 2, 3];\nnums.push(4);';
+    const { steps } = run(code, { trackArrays: true });
+    const doneStep = steps[steps.length - 1];
+    expect(doneStep.brain).toContain('Elements Kinds');
+    expect(doneStep.brain).toContain('array operation');
+  });
+});
+
+// ═══════════════════════════════════════
+// ObjExplorer brain text (three-layer)
+// ═══════════════════════════════════════
+describe('brain-text.js — objExplorer brain text', () => {
+  it('buildObjStartBrain mentions Hidden Class and Inline Caching', () => {
+    const text = buildObjStartBrain();
+    expect(text).toContain('Hidden Class');
+    expect(text).toContain('Inline Caching');
+    expect(text).toContain('Dictionary Mode');
+  });
+
+  it('buildObjDeclareBrain traces HC chain for a 2-property object', () => {
+    const text = buildObjDeclareBrain('user', { name: 'Alice', age: 30 });
+    expect(text).toContain('HC2');
+    expect(text).toContain('HC0');
+    expect(text).toContain('HC1 → HC2');
+    expect(text).toContain('Inline Caching');
+  });
+
+  it('buildObjSetBrain detects new property HC transition', () => {
+    const text = buildObjSetBrain('user', 'email', { name: 'Alice' }, { name: 'Alice', email: 'a@b.c' });
+    expect(text).toContain('HC1 to HC2');
+    expect(text).toContain('Inline Caching');
+    expect(text).toContain('HC0');
+  });
+
+  it('buildObjSetBrain detects overwrite (no transition)', () => {
+    const text = buildObjSetBrain('user', 'name', { name: 'Alice' }, { name: 'Bob' });
+    expect(text).toContain('no Hidden Class transition');
+    expect(text).toContain('monomorphic');
+  });
+
+  it('buildObjDestructBrain mentions Inline-Cached reads and HC', () => {
+    const text = buildObjDestructBrain(['name', 'age'], { name: 'Alice', age: 30 });
+    expect(text).toContain('HC2');
+    expect(text).toContain('Inline-Cached');
+    expect(text).toContain('monomorphic');
+  });
+
+  it('buildObjMethodBrain mentions Hidden Class transition chain', () => {
+    const text = buildObjMethodBrain('keys');
+    expect(text).toContain('Object.keys()');
+    expect(text).toContain('Hidden Class transition chain');
+  });
+
+  it('buildObjDoneBrain mentions object operations and Hidden Classes', () => {
+    const text = buildObjDoneBrain({ user: { name: 'Alice', age: 30 } }, { extra: { objOps: 3 } });
+    expect(text).toContain('3 object operations');
+    expect(text).toContain('Hidden Classes');
+    expect(text).toContain('HC2');
+  });
+});
+
+describe('ObjExplorer brain text integration', () => {
+  it('start step uses obj brain when trackObjects is on', () => {
+    const code = 'let user = { name: "Alice" };\nuser.age = 30;';
+    const { steps } = run(code, { trackObjects: true });
+    expect(steps[0].brain).toContain('Hidden Class');
+    expect(steps[0].brain).toContain('Inline Caching');
+  });
+
+  it('object declaration step mentions HC chain', () => {
+    const code = 'let user = { name: "Alice", age: 30 };';
+    const { steps } = run(code, { trackObjects: true });
+    const declStep = steps.find(s => s.phase === 'obj-create');
+    expect(declStep).toBeTruthy();
+    expect(declStep.brain).toContain('Hidden Class');
+    expect(declStep.brain).toContain('HC2');
+  });
+
+  it('obj-set step mentions HC transition', () => {
+    const code = 'let user = { name: "Alice" };\nuser.age = 30;';
+    const { steps } = run(code, { trackObjects: true });
+    const setStep = steps.find(s => s.phase === 'obj-set');
+    expect(setStep).toBeTruthy();
+    expect(setStep.brain).toContain('Hidden Class');
+    expect(setStep.brain).toContain('HC0');
+  });
+
+  it('done step uses obj brain when trackObjects is on', () => {
+    const code = 'let user = { name: "Alice" };\nuser.age = 30;';
+    const { steps } = run(code, { trackObjects: true });
+    const doneStep = steps[steps.length - 1];
+    expect(doneStep.brain).toContain('Hidden Classes');
+    expect(doneStep.brain).toContain('object operation');
+  });
+});
+
+// ═══════════════════════════════════════
+// DataStruct brain text (three-layer)
+// ═══════════════════════════════════════
+describe('brain-text.js — dataStruct brain text', () => {
+  it('buildDSStartBrain mentions Deterministic Hash Table and DataTable', () => {
+    const text = buildDSStartBrain();
+    expect(text).toContain('Deterministic Hash Table');
+    expect(text).toContain('DataTable');
+    expect(text).toContain('insertion order');
+  });
+
+  it('buildDSDeclareBrain for array mentions FixedArray and backing store', () => {
+    const text = buildDSDeclareBrain('stack', [1, 2, 3]);
+    expect(text).toContain('FixedArray');
+    expect(text).toContain('insertion order');
+  });
+
+  it('buildDSDeclareBrain for object mentions hash-backed and DataTable', () => {
+    const text = buildDSDeclareBrain('map', { alice: 100 });
+    expect(text).toContain('hash-backed');
+    expect(text).toContain('DataTable');
+  });
+
+  it('buildDSPushBrain mentions DataTable and insertion order', () => {
+    const text = buildDSPushBrain('stack', 10, 3, 4);
+    expect(text).toContain('DataTable');
+    expect(text).toContain('insertion order');
+    expect(text).toContain('O(1)');
+  });
+
+  it('buildDSPopBrain mentions hole and rehash', () => {
+    const text = buildDSPopBrain('stack', 30, 2);
+    expect(text).toContain('hole');
+    expect(text).toContain('rehash');
+    expect(text).toContain('O(1)');
+  });
+
+  it('buildDSDequeueBrain mentions O(n) and DataTable rewrite', () => {
+    const text = buildDSDequeueBrain('queue', 'A', 2);
+    expect(text).toContain('O(n)');
+    expect(text).toContain('DataTable');
+    expect(text).toContain('insertion-order');
+  });
+
+  it('buildDSSortBrain mentions TimSort and DataTable', () => {
+    const text = buildDSSortBrain('pq', 3);
+    expect(text).toContain('TimSort');
+    expect(text).toContain('DataTable');
+  });
+
+  it('buildDSDoneBrain mentions data-structure operations and DataTable', () => {
+    const text = buildDSDoneBrain({ stack: [1, 2] }, { extra: { dsOps: 5 } });
+    expect(text).toContain('5 data-structure operations');
+    expect(text).toContain('DataTable');
+    expect(text).toContain('rehash');
+  });
+});
+
+describe('DataStruct brain text integration', () => {
+  it('start step uses DS brain when trackDS is on', () => {
+    const code = 'let stack = [];\nstack.push(10);';
+    const { steps } = run(code, { trackDS: true });
+    expect(steps[0].brain).toContain('Deterministic Hash Table');
+    expect(steps[0].brain).toContain('DataTable');
+  });
+
+  it('ds-create step mentions FixedArray for array DS', () => {
+    const code = 'let stack = [];';
+    const { steps } = run(code, { trackDS: true });
+    const declStep = steps.find(s => s.phase === 'ds-create');
+    expect(declStep).toBeTruthy();
+    expect(declStep.brain).toContain('FixedArray');
+  });
+
+  it('ds-push step mentions DataTable', () => {
+    const code = 'let stack = [];\nstack.push(10);';
+    const { steps } = run(code, { trackDS: true });
+    const pushStep = steps.find(s => s.phase === 'ds-push');
+    expect(pushStep).toBeTruthy();
+    expect(pushStep.brain).toContain('DataTable');
+  });
+
+  it('done step uses DS brain when trackDS is on', () => {
+    const code = 'let stack = [];\nstack.push(10);';
+    const { steps } = run(code, { trackDS: true });
+    const doneStep = steps[steps.length - 1];
+    expect(doneStep.brain).toContain('data-structure operation');
+    expect(doneStep.brain).toContain('DataTable');
+  });
+});
+
+// ═══════════════════════════════════════
+// IfGate brain text (three-layer)
+// ═══════════════════════════════════════
+describe('brain-text.js — ifGate brain text', () => {
+  it('buildIfStartBrain mentions type speculation and deoptimisation cliff', () => {
+    const text = buildIfStartBrain();
+    expect(text).toContain('type speculation');
+    expect(text).toContain('deoptimisation cliff');
+    expect(text).toContain('TurboFan');
+  });
+
+  it('buildIfConditionBrain first eval records type feedback', () => {
+    const text = buildIfConditionBrain(true, true, null, 1);
+    expect(text).toContain('TRUE');
+    expect(text).toContain('first conditional evaluation');
+    expect(text).toContain('boolean');
+    expect(text).toContain('Ignition records');
+  });
+
+  it('buildIfConditionBrain same type keeps speculation active', () => {
+    const text = buildIfConditionBrain(false, false, 'boolean', 2);
+    expect(text).toContain('FALSE');
+    expect(text).toContain('speculation holds');
+  });
+
+  it('buildIfConditionBrain type change triggers deopt cliff', () => {
+    const text = buildIfConditionBrain(true, 1, 'boolean', 2);
+    expect(text).toContain('deoptimisation cliff');
+    expect(text).toContain('number');
+    expect(text).toContain('boolean');
+  });
+
+  it('buildIfSkipBrain true path skips else', () => {
+    const text = buildIfSkipBrain(true);
+    expect(text).toContain('TRUE path was taken');
+    expect(text).toContain('skips the else block');
+    expect(text).toContain('branch predictor');
+  });
+
+  it('buildIfSkipBrain false path skips if-block', () => {
+    const text = buildIfSkipBrain(false);
+    expect(text).toContain('FALSE');
+    expect(text).toContain('skips the if-block');
+    expect(text).toContain('branch predictor');
+  });
+
+  it('buildIfElseEnterBrain mentions deoptimisation cliff', () => {
+    const text = buildIfElseEnterBrain();
+    expect(text).toContain('else block');
+    expect(text).toContain('deoptimisation cliff');
+    expect(text).toContain('TurboFan');
+  });
+
+  it('buildIfDoneBrain mentions conditional evaluations and type feedback', () => {
+    const text = buildIfDoneBrain({ age: 22, canDrink: true }, { extra: { ifEvals: 1 } });
+    expect(text).toContain('1 conditional evaluation');
+    expect(text).toContain('type feedback');
+    expect(text).toContain('deoptimisation cliff');
+  });
+});
+
+describe('IfGate brain text integration', () => {
+  it('start step uses if brain when trackIf is on', () => {
+    const code = 'let x = 5;\nif (x > 3) { x = 10; }';
+    const { steps } = run(code, { trackIf: true });
+    expect(steps[0].brain).toContain('type speculation');
+    expect(steps[0].brain).toContain('TurboFan');
+  });
+
+  it('condition step mentions type and speculation', () => {
+    const code = 'let x = 5;\nif (x > 3) { x = 10; }';
+    const { steps } = run(code, { trackIf: true });
+    const condStep = steps.find(s => s.phase === 'condition');
+    expect(condStep).toBeTruthy();
+    expect(condStep.brain).toContain('TRUE');
+    expect(condStep.brain).toContain('first conditional evaluation');
+  });
+
+  it('skip step mentions branch predictor when trackIf is on', () => {
+    const code = 'let x = 1;\nif (x > 3) { x = 10; }';
+    const { steps } = run(code, { trackIf: true });
+    const skipStep = steps.find(s => s.phase === 'skip');
+    expect(skipStep).toBeTruthy();
+    expect(skipStep.brain).toContain('branch predictor');
+  });
+
+  it('else-enter step mentions deoptimisation cliff when trackIf is on', () => {
+    const code = 'let x = 1;\nif (x > 3) {\n  x = 10;\n} else {\n  x = 0;\n}';
+    const { steps } = run(code, { trackIf: true });
+    const elseStep = steps.find(s => s.phase === 'else-enter');
+    expect(elseStep).toBeTruthy();
+    expect(elseStep.brain).toContain('deoptimisation cliff');
+  });
+
+  it('done step uses if brain when trackIf is on', () => {
+    const code = 'let x = 5;\nif (x > 3) { x = 10; }';
+    const { steps } = run(code, { trackIf: true });
+    const doneStep = steps[steps.length - 1];
+    expect(doneStep.brain).toContain('conditional evaluation');
+    expect(doneStep.brain).toContain('type feedback');
+  });
+});
+
+// ═══════════════════════════════════════
+// VarStore brain text (three-layer)
+// ═══════════════════════════════════════
+describe('brain-text.js — varStore brain text', () => {
+  it('buildVarStartBrain mentions TDZ and two-phase model', () => {
+    const text = buildVarStartBrain();
+    expect(text).toContain('Temporal Dead Zone');
+    expect(text).toContain('two-phase');
+    expect(text).toContain('Lexical Environment');
+    expect(text).toContain('Script scope');
+  });
+
+  it('buildVarDeclareBrain mentions TDZ transition for let', () => {
+    const text = buildVarDeclareBrain('age', 25, 'let', 1);
+    expect(text).toContain('Temporal Dead Zone');
+    expect(text).toContain('age');
+    expect(text).toContain('let');
+    expect(text).toContain('ReferenceError');
+    expect(text).toContain('mutable');
+  });
+
+  it('buildVarDeclareBrain mentions immutable for const', () => {
+    const text = buildVarDeclareBrain('PI', 3.14, 'const', 1);
+    expect(text).toContain('const');
+    expect(text).toContain('immutable');
+    expect(text).toContain('Temporal Dead Zone');
+  });
+
+  it('buildVarDeclareBrain connects to prior bindings', () => {
+    const text = buildVarDeclareBrain('y', 10, 'let', 3);
+    expect(text).toContain('joining 2 prior bindings');
+    expect(text).toContain('Script scope');
+  });
+
+  it('buildVarAssignBrain mentions Lexical Environment and IC for same type', () => {
+    const text = buildVarAssignBrain('score', 0, 10);
+    expect(text).toContain('Lexical Environment');
+    expect(text).toContain('Inline Cache');
+    expect(text).toContain('monomorphic');
+    expect(text).toContain('let');
+  });
+
+  it('buildVarAssignBrain signals type change and polymorphic IC', () => {
+    const text = buildVarAssignBrain('x', 42, 'hello');
+    expect(text).toContain('polymorphic');
+    expect(text).toContain('number');
+    expect(text).toContain('string');
+  });
+
+  it('buildVarUpdateBrain mentions SMI for small integers', () => {
+    const text = buildVarUpdateBrain('i', 0, 1, '++');
+    expect(text).toContain('SMI');
+    expect(text).toContain('++');
+    expect(text).toContain('Lexical Environment');
+    expect(text).toContain('TDZ');
+  });
+
+  it('buildVarDoneBrain mentions TDZ and two-phase model', () => {
+    const text = buildVarDoneBrain({ x: 1, y: 2 }, { extra: { varDecls: 2 } });
+    expect(text).toContain('2 declarations');
+    expect(text).toContain('Temporal Dead Zone');
+    expect(text).toContain('two-phase');
+    expect(text).toContain('Script scope');
+  });
+});
+
+describe('VarStore brain text integration', () => {
+  it('start step uses var brain when trackVar is on', () => {
+    const code = 'let x = 5;';
+    const { steps } = run(code, { trackVar: true });
+    expect(steps[0].brain).toContain('Temporal Dead Zone');
+    expect(steps[0].brain).toContain('two-phase');
+  });
+
+  it('declare step mentions TDZ transition when trackVar is on', () => {
+    const code = 'let age = 25;';
+    const { steps } = run(code, { trackVar: true });
+    const declStep = steps.find(s => s.phase === 'declare');
+    expect(declStep).toBeTruthy();
+    expect(declStep.brain).toContain('Temporal Dead Zone');
+    expect(declStep.brain).toContain('age');
+  });
+
+  it('assign step mentions Lexical Environment when trackVar is on', () => {
+    const code = 'let score = 0;\nscore = 10;';
+    const { steps } = run(code, { trackVar: true });
+    const assignStep = steps.find(s => s.phase === 'assign');
+    expect(assignStep).toBeTruthy();
+    expect(assignStep.brain).toContain('Lexical Environment');
+  });
+
+  it('done step uses var brain when trackVar is on', () => {
+    const code = 'let x = 5;\nlet y = 10;';
+    const { steps } = run(code, { trackVar: true });
+    const doneStep = steps[steps.length - 1];
+    expect(doneStep.brain).toContain('Temporal Dead Zone');
+    expect(doneStep.brain).toContain('two-phase');
   });
 });
 

@@ -85,32 +85,34 @@
   titleAccent="Gate"
   subtitle="— Conditionals"
   {mapStep}
+  dataFlow
+  interpreterOptions={{ trackIf: true }}
 >
 
   {#snippet cpuRegisters(sd)}
     <rect x="210" y="14" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">TARGET</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.highlight ? '#fbbf24' : '#222'} font-size="10" font-weight="700" font-family="monospace">{sd.highlight || '—'}</text>
+    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
+    <text x="344" y="29" text-anchor="end" fill={sd.highlight ? '#fbbf24' : '#222'} font-size="10" font-weight="700" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
 
     <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">RESULT</text>
+    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">RESULT</text>
     {#if sd.lastCond === true}
       <circle cx="338" cy="51" r="5" fill="#4ade80"/>
-      <text x="330" y="55" text-anchor="end" fill="#4ade80" font-size="9" font-weight="700" font-family="monospace">TRUE</text>
+      <text x="330" y="55" text-anchor="end" fill="#4ade80" font-size="9" font-weight="700" font-family="'Geist Mono', monospace">TRUE</text>
     {:else if sd.lastCond === false}
       <circle cx="338" cy="51" r="5" fill="#f87171"/>
-      <text x="330" y="55" text-anchor="end" fill="#f87171" font-size="9" font-weight="700" font-family="monospace">FALSE</text>
+      <text x="330" y="55" text-anchor="end" fill="#f87171" font-size="9" font-weight="700" font-family="'Geist Mono', monospace">FALSE</text>
     {:else if sd.changed}
-      <text x="344" y="55" text-anchor="end" fill="#f59e0b" font-size="9" font-weight="600" font-family="monospace">{fv(sd.changed.to)}</text>
+      <text x="344" y="55" text-anchor="end" fill="#f59e0b" font-size="9" font-weight="600" font-family="'Geist Mono', monospace">{fv(sd.changed.to)}</text>
     {:else}
-      <text x="344" y="55" text-anchor="end" fill="#222" font-size="9" font-family="monospace">—</text>
+      <text x="344" y="55" text-anchor="end" fill="#222" font-size="9" font-family="'Geist Mono', monospace">—</text>
     {/if}
   {/snippet}
 
   {#snippet cpuGauge(sd)}
     <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
     <rect x="247" y="69" width={Math.min(102, (sd.comps || 0) * 25)} height="14" rx="2" fill="#a78bfa" opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">{sd.comps || 0} COMPARES</text>
+    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.comps || 0} COMPARES</text>
   {/snippet}
 
   {#snippet topPanel(sd)}
@@ -188,11 +190,11 @@
               use:animateDiamondFlash={{ active: isLive, color: takenColor }}/>
 
             <!-- Diamond text: raw condition (truncated) -->
-            <text x="150" y="37" text-anchor="middle" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="monospace">
+            <text x="150" y="37" text-anchor="middle" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace">
               {sd.condRaw.length > 22 ? sd.condRaw.slice(0, 20) + '...' : sd.condRaw}
             </text>
             <!-- Diamond text: substituted values -->
-            <text x="150" y="50" text-anchor="middle" fill="#777" font-size="6.5" font-family="monospace">
+            <text x="150" y="50" text-anchor="middle" fill="#777" font-size="6.5" font-family="'Geist Mono', monospace">
               {sd.condSub.length > 28 ? sd.condSub.slice(0, 26) + '...' : sd.condSub}
             </text>
 
@@ -211,8 +213,8 @@
               filter={!cond && isBranch ? 'url(#glow-f)' : 'none'}/>
 
             <!-- T / F labels -->
-            <text x="84"  y="82" fill={cond  ? '#4ade80' : '#2a2a42'} font-size="11" font-weight="900" font-family="monospace">T</text>
-            <text x="210" y="82" fill={!cond ? '#f87171' : '#2a2a42'} font-size="11" font-weight="900" font-family="monospace">F</text>
+            <text x="84"  y="82" fill={cond  ? '#4ade80' : '#2a2a42'} font-size="11" font-weight="900" font-family="'Geist Mono', monospace">T</text>
+            <text x="210" y="82" fill={!cond ? '#f87171' : '#2a2a42'} font-size="11" font-weight="900" font-family="'Geist Mono', monospace">F</text>
 
             <!-- ── IF block with reveal animation ────────────────── -->
             <g use:animateBlockReveal={{ taken: cond, delay: 0.6 }}>
@@ -220,25 +222,25 @@
                 fill={cond ? 'url(#tg)' : '#090910'}
                 stroke={cond ? '#4ade80' : '#1a1a2e'} stroke-width={cond ? 2 : 1}/>
               <text x="57" y="143" text-anchor="middle"
-                fill={cond ? '#4ade80' : '#252535'} font-size="11" font-weight="700" font-family="monospace">if {'{'}</text>
+                fill={cond ? '#4ade80' : '#252535'} font-size="11" font-weight="700" font-family="'Geist Mono', monospace">if {'{'}</text>
 
               <!-- Show actual code lines inside the block -->
               {#each ifBodyLines as line, li}
                 <text x="57" y={156 + li * 12} text-anchor="middle"
-                  fill={cond ? '#4ade80aa' : '#252535'} font-size="7" font-family="monospace">
+                  fill={cond ? '#4ade80aa' : '#252535'} font-size="7" font-family="'Geist Mono', monospace">
                   {line.length > 18 ? line.slice(0, 16) + '…' : line}
                 </text>
               {/each}
 
               <text x="57" y={156 + ifBodyLines.length * 12} text-anchor="middle"
-                fill={cond ? '#4ade80' : '#252535'} font-size="11" font-weight="700" font-family="monospace">{'}'}</text>
+                fill={cond ? '#4ade80' : '#252535'} font-size="11" font-weight="700" font-family="'Geist Mono', monospace">{'}'}</text>
 
               {#if cond}
                 <text x="57" y={170 + ifBodyLines.length * 12} text-anchor="middle"
-                  fill="#4ade8088" font-size="7" font-weight="700" font-family="monospace" letter-spacing="1">EXECUTED</text>
+                  fill="#4ade8088" font-size="7" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="1">EXECUTED</text>
               {:else}
                 <text x="57" y={170 + ifBodyLines.length * 12} text-anchor="middle"
-                  fill="#f8717155" font-size="6.5" font-family="monospace" letter-spacing="0.5">SKIPPED</text>
+                  fill="#f8717155" font-size="6.5" font-family="'Geist Mono', monospace" letter-spacing="0.5">SKIPPED</text>
               {/if}
             </g>
 
@@ -249,24 +251,24 @@
                   fill={!cond ? 'url(#fg)' : '#090910'}
                   stroke={!cond ? '#f87171' : '#1a1a2e'} stroke-width={!cond ? 2 : 1}/>
                 <text x="243" y="143" text-anchor="middle"
-                  fill={!cond ? '#f87171' : '#252535'} font-size="11" font-weight="700" font-family="monospace">else {'{'}</text>
+                  fill={!cond ? '#f87171' : '#252535'} font-size="11" font-weight="700" font-family="'Geist Mono', monospace">else {'{'}</text>
 
                 {#each elseBodyLines as line, li}
                   <text x="243" y={156 + li * 12} text-anchor="middle"
-                    fill={!cond ? '#f87171aa' : '#252535'} font-size="7" font-family="monospace">
+                    fill={!cond ? '#f87171aa' : '#252535'} font-size="7" font-family="'Geist Mono', monospace">
                     {line.length > 18 ? line.slice(0, 16) + '…' : line}
                   </text>
                 {/each}
 
                 <text x="243" y={156 + elseBodyLines.length * 12} text-anchor="middle"
-                  fill={!cond ? '#f87171' : '#252535'} font-size="11" font-weight="700" font-family="monospace">{'}'}</text>
+                  fill={!cond ? '#f87171' : '#252535'} font-size="11" font-weight="700" font-family="'Geist Mono', monospace">{'}'}</text>
 
                 {#if !cond}
                   <text x="243" y={170 + elseBodyLines.length * 12} text-anchor="middle"
-                    fill="#f8717188" font-size="7" font-weight="700" font-family="monospace" letter-spacing="1">EXECUTED</text>
+                    fill="#f8717188" font-size="7" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="1">EXECUTED</text>
                 {:else}
                   <text x="243" y={170 + elseBodyLines.length * 12} text-anchor="middle"
-                    fill="#4ade8055" font-size="6.5" font-family="monospace" letter-spacing="0.5">SKIPPED</text>
+                    fill="#4ade8055" font-size="6.5" font-family="'Geist Mono', monospace" letter-spacing="0.5">SKIPPED</text>
                 {/if}
               </g>
             {:else}
@@ -275,7 +277,7 @@
                 <rect x="192" y="128" width="102" height="46" rx="6"
                   fill="none" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="4 2"/>
                 <text x="243" y="155" text-anchor="middle"
-                  fill="#1a1a2e" font-size="9" font-family="monospace">no else</text>
+                  fill="#1a1a2e" font-size="9" font-family="'Geist Mono', monospace">no else</text>
               </g>
             {/if}
 
@@ -284,7 +286,7 @@
               fill={cond ? '#4ade8028' : '#f8717128'}
               filter={isBranch ? (cond ? 'url(#glow-t)' : 'url(#glow-f)') : 'none'}/>
             <text x={cond ? 50 : 236} y="121" text-anchor="middle"
-              fill={takenColor} font-size="8" font-weight="700" font-family="monospace">
+              fill={takenColor} font-size="8" font-weight="700" font-family="'Geist Mono', monospace">
               {cond ? '✓ TRUE' : '✗ FALSE'}
             </text>
 
@@ -318,13 +320,13 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
         <polygon points="200,20 270,75 200,130 130,75" fill="rgba(74,222,128,0.05)" stroke="rgba(74,222,128,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
-        <text x="200" y="82" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="18" font-family="monospace" font-weight="600">condition?</text>
+        <text x="200" y="82" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="18" font-family="'Geist Mono', monospace" font-weight="600">condition?</text>
         <path d="M 158 112 Q 110 150 88 188" fill="none" stroke="rgba(74,222,128,0.45)" stroke-width="2.5" stroke-dasharray="5 3"/>
         <path d="M 242 112 Q 290 150 312 188" fill="none" stroke="rgba(248,113,113,0.45)" stroke-width="2.5" stroke-dasharray="5 3"/>
         <rect x="28"  y="186" width="120" height="30" rx="5" fill="rgba(74,222,128,0.07)" stroke="rgba(74,222,128,0.50)" stroke-width="2" stroke-dasharray="5 3"/>
         <rect x="252" y="186" width="120" height="30" rx="5" fill="rgba(248,113,113,0.07)" stroke="rgba(248,113,113,0.50)" stroke-width="2" stroke-dasharray="5 3"/>
-        <text x="88"  y="207" text-anchor="middle" fill="rgba(74,222,128,0.90)" font-size="16" font-family="monospace" font-weight="600">if {'{'} {'}'}</text>
-        <text x="312" y="207" text-anchor="middle" fill="rgba(248,113,113,0.90)" font-size="16" font-family="monospace" font-weight="600">else {'{'} {'}'}</text>
+        <text x="88"  y="207" text-anchor="middle" fill="rgba(74,222,128,0.90)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">if {'{'} {'}'}</text>
+        <text x="312" y="207" text-anchor="middle" fill="rgba(248,113,113,0.90)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">else {'{'} {'}'}</text>
       </svg>
       <p class="ph-text">Click <strong style="color:{ACCENT}">▶ Visualize</strong> to see the execution flow</p>
     </div>
@@ -338,20 +340,20 @@
 
   /* ── Sub-expression evaluation row ─────────────────────── */
   .eval-row    { display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); flex-wrap:wrap; }
-  .eval-label  { font-size:0.6rem; color:rgba(255,255,255,0.42); font-family:monospace; text-transform:uppercase; letter-spacing:0.5px; flex-shrink:0; }
+  .eval-label  { font-size:0.6rem; color:rgba(255,255,255,0.42); font-family: var(--font-code); text-transform:uppercase; letter-spacing:0.5px; flex-shrink:0; }
   .eval-chips  { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .eval-chip   { display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10); border-radius:4px; padding:3px 8px; }
-  .eval-chip-raw   { font-size:0.62rem; color:rgba(255,255,255,0.75); font-family:'Geist Mono','SF Mono',monospace; font-weight:600; }
+  .eval-chip-raw   { font-size:0.62rem; color:rgba(255,255,255,0.75); font-family: var(--font-code); font-weight:600; }
   .eval-chip-arrow { font-size:0.5rem; color:rgba(255,255,255,0.35); }
-  .eval-chip-val   { font-size:0.62rem; color:#ff8866; font-family:'Geist Mono','SF Mono',monospace; font-weight:700; }
-  .eval-op     { font-size:0.62rem; color:#a78bfa; font-family:monospace; font-weight:800; padding:2px 4px; }
+  .eval-chip-val   { font-size:0.62rem; color:#ff8866; font-family: var(--font-code); font-weight:700; }
+  .eval-op     { font-size:0.62rem; color:#a78bfa; font-family: var(--font-code); font-weight:800; padding:2px 4px; }
 
   /* ── Condition expression row ───────────────────────────── */
   .cond-row    { display:flex; align-items:center; gap:6px; padding:7px 12px; background:#0d0d16; border-bottom:1px solid #1a1a2e; flex-wrap:wrap; }
-  .cond-expr   { font-size:0.72rem; color:#ccc; font-family:'SF Mono',monospace; font-weight:600; }
+  .cond-expr   { font-size:0.72rem; color:#ccc; font-family: var(--font-code); font-weight:600; }
   .cond-arrow  { font-size:0.6rem; color:#333; }
-  .cond-sub    { font-size:0.65rem; color:#888; font-family:'SF Mono',monospace; background:#ffffff06; padding:1px 5px; border-radius:3px; }
-  .cond-badge  { margin-left:auto; font-size:0.6rem; font-family:monospace; font-weight:700; padding:2px 8px; border-radius:4px; }
+  .cond-sub    { font-size:0.65rem; color:#888; font-family: var(--font-code); background:#ffffff06; padding:1px 5px; border-radius:3px; }
+  .cond-badge  { margin-left:auto; font-size:0.6rem; font-family: var(--font-code); font-weight:700; padding:2px 8px; border-radius:4px; }
   .badge-true  { color:#4ade80; background:#4ade8018; border:1px solid #4ade8033; }
   .badge-false { color:#f87171; background:#f8717118; border:1px solid #f8717133; }
 
@@ -359,7 +361,7 @@
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
 
   /* ── Responsive ─────────────────────────────────────────── */
   @media (max-width: 480px) {

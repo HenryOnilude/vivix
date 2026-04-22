@@ -63,23 +63,23 @@
   {#snippet cpuRegisters(sd)}
     <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
       stroke={sd.stack.length > 1 ? 'rgba(255,136,102,0.4)' : 'rgba(255,255,255,0.08)'} stroke-width="1"/>
-    <text x="216" y="22" fill="rgba(255,255,255,0.35)" font-size="6" font-family="monospace" letter-spacing="0.5">DEPTH</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.stack.length > 1 ? ACCENT : 'rgba(255,255,255,0.30)'} font-size="12" font-weight="800" font-family="monospace">{sd.stack.length}</text>
+    <text x="216" y="22" fill="rgba(255,255,255,0.35)" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">DEPTH</text>
+    <text x="272" y="29" text-anchor="end" fill={sd.stack.length > 1 ? ACCENT : 'rgba(255,255,255,0.30)'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.stack.length}</text>
 
     <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-    <text x="290" y="22" fill="rgba(255,255,255,0.35)" font-size="6" font-family="monospace" letter-spacing="0.5">CALLS</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.calls > 0 ? '#a78bfa' : 'rgba(255,255,255,0.30)'} font-size="12" font-weight="800" font-family="monospace">{sd.calls}</text>
+    <text x="290" y="22" fill="rgba(255,255,255,0.35)" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">CALLS</text>
+    <text x="344" y="29" text-anchor="end" fill={sd.calls > 0 ? '#a78bfa' : 'rgba(255,255,255,0.30)'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.calls}</text>
 
     <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-    <text x="216" y="48" fill="rgba(255,255,255,0.35)" font-size="6" font-family="monospace" letter-spacing="0.5">FRAME</text>
-    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="10" font-weight="700" font-family="monospace">{sd.stack[sd.stack.length - 1]}</text>
+    <text x="216" y="48" fill="rgba(255,255,255,0.35)" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">FRAME</text>
+    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="10" font-weight="700" font-family="'Geist Mono', monospace">{sd.stack[sd.stack.length - 1]}</text>
   {/snippet}
 
   <!-- CPU right gauge: max stack depth -->
   {#snippet cpuGauge(sd)}
     <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
     <rect x="247" y="69" width={Math.min(102, (sd.maxDepth || 1) * 25)} height="14" rx="2" fill={ACCENT} opacity="0.3"/>
-    <text x="252" y="79" fill="rgba(255,255,255,0.45)" font-size="6.5" font-family="monospace">MAX {sd.maxDepth || 1}</text>
+    <text x="252" y="79" fill="rgba(255,255,255,0.45)" font-size="6.5" font-family="'Geist Mono', monospace">MAX {sd.maxDepth || 1}</text>
   {/snippet}
 
   <!-- CPU stack visual override — shows actual frames -->
@@ -88,8 +88,8 @@
       {#if i < 3}
         <rect x="10" y={82 + i * 14} width="108" height="12" rx="3" fill="#0d0d18"
           stroke={i === 0 ? '#ff886644' : '#1a1a2e'} stroke-width="1"/>
-        <text x="16" y={91 + i * 14} fill={i === 0 ? ACCENT : '#4ade80'} font-size="7" font-weight="600" font-family="monospace">{frame}</text>
-        {#if i === 0}<text x="112" y={91 + i * 14} text-anchor="end" fill="rgba(255,255,255,0.35)" font-size="5.5" font-family="monospace">active</text>{/if}
+        <text x="16" y={91 + i * 14} fill={i === 0 ? ACCENT : '#4ade80'} font-size="7" font-weight="600" font-family="'Geist Mono', monospace">{frame}</text>
+        {#if i === 0}<text x="112" y={91 + i * 14} text-anchor="end" fill="rgba(255,255,255,0.35)" font-size="5.5" font-family="'Geist Mono', monospace">active</text>{/if}
       {/if}
     {/each}
   {/snippet}
@@ -204,14 +204,14 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
         <rect x="120" y="18" width="160" height="42" rx="5" fill="rgba(251,146,60,0.07)" stroke="rgba(251,146,60,0.55)" stroke-width="2.5"/>
-        <text x="200" y="45" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">ƒ double(x)</text>
+        <text x="200" y="45" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">ƒ double(x)</text>
         <line x1="200" y1="60" x2="200" y2="82" stroke="rgba(251,146,60,0.50)" stroke-width="2.5" stroke-dasharray="4 3"/>
         <rect x="120" y="82" width="160" height="42" rx="5" fill="rgba(251,146,60,0.07)" stroke="rgba(251,146,60,0.45)" stroke-width="2.5"/>
-        <text x="200" y="109" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">result = x * 2</text>
+        <text x="200" y="109" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">result = x * 2</text>
         <line x1="200" y1="124" x2="200" y2="150" stroke="rgba(251,146,60,0.50)" stroke-width="2.5" stroke-dasharray="4 3"/>
         <polygon points="191,144 209,144 200,158" fill="rgba(251,146,60,0.65)"/>
-        <text x="200" y="180" text-anchor="middle" fill="rgba(251,146,60,0.85)" font-size="16" font-family="monospace" font-weight="600">return 42</text>
-        <text x="200" y="204" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="monospace">value travels back ↑</text>
+        <text x="200" y="180" text-anchor="middle" fill="rgba(251,146,60,0.85)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">return 42</text>
+        <text x="200" y="204" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="13" font-family="'Geist Mono', monospace">value travels back ↑</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see function calls in action</p>
     </div>
@@ -224,17 +224,17 @@
   .return-banner      { background:#ff886610; border:1px solid #ff886630; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .return-banner-row  { display:flex; align-items:center; gap:10px; padding:8px 12px; }
   .ret-from           { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
-  .ret-fn-name        { font-size:0.75rem; color:#ff8866; font-weight:700; font-family:'SF Mono',monospace; }
-  .ret-label          { font-size:0.48rem; color:rgba(255,255,255,0.42); font-family:monospace; text-transform:uppercase; letter-spacing:0.5px; }
+  .ret-fn-name        { font-size:0.75rem; color:#ff8866; font-weight:700; font-family: var(--font-code); }
+  .ret-label          { font-size:0.48rem; color:rgba(255,255,255,0.42); font-family: var(--font-code); text-transform:uppercase; letter-spacing:0.5px; }
   .ret-arrow-track    { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; }
   .ret-arrow-line     { width:1px; height:10px; background:linear-gradient(to top, #ff8866, transparent); }
-  .ret-value-pill     { font-size:0.7rem; font-weight:800; font-family:'SF Mono',monospace; padding:3px 10px; border-radius:4px; border:1px solid; }
+  .ret-value-pill     { font-size:0.7rem; font-weight:800; font-family: var(--font-code); padding:3px 10px; border-radius:4px; border:1px solid; }
   .ret-arrow-head     { font-size:0.9rem; color:#ff8866; line-height:1; }
   .ret-to             { display:flex; flex-direction:column; align-items:flex-start; gap:2px; }
-  .ret-var-name       { font-size:0.75rem; font-weight:700; font-family:'SF Mono',monospace; }
+  .ret-var-name       { font-size:0.75rem; font-weight:700; font-family: var(--font-code); }
   .ret-type-row       { display:flex; justify-content:space-between; padding:3px 12px 6px; }
-  .ret-type-tag       { font-size:0.45rem; font-family:monospace; }
-  .ret-cost           { font-size:0.5rem; color:rgba(255,255,255,0.38); font-family:monospace; }
+  .ret-type-tag       { font-size:0.45rem; font-family: var(--font-code); }
+  .ret-cost           { font-size:0.5rem; color:rgba(255,255,255,0.38); font-family: var(--font-code); }
 
   /* Call stack card */
   .stack-card     {
@@ -253,8 +253,8 @@
     content:''; position:absolute; top:0; left:0; right:0; height:1.5px;
     background: linear-gradient(90deg, transparent, rgba(255,136,102,0.6), transparent);
   }
-  .stack-title    { font-size:0.58rem; color:rgba(255,255,255,0.55); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
-  .stack-depth    { margin-left:auto; font-size:0.52rem; color:#ff8866; font-family:monospace; font-weight:600; }
+  .stack-title    { font-size:0.58rem; color:rgba(255,255,255,0.55); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
+  .stack-depth    { margin-left:auto; font-size:0.52rem; color:#ff8866; font-family: var(--font-code); font-weight:600; }
   .stack-frames   { padding:6px; display:flex; flex-direction:column; gap:4px; }
 
   .stk-frame      { display:flex; align-items:stretch; border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.07); transition:all 0.3s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
@@ -263,22 +263,22 @@
   .stk-depth-bar  { flex-shrink:0; min-width:2px; }
   .stk-body       { flex:1; padding:5px 8px; }
   .stk-top        { display:flex; justify-content:space-between; align-items:center; }
-  .stk-name       { font-size:0.78rem; color:#e0e0e0; font-weight:700; font-family:'SF Mono',monospace; }
-  .stk-badge      { font-size:0.45rem; color:#ff8866; font-family:monospace; letter-spacing:0.5px; }
+  .stk-name       { font-size:0.78rem; color:#e0e0e0; font-weight:700; font-family: var(--font-code); }
+  .stk-badge      { font-size:0.45rem; color:#ff8866; font-family: var(--font-code); letter-spacing:0.5px; }
   .stk-badge-global { color:#4ade80; }
   .stk-vars       { display:flex; flex-direction:column; gap:2px; margin-top:4px; padding-top:4px; border-top:1px solid #1a1a2e; }
   .stk-var        { display:flex; align-items:center; gap:6px; padding:2px 4px; border-radius:3px; transition:all 0.3s; }
   .stk-flash      { background:#ff886618; box-shadow:inset 2px 0 0 #ff8866; }
-  .stk-vname      { font-size:0.72rem; color:#88aaff; font-weight:600; font-family:'SF Mono',monospace; }
-  .stk-vtype      { font-size:0.45rem; padding:1px 4px; border-radius:2px; background:#ffffff08; font-family:monospace; }
-  .stk-vval       { margin-left:auto; font-size:0.72rem; font-weight:600; font-family:'SF Mono',monospace; }
+  .stk-vname      { font-size:0.72rem; color:#88aaff; font-weight:600; font-family: var(--font-code); }
+  .stk-vtype      { font-size:0.45rem; padding:1px 4px; border-radius:2px; background:#ffffff08; font-family: var(--font-code); }
+  .stk-vval       { margin-left:auto; font-size:0.72rem; font-weight:600; font-family: var(--font-code); }
 
   .stack-footer   { padding:5px 12px 7px; background:rgba(0,0,0,0.2); border-top:1px solid rgba(255,255,255,0.05); }
-  .stack-note     { font-size:0.6rem; color:rgba(255,255,255,0.40); font-family:monospace; font-style:italic; }
+  .stack-note     { font-size:0.6rem; color:rgba(255,255,255,0.40); font-family: var(--font-code); font-style:italic; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.8rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.58rem; color:rgba(255,255,255,0.45); font-family:monospace; }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.58rem; color:rgba(255,255,255,0.45); font-family: var(--font-code); }
 </style>

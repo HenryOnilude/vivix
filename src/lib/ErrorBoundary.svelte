@@ -1,3 +1,4 @@
+
 <script>
   import { onMount } from 'svelte';
 
@@ -129,7 +130,7 @@
   }
 
   button {
-    background: #00ff88;
+    background: #00FFD1;
     color: var(--a11y-bg, #0a0a14);
     border: none;
     padding: 8px 20px;
@@ -151,6 +152,6 @@
   }
 
   a:hover {
-    color: #00ff88;
+    color: #00FFD1;
   }
 </style>

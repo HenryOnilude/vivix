@@ -1,7 +1,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
 
-  let { value = $bindable(''), accent = '#38bdf8', readonly = false, onchange = null } = $props();
+  let { value = $bindable(''), accent = '#38bdf8', readonly = false, placeholder = '', onchange = null } = $props();
 
   let container;
   let view;
@@ -73,7 +73,7 @@
   onMount(async () => {
     // ── Lazy-load CodeMirror — keeps it out of the initial JS bundle ──────────
     const [
-      { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightActiveLine, drawSelection },
+      { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightActiveLine, drawSelection, placeholder: cmPlaceholder },
       { EditorState },
       { javascript },
       { syntaxHighlighting, HighlightStyle, bracketMatching, indentOnInput },
@@ -131,6 +131,7 @@
         syntaxColors,
         EditorState.tabSize.of(2),
         EditorView.editable.of(!readonly),
+        ...(placeholder ? [cmPlaceholder(placeholder)] : []),
         EditorView.updateListener.of((update) => {
           if (update.docChanged && !updating) {
             updating = true;
@@ -194,6 +195,6 @@
     justify-content: center;
     font-size: 0.65rem;
     color: #333;
-    font-family: monospace;
+    font-family: var(--font-code);
   }
 </style>

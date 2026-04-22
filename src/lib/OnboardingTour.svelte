@@ -11,8 +11,8 @@
    */
   import { onMount, onDestroy } from 'svelte';
 
-  /** @type {string} */
-  let { accent = '#6366f1' } = $props();
+  /** @type {{ accent?: string, active?: boolean }} */
+  let { accent = '#6366f1', active = true } = $props();
 
   const STORAGE_KEY = 'vivix-onboarding-done';
 
@@ -95,20 +95,36 @@
     }, 100);
   }
 
-  onMount(() => {
-    if (isDone()) return;
+  /** Start timer so we don't fire multiple setTimeouts if `active`
+   *  flips more than once. */
+  let startTimer;
+  /** Has the tour already kicked off this session? Prevents re-entry when
+   *  the caller's `active` flag oscillates. */
+  let started = false;
+
+  function tryStart() {
+    if (started || !active || isDone()) return;
+    started = true;
     // Small delay to let the module render first
-    setTimeout(() => {
+    startTimer = setTimeout(() => {
       visible = true;
       currentStep = 0;
       positionTooltip();
     }, 600);
+  }
+
+  // Re-check whenever `active` changes — ModuleShell flips it to true
+  // after the first Visualize click so the tour lines up with real state.
+  $effect(() => { tryStart(); });
+
+  onMount(() => {
     window.addEventListener('resize', onResize);
   });
 
   onDestroy(() => {
     window.removeEventListener('resize', onResize);
     clearTimeout(resizeTimer);
+    clearTimeout(startTimer);
   });
 
   const stepData = $derived(currentStep >= 0 && currentStep < STEPS.length ? STEPS[currentStep] : null);
@@ -216,7 +232,7 @@
     background: color-mix(in srgb, var(--acc) 15%, transparent);
     padding: 2px 8px;
     border-radius: 10px;
-    font-family: 'Geist Mono', monospace;
+    font-family: var(--font-code);
     letter-spacing: 0.5px;
   }
 
@@ -237,7 +253,7 @@
     font-weight: 700;
     color: var(--a11y-text, #eeeef2);
     margin: 0 0 4px;
-    font-family: 'Geist', system-ui, sans-serif;
+    font-family: var(--font-ui);
   }
 
   .tour-text {
@@ -245,7 +261,7 @@
     color: var(--a11y-text-sec, #c8c8d4);
     line-height: 1.55;
     margin: 0 0 12px;
-    font-family: 'Geist', system-ui, sans-serif;
+    font-family: var(--font-ui);
   }
 
   /* ── Navigation ───────────────────────────────────────────────────────── */
@@ -262,7 +278,7 @@
     padding: 6px 14px;
     font-size: 0.68rem;
     font-weight: 600;
-    font-family: 'Geist', system-ui, sans-serif;
+    font-family: var(--font-ui);
     cursor: pointer;
     transition: all 0.15s;
   }

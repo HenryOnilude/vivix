@@ -56,16 +56,16 @@
   {#snippet cpuRegisters(sd)}
     <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
       stroke={sd.objOps > 0 ? '#c084fc33' : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">OBJ-OPS</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.objOps > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="monospace">{sd.objOps}</text>
+    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">OBJ-OPS</text>
+    <text x="272" y="29" text-anchor="end" fill={sd.objOps > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.objOps}</text>
 
     <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="290" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">TARGET</text>
-    <text x="344" y="29" text-anchor="end" fill={ACCENT} font-size="9" font-weight="700" font-family="monospace">{sd.highlight || '—'}</text>
+    <text x="290" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
+    <text x="344" y="29" text-anchor="end" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
 
     <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">HEAP</text>
-    <text x="344" y="55" text-anchor="end" fill="#888" font-size="8" font-weight="700" font-family="monospace">
+    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">HEAP</text>
+    <text x="344" y="55" text-anchor="end" fill="#888" font-size="8" font-weight="700" font-family="'Geist Mono', monospace">
       {Object.entries(sd.vars || {}).filter(([, v]) => typeof v === 'object' && v !== null).length} objects
     </text>
   {/snippet}
@@ -74,7 +74,7 @@
   {#snippet cpuGauge(sd)}
     <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
     <rect x="247" y="69" width={Math.min(102, sd.objOps * 15)} height="14" rx="2" fill={ACCENT} opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">{sd.objOps} OBJ OPS</text>
+    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.objOps} OBJ OPS</text>
   {/snippet}
 
   <!-- Object property visualization + scalar heap -->
@@ -84,8 +84,8 @@
       <div class="obj-card">
         <div class="obj-card-hdr">
           <svg width="14" height="14" viewBox="0 0 14 14">
-            <text x="1"  y="11" fill={ACCENT} font-size="11" font-family="monospace" font-weight="700">{'{'}</text>
-            <text x="8"  y="11" fill={ACCENT} font-size="11" font-family="monospace" font-weight="700" opacity="0.4">{'}'}</text>
+            <text x="1"  y="11" fill={ACCENT} font-size="11" font-family="'Geist Mono', monospace" font-weight="700">{'{'}</text>
+            <text x="8"  y="11" fill={ACCENT} font-size="11" font-family="'Geist Mono', monospace" font-weight="700" opacity="0.4">{'}'}</text>
           </svg>
           <span class="obj-card-title">{objName}</span>
           <span class="obj-access-badge">access: O(1)</span>
@@ -165,7 +165,7 @@
                   {#each [0,1,2,3] as b}
                     {@const bx = 6 + b * 73}
                     <rect x={bx} y="4" width="66" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-                    <text x={bx + 33} y="15" text-anchor="middle" fill="#333" font-size="6" font-family="monospace">bucket {b}</text>
+                    <text x={bx + 33} y="15" text-anchor="middle" fill="#333" font-size="6" font-family="'Geist Mono', monospace">bucket {b}</text>
                   {/each}
 
                   <!-- Key pills dropped into buckets -->
@@ -177,9 +177,9 @@
                       fill={isHL ? ACCENT + '25' : '#0d0d1a'}
                       stroke={isHL ? ACCENT : '#1a1a2e'}
                       stroke-width={isHL ? 1 : 0.5}/>
-                    <text x={bx + 5} y={ky + 10} fill={isHL ? ACCENT : '#666'} font-size="6" font-family="monospace">"{item.key}"</text>
+                    <text x={bx + 5} y={ky + 10} fill={isHL ? ACCENT : '#666'} font-size="6" font-family="'Geist Mono', monospace">"{item.key}"</text>
                     {#if isHL}
-                      <text x={bx + 60} y={ky + 10} text-anchor="end" fill={ACCENT} font-size="5.5" font-family="monospace">← hit</text>
+                      <text x={bx + 60} y={ky + 10} text-anchor="end" fill={ACCENT} font-size="5.5" font-family="'Geist Mono', monospace">← hit</text>
                     {/if}
                   {/each}
 
@@ -188,12 +188,12 @@
                   {@const hk = sd.highlightKey}
                   {@const b = hashKey(hk)}
                   <text x="150" y={Math.max(60, Math.ceil(keys.length / 2) * 22 + 32)} text-anchor="middle"
-                    fill={ACCENT} font-size="6.5" font-family="monospace">
+                    fill={ACCENT} font-size="6.5" font-family="'Geist Mono', monospace">
                     hash("{hk}") → bucket {b} → O(1) lookup
                   </text>
                 {:else}
                   <text x="150" y={Math.max(60, Math.ceil(keys.length / 2) * 22 + 32)} text-anchor="middle"
-                    fill="#2a2a3e" font-size="6" font-family="monospace">
+                    fill="#2a2a3e" font-size="6" font-family="'Geist Mono', monospace">
                     hash(key) → bucket index → O(1) access regardless of object size
                   </text>
                 {/if}
@@ -222,19 +222,19 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
-        <text x="96"  y="56" fill="rgba(192,132,252,0.80)" font-size="30" font-family="monospace" font-weight="700">{'{'}</text>
-        <text x="116" y="82" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">name: "Alice"</text>
-        <text x="116" y="106" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">age: 25</text>
-        <text x="288" y="106" fill="rgba(192,132,252,0.80)" font-size="30" font-family="monospace" font-weight="700">{'}'}</text>
+        <text x="96"  y="56" fill="rgba(192,132,252,0.80)" font-size="30" font-family="'Geist Mono', monospace" font-weight="700">{'{'}</text>
+        <text x="116" y="82" fill="rgba(255,255,255,0.88)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">name: "Alice"</text>
+        <text x="116" y="106" fill="rgba(255,255,255,0.88)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">age: 25</text>
+        <text x="288" y="106" fill="rgba(192,132,252,0.80)" font-size="30" font-family="'Geist Mono', monospace" font-weight="700">{'}'}</text>
         <rect x="28"  y="130" width="76" height="30" rx="3" fill="rgba(192,132,252,0.06)" stroke="rgba(192,132,252,0.45)" stroke-width="1.5"/>
         <rect x="112" y="130" width="76" height="30" rx="3" fill="rgba(192,132,252,0.06)" stroke="rgba(192,132,252,0.45)" stroke-width="1.5"/>
         <rect x="196" y="130" width="76" height="30" rx="3" fill="rgba(192,132,252,0.06)" stroke="rgba(192,132,252,0.45)" stroke-width="1.5"/>
         <rect x="280" y="130" width="76" height="30" rx="3" fill="rgba(192,132,252,0.06)" stroke="rgba(192,132,252,0.45)" stroke-width="1.5"/>
-        <text x="66"  y="150" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">bucket 0</text>
-        <text x="150" y="150" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">bucket 1</text>
-        <text x="234" y="150" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">bucket 2</text>
-        <text x="318" y="150" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">bucket 3</text>
-        <text x="200" y="196" text-anchor="middle" fill="rgba(192,132,252,0.70)" font-size="14" font-family="monospace" font-weight="600">key → hash → bucket → O(1)</text>
+        <text x="66"  y="150" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="12" font-family="'Geist Mono', monospace">bucket 0</text>
+        <text x="150" y="150" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="12" font-family="'Geist Mono', monospace">bucket 1</text>
+        <text x="234" y="150" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="12" font-family="'Geist Mono', monospace">bucket 2</text>
+        <text x="318" y="150" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="12" font-family="'Geist Mono', monospace">bucket 3</text>
+        <text x="200" y="196" text-anchor="middle" fill="rgba(192,132,252,0.70)" font-size="14" font-family="'Geist Mono', monospace" font-weight="600">key → hash → bucket → O(1)</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see objects in action</p>
     </div>
@@ -246,40 +246,40 @@
   /* Object cards */
   .obj-card       { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .obj-card-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .obj-card-title { font-size:0.65rem; color:#c084fc; font-family:'SF Mono',monospace; font-weight:700; }
+  .obj-card-title { font-size:0.65rem; color:#c084fc; font-family: var(--font-code); font-weight:700; }
   .obj-access-badge { font-size:0.45rem; color:#4ade80; background:#4ade8010; padding:1px 5px; border-radius:3px; border:1px solid #4ade8025; }
-  .obj-card-count { margin-left:auto; font-size:0.5rem; color:#444; font-family:monospace; }
+  .obj-card-count { margin-left:auto; font-size:0.5rem; color:#444; font-family: var(--font-code); }
   .obj-props      { padding:6px 8px; display:flex; flex-direction:column; gap:2px; }
   .obj-prop       { display:flex; align-items:center; gap:6px; padding:4px 8px; border-radius:4px; background:#08080e; border:1px solid #1a1a2e; transition:all 0.3s; }
   .prop-hl        { border-color:#c084fc44; background:#c084fc08; box-shadow:inset 3px 0 0 #c084fc; }
-  .prop-key       { font-size:0.7rem; color:#e0e0e0; font-family:'SF Mono',monospace; font-weight:600; }
+  .prop-key       { font-size:0.7rem; color:#e0e0e0; font-family: var(--font-code); font-weight:600; }
   .prop-sep       { font-size:0.6rem; color:#333; }
-  .prop-val       { font-size:0.72rem; font-weight:700; font-family:'SF Mono',monospace; flex:1; }
-  .prop-type      { font-size:0.42rem; padding:1px 4px; border-radius:2px; background:#ffffff08; font-family:monospace; margin-left:auto; }
-  .obj-empty      { font-size:0.6rem; color:#2a2a3e; padding:6px; font-family:monospace; }
+  .prop-val       { font-size:0.72rem; font-weight:700; font-family: var(--font-code); flex:1; }
+  .prop-type      { font-size:0.42rem; padding:1px 4px; border-radius:2px; background:#ffffff08; font-family: var(--font-code); margin-left:auto; }
+  .obj-empty      { font-size:0.6rem; color:#2a2a3e; padding:6px; font-family: var(--font-code); }
 
   /* Hash map card */
   .hash-card      { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .hash-hdr       { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .hash-title     { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
-  .hash-subtitle  { margin-left:auto; font-size:0.45rem; color:#333; font-family:monospace; }
+  .hash-title     { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
+  .hash-subtitle  { margin-left:auto; font-size:0.45rem; color:#333; font-family: var(--font-code); }
   .hash-svg       { width:100%; height:auto; display:block; padding:4px 0 6px; }
 
   /* Scalars */
   .scalars-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scalars-hdr   { display:flex; align-items:center; gap:6px; padding:6px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .scalars-label { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .scalars-label { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .scalars-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; padding:8px; }
   .sc-box        { background:#08080e; border:1px solid #1a1a2e; border-radius:6px; padding:8px; display:flex; flex-direction:column; gap:3px; transition:all 0.3s; }
   .sc-flash      { border-color:#c084fc44; background:#c084fc08; box-shadow:inset 3px 0 0 #c084fc; }
   .sc-hdr        { display:flex; justify-content:space-between; align-items:center; }
-  .sc-name       { font-size:0.8rem; color:#e0e0e0; font-weight:700; font-family:'SF Mono',monospace; }
-  .sc-type       { font-size:0.5rem; font-weight:600; padding:1px 5px; border-radius:3px; background:#ffffff08; font-family:monospace; }
-  .sc-val        { font-size:0.85rem; font-weight:700; font-family:'SF Mono',monospace; }
+  .sc-name       { font-size:0.8rem; color:#e0e0e0; font-weight:700; font-family: var(--font-code); }
+  .sc-type       { font-size:0.5rem; font-weight:600; padding:1px 5px; border-radius:3px; background:#ffffff08; font-family: var(--font-code); }
+  .sc-val        { font-size:0.85rem; font-weight:700; font-family: var(--font-code); }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
 </style>

@@ -11,6 +11,129 @@
  */
 import { gsap } from 'gsap';
 
+/* ═══════════════════════════════════════════
+   EASING STANDARDS (project-wide)
+     Micro-interactions:         100–200ms  power2.out
+     Standard state transitions: 300–400ms  power2.inOut
+     Significant layout shifts:  500–800ms  back.out
+     Data landing (elastic):                back.out(1.4)
+   Linear easing is not used anywhere — data does not move linearly in
+   the real world. All ambient / spinner rotations use CSS keyframes.
+   ═══════════════════════════════════════════ */
+
+const REDUCED_MOTION =
+  typeof window !== 'undefined' &&
+  window.matchMedia &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Three-stage causal data-flow animation.
+ *   Stage 1 — Instruction pulse  (100ms) on source line
+ *   Stage 2 — Particle travel    (300ms) source → target, power2.inOut
+ *   Stage 3 — Mutation landing   (200ms) scale 1 → 1.04 back.out(1.4)
+ *             Residual glow      (600ms) fades out
+ *
+ * Works with any two DOM elements. Used by makeAnimateBoxFlow below.
+ */
+export function dataFlow(sourceEl, targetEl, accent = '#f59e0b') {
+  if (!targetEl) return;
+
+  // Reduced-motion fallback: skip travel, do a gentle landing flash only.
+  if (REDUCED_MOTION) {
+    gsap.fromTo(targetEl,
+      { boxShadow: `0 0 0 2px ${accent}, 0 2px 8px rgba(0,0,0,0.4)` },
+      { boxShadow: '0 2px 8px rgba(0,0,0,0.4)', duration: 0.4, ease: 'power2.out' }
+    );
+    return;
+  }
+
+  // ── Stage 1: Instruction pulse on the source code line (100ms) ──────
+  if (sourceEl) {
+    gsap.fromTo(sourceEl,
+      { filter: 'brightness(1.75)' },
+      { filter: 'brightness(1)', duration: 0.1, ease: 'power2.out', overwrite: 'auto' }
+    );
+  }
+
+  const srcRect = sourceEl?.getBoundingClientRect();
+  const tgtRect = targetEl.getBoundingClientRect();
+  if (!tgtRect.width) return; // target not laid out yet
+
+  // ── Stage 3 landing function (called by particle onComplete, or
+  //     immediately if there's no source to travel from) ───────────────
+  const land = () => {
+    const tl = gsap.timeline();
+    tl.to(targetEl, { scale: 1.04, duration: 0.2, ease: 'back.out(1.4)' })
+      .to(targetEl, { scale: 1, duration: 0.3, ease: 'power2.out' });
+
+    // Residual glow: snaps on, then fades over 600ms
+    gsap.fromTo(targetEl,
+      { boxShadow: `0 0 24px ${accent}cc, 0 2px 8px rgba(0,0,0,0.4)` },
+      { boxShadow: '0 2px 8px rgba(0,0,0,0.4)', duration: 0.6, delay: 0.2, ease: 'power2.out', overwrite: 'auto' }
+    );
+  };
+
+  if (!srcRect) { land(); return; }
+
+  // ── Stage 2: Traveling particle (fixed-positioned, transform-only) ──
+  const startX = srcRect.right - 6;
+  const startY = srcRect.top + srcRect.height / 2 - 4;
+  const endX   = tgtRect.left + tgtRect.width / 2;
+  const endY   = tgtRect.top  + tgtRect.height / 2;
+
+  const particle = document.createElement('div');
+  particle.setAttribute('aria-hidden', 'true');
+  particle.style.cssText = `
+    position: fixed;
+    left: ${startX}px;
+    top:  ${startY}px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: ${accent};
+    box-shadow: 0 0 14px ${accent}, 0 0 4px ${accent};
+    pointer-events: none;
+    z-index: 9999;
+    will-change: transform, opacity;
+  `;
+  document.body.appendChild(particle);
+
+  gsap.to(particle, {
+    x: endX - startX,
+    y: endY - startY,
+    duration: 0.3,
+    delay: 0.05,
+    ease: 'power2.inOut',
+    onComplete: () => {
+      // Quick pop on arrival, then fade out particle
+      gsap.to(particle, {
+        scale: 1.8, opacity: 0,
+        duration: 0.15, ease: 'power2.out',
+        onComplete: () => particle.remove(),
+      });
+      land();
+    },
+  });
+}
+
+// ── animateBoxFlow ──
+// Drop-in replacement for animateBox that runs the full causal data-flow
+// sequence on 'changed'. New boxes still animate in with a clean back.out.
+export function makeAnimateBoxFlow(accentColor = '#f59e0b') {
+  return function animateBoxFlow(node, p) {
+    function run(status) {
+      if (status === 'new') {
+        gsap.from(node, { scaleY: 0, opacity: 0, duration: 0.5, ease: 'back.out(1.7)', transformOrigin: 'bottom center' });
+      } else if (status === 'changed') {
+        const source = document.querySelector('.cl-exec');
+        dataFlow(source, node, accentColor);
+      }
+    }
+    run(p.status);
+    return { update(np) { run(np.status); } };
+  };
+}
+
 // ── animateBox ──
 // Animate a variable/heap box: scale-in on 'new', border flash on 'changed'.
 // `accentColor` controls the flash color (module accent).
@@ -61,14 +184,19 @@ export function animateBar(node, p) {
 }
 
 // ── animateFrame ──
-// Animate a call-stack frame sliding in (FnCall module).
+// Animate a call-stack frame sliding in (FnCall / Closures).
+// When a new frame is pushed we also emit a causal particle from the
+// active code line to the frame — this makes the "a call creates a
+// stack frame" relationship spatially obvious.
 export function animateFrame(node, p) {
-  if (p.isNew) {
+  function run(isNew, accent) {
+    if (!isNew) return;
     gsap.from(node, { scaleY: 0, opacity: 0, duration: 0.6, ease: 'back.out(1.7)', transformOrigin: 'top center' });
+    const src = typeof document !== 'undefined' ? document.querySelector('.cl-exec') : null;
+    if (src) dataFlow(src, node, accent || '#c084fc');
   }
-  return { update(np) {
-    if (np.isNew) gsap.from(node, { scaleY: 0, opacity: 0, duration: 0.6, ease: 'back.out(1.7)', transformOrigin: 'top center' });
-  }};
+  run(p.isNew, p.accent);
+  return { update(np) { run(np.isNew, np.accent); } };
 }
 
 // ── animateVar ──
@@ -82,12 +210,17 @@ export function animateVar(node, p) {
 }
 
 // ── animateElement ──
-// Slide-in for a new array element (ArrayFlow module).
+// Slide-in for a new array element (ArrayFlow module), plus a causal
+// particle from the active code line to the newly-arriving element.
 export function animateElement(node, p) {
-  if (p.isNew) gsap.from(node, { x: 30, opacity: 0, duration: 0.5, ease: 'power2.out' });
-  return { update(np) {
-    if (np.isNew) gsap.from(node, { x: 30, opacity: 0, duration: 0.5, ease: 'power2.out' });
-  }};
+  function run(isNew, accent) {
+    if (!isNew) return;
+    gsap.from(node, { x: 30, opacity: 0, duration: 0.5, ease: 'power2.out' });
+    const src = typeof document !== 'undefined' ? document.querySelector('.cl-exec') : null;
+    if (src) dataFlow(src, node, accent || '#818cf8');
+  }
+  run(p.isNew, p.accent);
+  return { update(np) { run(np.isNew, np.accent); } };
 }
 
 // ── animatePath ──
@@ -235,7 +368,9 @@ export function animateValueFlow(node, p) {
 }
 
 // ── animateReturnValue ──
-// Animate a return value flowing back from function to caller.
+// Animate a return value flowing back from function to caller, plus a
+// causal particle from the active code line (the `return` statement) to
+// the caller slot receiving the value.
 export function animateReturnValue(node, p) {
   function run(active, color) {
     if (!active) return;
@@ -244,8 +379,10 @@ export function animateReturnValue(node, p) {
       { scale: 1, opacity: 1, duration: 0.6, ease: 'back.out(2)', overwrite: true }
     );
     if (color) {
-      gsap.fromTo(node, { borderColor: '#fff' }, { borderColor: color, duration: 0.8, delay: 0.3, overwrite: false });
+      gsap.fromTo(node, { borderColor: '#fff' }, { borderColor: color, duration: 0.8, delay: 0.3, ease: 'power2.out', overwrite: false });
     }
+    const src = typeof document !== 'undefined' ? document.querySelector('.cl-exec') : null;
+    if (src) dataFlow(src, node, color || '#fb923c');
   }
   run(p.active, p.color);
   return { update(np) { run(np.active, np.color); } };

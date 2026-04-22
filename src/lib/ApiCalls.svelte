@@ -200,23 +200,23 @@
       <svg viewBox="0 0 400 200" class="ph-svg">
         <!-- Browser -->
         <rect x="20" y="70" width="100" height="60" rx="5" fill="rgba(139,92,246,0.07)" stroke="rgba(139,92,246,0.4)" stroke-width="2" stroke-dasharray="5 3"/>
-        <text x="70" y="96"  text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9"  font-family="monospace">Browser</text>
-        <text x="70" y="112" text-anchor="middle" fill="rgba(139,92,246,0.8)" font-size="8" font-family="monospace">fetch()</text>
+        <text x="70" y="96"  text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9"  font-family="'Geist Mono', monospace">Browser</text>
+        <text x="70" y="112" text-anchor="middle" fill="rgba(139,92,246,0.8)" font-size="8" font-family="'Geist Mono', monospace">fetch()</text>
         <!-- Request arrow -->
         <line x1="120" y1="100" x2="180" y2="100" stroke="rgba(139,92,246,0.5)" stroke-width="1.5"/>
         <polygon points="180,96 188,100 180,104" fill="rgba(139,92,246,0.5)"/>
-        <text x="150" y="95" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="7" font-family="monospace">GET /api/user</text>
+        <text x="150" y="95" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="7" font-family="'Geist Mono', monospace">GET /api/user</text>
         <!-- Server -->
         <rect x="188" y="70" width="100" height="60" rx="5" fill="rgba(139,92,246,0.04)" stroke="rgba(139,92,246,0.25)" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <text x="238" y="96"  text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="monospace">Server</text>
-        <text x="238" y="112" text-anchor="middle" fill="rgba(74,222,128,0.5)" font-size="8" font-family="monospace">200 OK</text>
+        <text x="238" y="96"  text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="'Geist Mono', monospace">Server</text>
+        <text x="238" y="112" text-anchor="middle" fill="rgba(74,222,128,0.5)" font-size="8" font-family="'Geist Mono', monospace">200 OK</text>
         <!-- Response arrow -->
         <line x1="288" y1="100" x2="350" y2="100" stroke="rgba(74,222,128,0.4)" stroke-width="1.5"/>
         <polygon points="350,96 358,100 350,104" fill="rgba(74,222,128,0.4)"/>
-        <text x="320" y="95" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="7" font-family="monospace">{'{ name: "Alex" }'}</text>
+        <text x="320" y="95" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="7" font-family="'Geist Mono', monospace">{'{ name: "Alex" }'}</text>
         <rect x="358" y="78" width="32" height="44" rx="4" fill="rgba(74,222,128,0.07)" stroke="rgba(74,222,128,0.3)" stroke-width="1"/>
-        <text x="374" y="97"  text-anchor="middle" fill="rgba(74,222,128,0.8)" font-size="6.5" font-family="monospace">heap</text>
-        <text x="374" y="111" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="6"   font-family="monospace">data</text>
+        <text x="374" y="97"  text-anchor="middle" fill="rgba(74,222,128,0.8)" font-size="6.5" font-family="'Geist Mono', monospace">heap</text>
+        <text x="374" y="111" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="6"   font-family="'Geist Mono', monospace">data</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to trace the request lifecycle</p>
     </div>
@@ -227,14 +227,14 @@
 <style>
   .brain-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .brain-hdr   { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
-  .brain-title { font-size: 0.55rem; color: #555; font-family: monospace; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
+  .brain-title { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
   .brain-box   { padding: 8px 10px; transition: background 0.3s; }
   .brain-box.brain-fetch { background: rgba(139,92,246,0.05); }
   .brain-box.brain-json  { background: rgba(74,222,128,0.04); }
   .brain-box.brain-error { background: rgba(248,113,113,0.05); }
-  .brain-text  { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: 'Geist Mono', monospace; }
+  .brain-text  { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: var(--font-code); }
 
-  .api-badge { font-size: 0.5rem; font-weight: 700; font-family: monospace; padding: 2px 7px; border-radius: 8px; }
+  .api-badge { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius: 8px; }
   .api-badge.sending  { background: rgba(139,92,246,0.2);  color: #8b5cf6; }
   .api-badge.received { background: rgba(245,158,11,0.15); color: #f59e0b; }
   .api-badge.parsing  { background: rgba(251,191,36,0.15); color: #fbbf24; }
@@ -245,45 +245,45 @@
 
   /* ── Requests ─────────────────────────────────────────────────────── */
   .requests-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
-  .requests-hdr   { font-size: 0.55rem; color: #555; font-family: monospace; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
+  .requests-hdr   { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .requests-list  { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; }
-  .req-empty      { font-size: 0.58rem; color: #333; font-family: monospace; padding: 8px 10px; }
+  .req-empty      { font-size: 0.58rem; color: #333; font-family: var(--font-code); padding: 8px 10px; }
 
   .req-card        { background: color-mix(in srgb, var(--rcolor) 6%, transparent); border: 1px solid color-mix(in srgb, var(--rcolor) 25%, transparent); border-radius: 6px; padding: 6px 10px; display: flex; flex-direction: column; gap: 3px; transition: all 0.3s; }
   .req-method-url  { display: flex; align-items: center; gap: 8px; }
-  .req-method      { font-size: 0.62rem; font-weight: 800; font-family: monospace; }
-  .req-url         { font-size: 0.58rem; font-family: monospace; color: rgba(255,255,255,0.55); }
+  .req-method      { font-size: 0.62rem; font-weight: 800; font-family: var(--font-code); }
+  .req-url         { font-size: 0.58rem; font-family: var(--font-code); color: rgba(255,255,255,0.55); }
   .req-status-row  { display: flex; align-items: center; gap: 6px; }
   .req-state-icon  { font-size: 0.6rem; }
-  .req-state       { font-size: 0.52rem; font-family: monospace; }
-  .req-status      { font-size: 0.52rem; font-family: monospace; font-weight: 700; margin-left: auto; }
-  .req-data        { font-size: 0.5rem; font-family: monospace; color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.03); border-radius: 3px; padding: 2px 5px; margin-top: 2px; }
+  .req-state       { font-size: 0.52rem; font-family: var(--font-code); }
+  .req-status      { font-size: 0.52rem; font-family: var(--font-code); font-weight: 700; margin-left: auto; }
+  .req-data        { font-size: 0.5rem; font-family: var(--font-code); color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.03); border-radius: 3px; padding: 2px 5px; margin-top: 2px; }
 
   /* ── Runtime row ─────────────────────────────────────────────────── */
   .runtime-row   { display: flex; gap: 6px; flex-shrink: 0; }
   .runtime-panel { flex: 1; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; }
-  .runtime-hdr   { font-size: 0.55rem; color: #555; font-family: monospace; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
+  .runtime-hdr   { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
 
   .stack-box   { display: flex; flex-direction: column-reverse; gap: 3px; padding: 8px 10px; min-height: 56px; }
   .stack-frame { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 4px 8px; transition: all 0.3s; }
   .stack-frame.stack-top        { border-color: rgba(139,92,246,0.3); background: rgba(139,92,246,0.06); }
   .stack-frame.stack-suspended  { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.05); }
-  .stack-name  { font-size: 0.6rem; font-family: monospace; color: rgba(255,255,255,0.6); }
-  .stack-state { font-size: 0.48rem; font-family: monospace; color: #8b5cf6; }
+  .stack-name  { font-size: 0.6rem; font-family: var(--font-code); color: rgba(255,255,255,0.6); }
+  .stack-state { font-size: 0.48rem; font-family: var(--font-code); color: #8b5cf6; }
   .stack-state { color: #8b5cf6; }
   .stack-frame.stack-suspended .stack-state { color: #f59e0b; }
-  .stack-empty { font-size: 0.55rem; color: #333; font-family: monospace; }
+  .stack-empty { font-size: 0.55rem; color: #333; font-family: var(--font-code); }
 
   .vars-box  { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; min-height: 56px; }
   .var-row   { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 6px; border-radius: 4px; transition: all 0.3s; }
   .var-row.var-flash { background: rgba(139,92,246,0.08); }
-  .var-name  { font-size: 0.6rem; font-weight: 700; font-family: monospace; color: #8b5cf6; min-width: 40px; }
-  .var-value { font-size: 0.55rem; font-family: monospace; color: rgba(255,255,255,0.55); text-align: right; }
-  .var-empty { font-size: 0.55rem; color: #333; font-family: monospace; }
+  .var-name  { font-size: 0.6rem; font-weight: 700; font-family: var(--font-code); color: #8b5cf6; min-width: 40px; }
+  .var-value { font-size: 0.55rem; font-family: var(--font-code); color: rgba(255,255,255,0.55); text-align: right; }
+  .var-empty { font-size: 0.55rem; color: #333; font-family: var(--font-code); }
 
   .vis-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
   .ph-svg   { width: 380px; height: auto; }
   .ph-text  { font-size: 0.78rem; color: rgba(255,255,255,0.45); text-align: center; }
 
-  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #444; font-family: monospace; }
+  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #444; font-family: var(--font-code); }
 </style>

@@ -172,20 +172,20 @@
       <svg viewBox="0 0 400 200" class="ph-svg">
         <!-- Element box -->
         <rect x="30" y="60" width="120" height="80" rx="6" fill="rgba(236,72,153,0.06)" stroke="rgba(236,72,153,0.4)" stroke-width="2" stroke-dasharray="5 3"/>
-        <text x="90" y="82"  text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-family="monospace">&lt;button&gt;</text>
-        <text x="90" y="100" text-anchor="middle" fill="rgba(236,72,153,0.8)" font-size="8"  font-family="monospace">'click' listener</text>
-        <text x="90" y="116" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="7"  font-family="monospace">→ handleClick()</text>
+        <text x="90" y="82"  text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-family="'Geist Mono', monospace">&lt;button&gt;</text>
+        <text x="90" y="100" text-anchor="middle" fill="rgba(236,72,153,0.8)" font-size="8"  font-family="'Geist Mono', monospace">'click' listener</text>
+        <text x="90" y="116" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="7"  font-family="'Geist Mono', monospace">→ handleClick()</text>
         <!-- Arrow to event queue -->
         <line x1="150" y1="100" x2="190" y2="100" stroke="rgba(236,72,153,0.4)" stroke-width="1.5"/>
         <polygon points="190,96 198,100 190,104" fill="rgba(236,72,153,0.4)"/>
         <!-- Event queue -->
         <rect x="198" y="75" width="90" height="50" rx="5" fill="rgba(236,72,153,0.04)" stroke="rgba(236,72,153,0.25)" stroke-width="1" stroke-dasharray="4 3"/>
-        <text x="243" y="93"  text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="8" font-family="monospace">Event Queue</text>
-        <text x="243" y="110" text-anchor="middle" fill="rgba(236,72,153,0.5)" font-size="7" font-family="monospace">⚡ click</text>
+        <text x="243" y="93"  text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="8" font-family="'Geist Mono', monospace">Event Queue</text>
+        <text x="243" y="110" text-anchor="middle" fill="rgba(236,72,153,0.5)" font-size="7" font-family="'Geist Mono', monospace">⚡ click</text>
         <!-- Arrow to handler -->
         <line x1="288" y1="100" x2="320" y2="100" stroke="rgba(236,72,153,0.25)" stroke-width="1"/>
-        <text x="345" y="95" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="7" font-family="monospace">handler</text>
-        <text x="345" y="108" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="6" font-family="monospace">runs</text>
+        <text x="345" y="95" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="7" font-family="'Geist Mono', monospace">handler</text>
+        <text x="345" y="108" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="6" font-family="'Geist Mono', monospace">runs</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see event listeners fire</p>
     </div>
@@ -196,13 +196,13 @@
 <style>
   .brain-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .brain-hdr   { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
-  .brain-title { font-size: 0.55rem; color: #555; font-family: monospace; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
+  .brain-title { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
   .brain-box   { padding: 8px 10px; transition: background 0.3s; }
   .brain-box.brain-dispatch { background: rgba(236,72,153,0.05); }
   .brain-box.brain-handler  { background: rgba(236,72,153,0.07); }
-  .brain-text  { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: 'Geist Mono', monospace; }
+  .brain-text  { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: var(--font-code); }
 
-  .ev-badge  { font-size: 0.5rem; font-weight: 700; font-family: monospace; padding: 2px 7px; border-radius: 8px; }
+  .ev-badge  { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius: 8px; }
   .ev-badge.register { background: rgba(236,72,153,0.15); color: #ec4899; }
   .ev-badge.dispatch { background: rgba(251,191,36,0.15);  color: #fbbf24; }
   .ev-badge.running  { background: rgba(236,72,153,0.2);   color: #f472b6; }
@@ -212,37 +212,37 @@
   /* ── Elements + listeners ────────────────────────────────────────── */
   .elements-row { display: flex; gap: 6px; flex-shrink: 0; }
   .runtime-panel { flex: 1; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; }
-  .runtime-hdr  { font-size: 0.55rem; color: #555; font-family: monospace; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
+  .runtime-hdr  { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .el-panel     { flex: 1.5; }
   .el-box       { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; min-height: 60px; }
-  .el-empty     { font-size: 0.58rem; color: #333; font-family: monospace; }
+  .el-empty     { font-size: 0.58rem; color: #333; font-family: var(--font-code); }
 
   .el-card      { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 6px 8px; }
-  .el-tag       { font-size: 0.7rem; font-weight: 700; font-family: monospace; color: #ec4899; }
-  .el-name      { font-size: 0.5rem; color: #555; font-family: monospace; margin-bottom: 4px; }
+  .el-tag       { font-size: 0.7rem; font-weight: 700; font-family: var(--font-code); color: #ec4899; }
+  .el-name      { font-size: 0.5rem; color: #555; font-family: var(--font-code); margin-bottom: 4px; }
   .el-listeners { display: flex; flex-direction: column; gap: 3px; }
-  .el-listener  { display: flex; align-items: center; gap: 5px; font-size: 0.55rem; font-family: monospace; background: color-mix(in srgb, var(--lcolor) 8%, transparent); border-radius: 4px; padding: 2px 6px; }
+  .el-listener  { display: flex; align-items: center; gap: 5px; font-size: 0.55rem; font-family: var(--font-code); background: color-mix(in srgb, var(--lcolor) 8%, transparent); border-radius: 4px; padding: 2px 6px; }
   .l-event   { color: #fbbf24; }
   .l-arrow   { color: rgba(255,255,255,0.2); }
   .l-handler { color: rgba(255,255,255,0.6); }
   .l-once    { font-size: 0.42rem; background: rgba(248,113,113,0.15); color: #f87171; border-radius: 4px; padding: 1px 4px; }
-  .el-no-listeners { font-size: 0.52rem; color: #333; font-family: monospace; }
+  .el-no-listeners { font-size: 0.52rem; color: #333; font-family: var(--font-code); }
 
   .stack-box    { display: flex; flex-direction: column-reverse; gap: 3px; padding: 8px 10px; min-height: 60px; }
   .stack-frame  { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 4px 8px; }
   .stack-frame.stack-top { border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.06); }
-  .stack-name   { font-size: 0.6rem; font-family: monospace; color: rgba(255,255,255,0.6); }
+  .stack-name   { font-size: 0.6rem; font-family: var(--font-code); color: rgba(255,255,255,0.6); }
   .stack-arrow  { font-size: 0.48rem; color: #ec4899; }
-  .stack-empty  { font-size: 0.55rem; color: #333; font-family: monospace; }
+  .stack-empty  { font-size: 0.55rem; color: #333; font-family: var(--font-code); }
 
   /* ── Event queue ─────────────────────────────────────────────────── */
   .eq-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .eq-box   { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
-  .eq-item  { font-size: 0.58rem; font-family: monospace; color: #fbbf24; background: rgba(251,191,36,0.08); border-radius: 4px; padding: 3px 8px; }
+  .eq-item  { font-size: 0.58rem; font-family: var(--font-code); color: #fbbf24; background: rgba(251,191,36,0.08); border-radius: 4px; padding: 3px 8px; }
 
   .vis-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
   .ph-svg   { width: 360px; height: auto; }
   .ph-text  { font-size: 0.78rem; color: rgba(255,255,255,0.45); text-align: center; }
 
-  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #444; font-family: monospace; }
+  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #444; font-family: var(--font-code); }
 </style>

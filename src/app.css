@@ -1,3 +1,35 @@
+/* ═══════════════════════════════════════════
+   Geist family (Vercel) + Space Grotesk (hero-only display face).
+   Both self-hosted — see main.js for the preload hints that keep the
+   LCP waterfall tight.
+   ═══════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('/node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Space Grotesk — reserved for the hero headline only. Single 700
+   weight is sufficient; the rest of the app stays on Geist. */
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,22 +37,61 @@
 }
 
 :root {
-  /* ── Accessibility theme tokens (overridden by a11y-theme.js) ── */
-  --a11y-bg:         #080810;
-  --a11y-surface1:   #0f0f1c;
-  --a11y-surface2:   #141422;
-  --a11y-surface3:   #0c0c18;
-  --a11y-border:     #252540;
+  /* ── Semantic font tokens ─────────────────────────────────────────────
+     --font-code    → monospaced technical data (editor, registers, heap)
+     --font-ui      → everything else (labels, narration, buttons)
+     --font-display → hero headline only
+     ──────────────────────────────────────────────────────────────────── */
+  --font-code:    'Geist Mono', 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+  --font-ui:      'Geist Sans', 'Inter', 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  --font-display: 'Space Grotesk', 'Geist Sans', 'Inter', system-ui, sans-serif;
+
+  /* ── Premium atmospheric palette ──────────────────────────────────────
+     A single near-black void with every surface above it rendered as
+     frosted glass. --accent is the only saturated colour in the chrome. */
+  --bg-void:      #09090B;           /* root page background */
+  --accent:       #00FFD1;           /* primary interactive accent */
+  --accent-soft:  rgba(0, 255, 209, 0.12);
+  --accent-glow:  rgba(0, 255, 209, 0.35);
+
+  /* ── Glass card tokens ────────────────────────────────────────────────
+     Every surface that used to be solid --elevation-* should now read
+     --glass-bg + --glass-border and add `backdrop-filter: var(--glass-blur)`.
+     Solid legacy tokens are preserved below so components that have not
+     yet migrated still render. */
+  --glass-bg:     rgba(255, 255, 255, 0.03);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-blur:   blur(24px) saturate(140%);
+
+  /* ── Legacy elevation scale (solid fallbacks) ───────────────────────── */
+  --elevation-base:    var(--bg-void);
+  --elevation-surface: rgba(255, 255, 255, 0.02);
+  --elevation-raised:  rgba(255, 255, 255, 0.03);
+  --elevation-overlay: rgba(255, 255, 255, 0.06);
+
+  --elevation-shadow-raised:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 2px 12px rgba(0, 0, 0, 0.45);
+  --elevation-shadow-overlay:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 10px 30px rgba(0, 0, 0, 0.6);
+
+  /* ── Accessibility theme tokens ────────────────────────────────────── */
+  --a11y-bg:         var(--bg-void);
+  --a11y-surface1:   var(--elevation-surface);
+  --a11y-surface2:   var(--elevation-raised);
+  --a11y-surface3:   var(--elevation-overlay);
+  --a11y-border:     rgba(255, 255, 255, 0.08);
   --a11y-text:       #eeeef2;
   --a11y-text-sec:   #c8c8d4;
   --a11y-text-muted: #666688;
-  --a11y-code-bg:    #0b0b16;
+  --a11y-code-bg:    rgba(255, 255, 255, 0.025);
 
-  font-family: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-ui);
   line-height: 1.5;
   font-weight: 400;
   color: var(--a11y-text-sec);
-  background-color: var(--a11y-bg);
+  background-color: var(--bg-void);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -32,11 +103,139 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow: auto;
+  background: var(--bg-void);
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════
+   Global noise texture — base64-encoded SVG so there is zero network
+   cost. Sits above the void background but below all content via
+   z-index: -1, tiling at exactly 200x200 px at 5% opacity. The noise
+   adds tactile grain to the atmospheric backdrop without affecting
+   contrast on any UI element above it.
+   ═══════════════════════════════════════════ */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC45IiBudW1PY3RhdmVzPSIyIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdmFsdWVzPSIwIDAgMCAwIDEgIDAgMCAwIDAgMSAgMCAwIDAgMCAxICAwIDAgMCAwLjkgMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNuKSIvPjwvc3ZnPg==");
+  background-size: 200px 200px;
+}
+
+@media (prefers-contrast: more) {
+  body::after { display: none; }
 }
 
 #app {
   width: 100vw;
   min-height: 100vh;
+  position: relative;
+  z-index: 0;
+}
+
+/* ═══════════════════════════════════════════
+   Hero headline — Space Grotesk is reserved for .hero h1 only.
+   All other UI text stays on Geist Sans via --font-ui.
+   ═══════════════════════════════════════════ */
+.hero h1 {
+  font-family: 'Space Grotesk', var(--font-display), sans-serif;
+}
+
+/* ═══════════════════════════════════════════
+   Utility .glass class — any surface that wants the frosted-card
+   treatment can opt in with a single class. Kept minimal so the rest
+   of each component's styles stay intact.
+   ═══════════════════════════════════════════ */
+.glass {
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+/* ═══════════════════════════════════════════
+   PROGRESSIVE DISCLOSURE (depth levels)
+   Elements tagged .dl-explore appear at Explore + Deep Dive.
+   Elements tagged .dl-deep appear only at Deep Dive.
+   Transitions feel like zooming out on a map — a 150ms opacity fade
+   with accompanying collapse so elements never snap off.
+   ═══════════════════════════════════════════ */
+
+.dl-explore,
+.dl-deep {
+  transition:
+    opacity 0.15s ease,
+    max-height 0.15s ease,
+    margin 0.15s ease,
+    padding 0.15s ease,
+    transform 0.15s ease;
+  max-height: 2000px;
+}
+
+html[data-depth="learn"] .dl-explore,
+html[data-depth="learn"] .dl-deep,
+html[data-depth="explore"] .dl-deep {
+  opacity: 0 !important;
+  max-height: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  transform: scale(0.98);
+}
+
+/* Inline text chunks inside prose don't need to collapse vertically —
+   use a separate class that only fades opacity. */
+.dl-inline-explore,
+.dl-inline-deep {
+  transition: opacity 0.15s ease;
+}
+html[data-depth="learn"] .dl-inline-explore,
+html[data-depth="learn"] .dl-inline-deep,
+html[data-depth="explore"] .dl-inline-deep {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-explore, .dl-deep,
+  .dl-inline-explore, .dl-inline-deep {
+    transition: none;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   AMBIENT ENGINE PULSE
+   Subtle 2-second breathing glow that signals the engine is alive
+   and waiting, even when the user isn't stepping. Applied to the
+   currently-executing line of code. Any component can opt in via
+   the .engine-pulse class.
+   ═══════════════════════════════════════════ */
+
+@keyframes engine-pulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(74, 222, 128, 0.18),
+      0 0 0 0 rgba(74, 222, 128, 0.00);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(74, 222, 128, 0.42),
+      0 0 16px 2px rgba(74, 222, 128, 0.16);
+  }
+}
+
+.engine-pulse {
+  animation: engine-pulse 2s ease-in-out infinite;
+  border-radius: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .engine-pulse { animation: none; box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.30); }
 }
 
 /* ═══════════════════════════════════════════
@@ -66,7 +265,7 @@ body {
 .code-side { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
 
 /* ── Panel header ── */
-.panel-head { display:flex; justify-content:space-between; align-items:center; padding:5px 10px; background:var(--a11y-surface2); border:1px solid var(--a11y-border); border-radius:6px 6px 0 0; font-size:0.75rem; color:rgba(255,255,255,0.45); letter-spacing:0.5px; text-transform:uppercase; }
+.panel-head { display:flex; justify-content:space-between; align-items:center; padding:5px 10px; background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:6px 6px 0 0; font-size:0.75rem; color:rgba(255,255,255,0.45); letter-spacing:0.5px; text-transform:uppercase; }
 .panel-title { color:rgba(255,255,255,0.45); }
 .panel-actions { display:flex; gap:6px; }
 .edit-btn { background:transparent; color:rgba(255,255,255,0.40); border:1px solid var(--a11y-border); border-radius:4px; padding:3px 10px; font-family:inherit; font-size:0.65rem; cursor:pointer; }
@@ -99,29 +298,29 @@ body {
 .vis-panel { width:480px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; overflow-y:auto; overflow-x:hidden; padding-right:2px; }
 
 /* ── CPU dashboard ── */
-.cpu-dash { flex-shrink:0; background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; }
+.cpu-dash { flex-shrink:0; background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:8px; overflow:hidden; }
 .cpu-svg { width:100%; height:auto; display:block; }
 .cpu-explain { padding:8px 12px; font-size:0.75rem; color:rgba(255,255,255,0.62); line-height:1.6; border-top:1px solid var(--a11y-border); white-space:pre-wrap; font-family:'Geist Mono','SF Mono','Fira Code',monospace; }
 
 /* ── Heap / Memory boxes ── */
-.heap { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+.heap { background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:8px; overflow:hidden; flex-shrink:0; }
 .heap-hdr { display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
 .heap-label { font-size:0.72rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
 .heap-count { margin-left:auto; font-size:0.65rem; color:rgba(255,255,255,0.30); font-family:monospace; }
 .heap-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; padding:8px; }
-.heap-box { background:var(--a11y-surface3); border:1px solid var(--a11y-border); border-radius:6px; padding:8px; display:flex; flex-direction:column; gap:3px; transition:all 0.3s; }
+.heap-box { background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:6px; padding:8px; display:flex; flex-direction:column; gap:3px; transition:all 0.3s; }
 .heap-box-hdr { display:flex; justify-content:space-between; align-items:center; }
 .heap-name { font-size:0.8rem; color:var(--a11y-text); font-weight:700; font-family:'Geist Mono','SF Mono',monospace; }
 .heap-type { font-size:0.5rem; font-weight:600; padding:1px 5px; border-radius:3px; background:rgba(255,255,255,0.06); font-family:monospace; }
 .heap-val { font-size:0.85rem; font-weight:700; font-family:'Geist Mono','SF Mono',monospace; }
 
 /* ── Stdout card ── */
-.out-card { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+.out-card { background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:8px; overflow:hidden; flex-shrink:0; }
 .out-hdr { display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); font-size:0.72rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
 .out-ln { padding:3px 10px; font-size:0.75rem; color:rgba(255,255,255,0.82); font-family:'Geist Mono','SF Mono',monospace; }
 
 /* ── Complexity card ── */
-.cx-card { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+.cx-card { background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:8px; overflow:hidden; flex-shrink:0; }
 .cx-card-hdr { padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
 .cx-card-title { font-size:0.72rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
 .cx-chart { display:flex; align-items:flex-end; gap:4px; height:60px; padding:8px 10px 0; }

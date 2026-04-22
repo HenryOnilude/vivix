@@ -33,24 +33,26 @@
   titleAccent="Store"
   subtitle="— Variables & Memory"
   {mapStep}
+  dataFlow
+  interpreterOptions={{ trackVar: true }}
 >
 
   <!-- CPU right-column registers: TARGET + HEAP -->
   {#snippet cpuRegisters(sd)}
     <rect x="210" y="14" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">TARGET</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.highlight ? '#fbbf24' : '#222'} font-size="10" font-weight="700" font-family="monospace">{sd.highlight || '—'}</text>
+    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
+    <text x="344" y="29" text-anchor="end" fill={sd.highlight ? '#fbbf24' : '#222'} font-size="10" font-weight="700" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
 
     <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">HEAP</text>
-    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="9" font-weight="700" font-family="monospace">~{sd.bytes ?? 0}B</text>
+    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">HEAP</text>
+    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace">~{sd.bytes ?? 0}B</text>
   {/snippet}
 
   <!-- CPU right gauge: new bytes -->
   {#snippet cpuGauge(sd)}
     <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
     <rect x="247" y="69" width={Math.min(102, (sd.newBytes || 0) * 4)} height="14" rx="2" fill={ACCENT} opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">{sd.newBytes || 0}B NEW</text>
+    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.newBytes || 0}B NEW</text>
   {/snippet}
 
   <!-- Byte map — byte-square grid per variable -->
@@ -140,11 +142,11 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
         <rect x="60"  y="60" width="110" height="52" rx="5" fill="rgba(56,189,248,0.06)" stroke="rgba(56,189,248,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
-        <text x="115" y="92" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">x = 42</text>
+        <text x="115" y="92" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">x = 42</text>
         <rect x="230" y="60" width="110" height="52" rx="5" fill="rgba(74,222,128,0.06)" stroke="rgba(74,222,128,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
-        <text x="285" y="92" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">y = "hi"</text>
+        <text x="285" y="92" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">y = "hi"</text>
         <rect x="145" y="138" width="110" height="52" rx="5" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
-        <text x="200" y="170" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="monospace" font-weight="600">z = true</text>
+        <text x="200" y="170" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">z = true</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see variables in memory</p>
     </div>
@@ -156,8 +158,8 @@
   /* Byte map */
   .bytemap-card  { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
   .bytemap-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
-  .bytemap-title { font-size:0.55rem; color:#555; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
-  .bytemap-total { margin-left:auto; font-size:0.5rem; color:#38bdf8; font-family:monospace; }
+  .bytemap-title { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
+  .bytemap-total { margin-left:auto; font-size:0.5rem; color:#38bdf8; font-family: var(--font-code); }
 
   .bytemap-body  { padding:6px 8px; display:flex; flex-direction:column; gap:5px; }
 
@@ -165,25 +167,25 @@
   .byterow-active { background:#38bdf808; box-shadow:inset 3px 0 0 #38bdf8; }
 
   .byterow-meta  { display:flex; flex-direction:column; gap:1px; min-width:60px; }
-  .byterow-name  { font-size:0.7rem; font-weight:700; font-family:'SF Mono',monospace; }
-  .byterow-type  { font-size:0.42rem; font-family:monospace; letter-spacing:0.3px; }
+  .byterow-name  { font-size:0.7rem; font-weight:700; font-family: var(--font-code); }
+  .byterow-type  { font-size:0.42rem; font-family: var(--font-code); letter-spacing:0.3px; }
 
   .byte-squares  { display:flex; flex-wrap:wrap; gap:1.5px; flex:1; }
   .byte-sq       { width:7px; height:12px; border-radius:1px; transition:all 0.3s; flex-shrink:0; }
   .byte-sq-active { box-shadow:0 0 3px currentColor; }
-  .bytes-overflow { font-size:0.45rem; color:#444; font-family:monospace; align-self:center; margin-left:2px; }
+  .bytes-overflow { font-size:0.45rem; color:#444; font-family: var(--font-code); align-self:center; margin-left:2px; }
 
-  .byterow-size  { font-size:0.55rem; font-family:monospace; font-weight:700; min-width:32px; text-align:right; }
+  .byterow-size  { font-size:0.55rem; font-family: var(--font-code); font-weight:700; min-width:32px; text-align:right; }
 
   /* Type legend */
   .byte-legend   { display:flex; flex-wrap:wrap; gap:8px; padding:5px 10px 7px; background:#07070f; border-top:1px solid #1a1a2e; }
   .leg-item      { display:flex; align-items:center; gap:4px; }
   .leg-sq        { width:8px; height:8px; border-radius:1.5px; flex-shrink:0; opacity:0.7; }
-  .leg-label     { font-size:0.45rem; color:#444; font-family:monospace; }
+  .leg-label     { font-size:0.45rem; color:#444; font-family: var(--font-code); }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family:monospace; }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
 </style>

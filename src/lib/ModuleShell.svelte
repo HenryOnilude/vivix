@@ -23,14 +23,16 @@
    *   cpuStack(sd)      — SVG: optional stack-visual override inside CpuDash
    */
   import { onMount } from 'svelte';
+  import { posthog } from './posthog.js';
   import { interpret, parseCode, checkSupported, friendlyError } from './interpreter.js';
   import { fv, tc, tb, COMPLEXITY_BARS, analyzeComplexity } from './utils.js';
-  import { makeAnimateBox, makeAnimateVal, animateBar } from './animations.js';
+  import { makeAnimateBox, makeAnimateBoxFlow, makeAnimateVal, animateBar } from './animations.js';
   import { createInterpreterWorker } from './useInterpreterWorker.js';
   import { phColor as _phColor, phIcon, computeVarDiff, markerPct, fillPct as computeFillPct, complexityBadgeColor } from './shell-logic.js';
   import CodeEditor from './CodeEditor.svelte';
   import CpuDash from './CpuDash.svelte';
   import TapTooltip from './TapTooltip.svelte';
+  import DepthToggle from './DepthToggle.svelte';
   import { parseHashState, updateUrlSilent, buildShareUrl } from './url-state.js';
   import OnboardingTour from './OnboardingTour.svelte';
 
@@ -68,6 +70,23 @@
 
     // ── layout ────────────────────────────────────────────────────────────────
     showHeap = true,
+    /** Enable the three-stage causal data-flow animation for heap mutations
+     *  (instruction pulse → particle travel → landing scale + residual glow).
+     *  Opt-in per module while this is rolled out. */
+    dataFlow = false,
+    /** Hide the "Examples:" picker bar entirely (blank-canvas modes). */
+    hideExamples = false,
+    /** First-run hint shown above the editor before Visualize has been clicked.
+     *  Pass an empty string to suppress the hint completely. */
+    runHint = 'Pick an example below, then click Visualize to step through it.',
+    /** Placeholder text shown inside the empty editor (CodeMirror placeholder
+     *  extension). Blank by default so regular modules retain no placeholder. */
+    editorPlaceholder = '',
+
+    // ── callbacks ─────────────────────────────────────────────────────────────
+    /** Called once after each run with the finalised steps array — lets parents
+     *  inject post-hoc narration (e.g. LLM streaming into step.brain). */
+    onSteps = undefined,
 
     // ── Svelte 5 snippets ─────────────────────────────────────────────────────
     topPanel    = undefined,
@@ -83,6 +102,11 @@
   let selEx    = $state(0);
   // eslint-disable-next-line -- intentionally captures initial example code
   let codeText = $state(examples[0]?.code ?? '');
+  /** Snapshot of `codeText` at the moment Visualize was last clicked.
+   *  Used to detect whether the user has edited the code since the
+   *  active visualization was generated, so we can surface a subtle
+   *  "Code changed — click Visualize to re-run" hint. */
+  let codeSnapshot = $state('');
   let step     = $state(-1);
   let total    = $state(0);
   let steps    = $state([]);
@@ -106,7 +130,6 @@
   let interpWorker = null;
 
   // ── Derived ────────────────────────────────────────────────────────────────
-  let lines  = $derived(codeText.split('\n'));
   let sd     = $derived(step >= 0 && step < steps.length ? steps[step] : null);
   let prev   = $derived(step >= 1 && step < steps.length ? steps[step - 1] : null);
 
@@ -115,6 +138,11 @@
 
   /** True when the code in the editor doesn't match the selected example */
   let isCustomCode = $derived(codeText !== (examples[selEx]?.code ?? ''));
+
+  /** True once we've already visualised and the user has since edited the code.
+   *  The current `steps`/`sd` snapshot no longer reflects what's in the editor,
+   *  so we surface a subtle hint prompting a re-run. */
+  let codeDirty = $derived(hasRun && codeText !== codeSnapshot);
 
   /** Complexity to show: dynamic if user edited code, preset otherwise */
   let cx = $derived.by(() => {
@@ -137,7 +165,7 @@
   let spaceBadgeColor = $derived(complexityBadgeColor(cx.space));
 
   // ── GSAP actions (accent-coloured) ─────────────────────────────────────────
-  let animateBox = $derived(makeAnimateBox(accent));
+  let animateBox = $derived(dataFlow ? makeAnimateBoxFlow(accent) : makeAnimateBox(accent));
   const animateVal = makeAnimateVal();
 
   // ── Phase helpers (delegated to shell-logic.js) ───────────────────────────
@@ -180,10 +208,14 @@
       }
 
       const codeLines = codeText.split('\n');
-      steps = rawSteps.map(s => mapStep ? mapStep(s, codeLines) : s);
+      steps = rawSteps.map((s, i) => mapStep ? mapStep(s, codeLines, i) : s);
       total  = steps.length;
       step   = 0;
       hasRun = true;
+      // Snapshot the exact code that produced `steps` — any subsequent edit
+      // makes `codeDirty` true and surfaces the "click Visualize to re-run" hint.
+      codeSnapshot = codeText;
+      if (typeof onSteps === 'function') onSteps(steps);
       mobileTab = 'visual'; // Auto-switch to visual tab on mobile after running
       // Auto-start playback
       if (playing) { clearInterval(timer); timer = null; playing = false; }
@@ -234,8 +266,6 @@
     _reset();
   }
 
-  function editCode() { _reset(); mobileTab = 'code'; }
-
   function _reset() {
     hasRun = false; step = -1; steps = []; err = ''; errFriendly = null; dynamicCx = null;
     if (playing) { clearInterval(timer); timer = null; playing = false; }
@@ -271,6 +301,11 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKey);
+
+    // Analytics: record that this module was opened. We only send the
+    // identifier (never code), and guard against missing routeKey.
+    const moduleName = routeKey || titlePrefix || 'unknown';
+    try { posthog.capture('module_opened', { module: moduleName }); } catch (_) {}
 
     // Read URL params and apply initial state
     if (!_urlApplied) {
@@ -320,6 +355,25 @@
     });
   });
 
+  // ── Analytics: module completion ──────────────────────────────────────────
+  // Fires once per run when the user reaches the final step. Reset whenever
+  // a fresh run produces a new `total`, so each full traversal is tracked.
+  let _completedFor = $state(-1);
+  $effect(() => {
+    if (total > 0 && step === total - 1 && _completedFor !== total) {
+      _completedFor = total;
+      const moduleName = routeKey || titlePrefix || 'unknown';
+      try {
+        posthog.capture('module_completed', {
+          module: moduleName,
+          total_steps: total,
+        });
+      } catch (_) {}
+    }
+    // Reset the guard when a new run starts (step rewinds to -1/0).
+    if (step < 0) _completedFor = -1;
+  });
+
   // ── Share button handler ──────────────────────────────────────────────────
   async function shareUrl() {
     const url = buildShareUrl({
@@ -349,6 +403,7 @@
       {#if desc}<p class="desc">{desc}</p>{/if}
     </div>
     <div class="hdr-spacer"></div>
+    <DepthToggle {accent} />
     <button class="share-btn" style="--acc:{accent}" onclick={shareUrl} aria-label="Copy shareable link">
       <span class="share-icon">🔗</span> Share
     </button>
@@ -357,25 +412,27 @@
     {/if}
   </header>
 
-  <!-- First-run hint -->
-  {#if !hasRun}
-    <p class="run-hint">Pick an example below, then click Visualize to step through it.</p>
+  <!-- First-run hint (suppressed when runHint is empty, e.g. free-form mode) -->
+  {#if !hasRun && runHint}
+    <p class="run-hint">{runHint}</p>
   {/if}
 
-  <!-- Example picker -->
-  <nav class="ex-bar" aria-label="Example programs">
-    <span class="ex-lbl" id="ex-label">Examples:</span>
-    {#each examples as ex, i}
-      <button
-        class="ex-btn"
-        class:act={selEx === i}
-        style="--acc:{accent}"
-        onclick={() => loadEx(i)}
-        aria-pressed={selEx === i}
-        aria-describedby="ex-label"
-      >{ex.label}</button>
-    {/each}
-  </nav>
+  <!-- Example picker (hidden in blank-canvas modes) -->
+  {#if !hideExamples && examples.length > 0}
+    <nav class="ex-bar" aria-label="Example programs">
+      <span class="ex-lbl" id="ex-label">Examples:</span>
+      {#each examples as ex, i}
+        <button
+          class="ex-btn"
+          class:act={selEx === i}
+          style="--acc:{accent}"
+          onclick={() => loadEx(i)}
+          aria-pressed={selEx === i}
+          aria-describedby="ex-label"
+        >{ex.label}</button>
+      {/each}
+    </nav>
+  {/if}
 
   <!-- Mobile tab switcher (hidden on desktop via CSS) -->
   {#if hasRun}
@@ -397,37 +454,27 @@
       <div class="ph">
         <span class="pt">Source Code</span>
         <div class="pa">
-          <button class="eb" onclick={editCode} aria-label="Edit code">✎ Edit</button>
+          {#if codeDirty}
+            <!-- Subtle cue that the editor content no longer matches the
+                 current visualization. Tapping Visualize re-runs with the
+                 fresh code; everything else is informational. -->
+            <span class="dirty-pill" style="--acc:{accent}" aria-live="polite">
+              <span class="dirty-dot"></span>
+              Code changed — click Visualize to re-run
+            </span>
+          {/if}
           <button class="rb" style="background:{accent};color:var(--a11y-bg, #0a0a0f)" onclick={_runCode} disabled={running}
-            aria-label={running ? 'Running code' : 'Visualize code execution'}>
-            {running ? '⏳ Running…' : '▶ Visualize'}
+            aria-label={running ? 'Running code' : (codeDirty ? 'Re-run visualization with edited code' : 'Visualize code execution')}>
+            {running ? '⏳ Running…' : (codeDirty ? '▶ Re-run' : '▶ Visualize')}
           </button>
         </div>
       </div>
 
-      {#if !hasRun}
-        <CodeEditor bind:value={codeText} {accent} />
-      {:else}
-        <div class="code-disp">
-          {#each lines as line, i}
-            <div class="cl"
-              class:cl-exec ={sd && sd.lineIndex      === i}
-              class:cl-next ={sd && sd.nextLineIndex  === i}
-              class:cl-true ={sd && sd.lineIndex === i && sd.cond === true}
-              class:cl-false={sd && sd.lineIndex === i && sd.cond === false}
-              style="--acc:{accent}"
-            >
-              <span class="ln">{i + 1}</span>
-              <span class="ac-col">
-                {#if      sd && sd.lineIndex     === i}<span class="ae" style="color:{accent}">▶</span>
-                {:else if sd && sd.nextLineIndex === i}<span class="an">▸</span>
-                {:else}<span class="ax">&nbsp;</span>{/if}
-              </span>
-              <span class="lt">{line || ' '}</span>
-            </div>
-          {/each}
-        </div>
-      {/if}
+      <!-- Editor is always mounted and always editable. The visualization
+           runs off the `steps` snapshot captured when Visualize was last
+           clicked, so editing mid-playback never corrupts state — it just
+           flips `codeDirty` true until the user re-runs. -->
+      <CodeEditor bind:value={codeText} {accent} placeholder={editorPlaceholder} />
 
       {#if err}
         <div class="err-card">
@@ -520,9 +567,9 @@
         <!-- Module-specific content above the heap (e.g. branch flowchart, loop tracker) -->
         {#if topPanel}{@render topPanel(sd)}{/if}
 
-        <!-- Default heap memory card -->
+        <!-- Default heap memory card (Machine level and above) -->
         {#if showHeap && varArr.length > 0}
-          <div class="heap-card">
+          <div class="heap-card dl-explore">
             <div class="heap-hdr" role="heading" aria-level="3">
               <svg width="14" height="14" viewBox="0 0 14 14">
                 <rect x="1" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.5"/>
@@ -538,7 +585,7 @@
                 {@const status = varDiff[name] || 'same'}
                 {@const color  = tc(val)}
                 <div class="heap-box" use:animateBox={{ status, step }}>
-                  <div class="heap-addr">0x{(0x4A00 + idx * 8).toString(16).toUpperCase()}</div>
+                  <div class="heap-addr dl-inline-deep">0x{(0x4A00 + idx * 8).toString(16).toUpperCase()}</div>
                   <div class="heap-head">
                     <span class="heap-name">{name}</span>
                     <span class="heap-type" style="color:{color};border-color:{color}33">{tb(val)}</span>
@@ -568,7 +615,7 @@
             <div class="out-hdr" role="heading" aria-level="3">
               <svg width="12" height="12" viewBox="0 0 12 12">
                 <rect x="0" y="0" width="12" height="12" rx="2" fill="#111"/>
-                <text x="3" y="9" fill={accent} font-size="8" font-family="monospace">$</text>
+                <text x="3" y="9" fill={accent} font-size="8" font-family="'Geist Mono', monospace">$</text>
               </svg>
               <span>STDOUT<span class="panel-subtitle">console output</span></span>
             </div>
@@ -578,8 +625,8 @@
           </div>
         {/if}
 
-        <!-- COMPLEXITY ANALYSIS -->
-        <div class="cx-card">
+        <!-- COMPLEXITY ANALYSIS — Explore level and above -->
+        <div class="cx-card dl-explore">
           <div class="cx-hdr">
             <span class="cx-title">COMPLEXITY ANALYSIS<span class="panel-subtitle">performance cost</span></span>
             {#if cx.dynamic}<span class="cx-live-badge">live</span>{/if}
@@ -639,23 +686,21 @@
         </div>
 
       {:else if !hasRun}
-        {#if placeholder}
-          {@render placeholder()}
-        {:else}
-          <div class="vis-placeholder">
-            <p class="ph-text">Write code and click
-              <strong style="color:{accent}">▶ Visualize</strong>
-              to see execution
-            </p>
-          </div>
-        {/if}
+        <!-- Blank canvas before Visualize is clicked — no decorative
+             preview boxes, no phase hints, nothing that could be
+             mistaken for real execution state. The module-specific
+             `placeholder` snippet is intentionally ignored here so the
+             visualisation panel is empty and clean. -->
+        <div class="vis-idle" aria-hidden="true"></div>
       {/if}
     </div>
 
   </div>
 
-  <!-- First-run onboarding tour -->
-  <OnboardingTour {accent} />
+  <!-- First-run onboarding tour. Deferred until the user has clicked
+       Visualize at least once so the "engine detail" tooltips never
+       appear before there is anything to visualise. -->
+  <OnboardingTour {accent} active={hasRun} />
 </div>
 
 <style>
@@ -663,7 +708,7 @@
   .mod {
     width:100%; height:100%; display:flex; flex-direction:column;
     padding:14px 18px; gap:10px; overflow:hidden;
-    font-family:'Geist','Inter','SF Pro',system-ui,sans-serif;
+    font-family: var(--font-ui);
     color:var(--a11y-text-sec);
     /* Module-identity atmosphere: accent color orb top-right, subtle opposite corner */
     background-color: var(--a11y-bg);
@@ -673,13 +718,13 @@
   }
   .hdr { display:flex; align-items:center; gap:14px; flex-shrink:0; position:relative; }
   .hdr-spacer { flex:1; }
-  .back { font-size:0.78rem; color:rgba(255,255,255,0.45); text-decoration:none; transition:color 0.2s; font-family:'Geist','Inter',system-ui,sans-serif; }
+  .back { font-size:0.78rem; color:rgba(255,255,255,0.45); text-decoration:none; transition:color 0.2s; font-family: var(--font-ui); }
   .back:hover { color:var(--acc); }
   .title-group { display:flex; flex-direction:column; }
-  h2  { font-size:1.3rem; font-weight:700; color:rgba(255,255,255,0.95); margin:0; font-family:'SF Mono','Fira Code',monospace; }
+  h2  { font-size:1.3rem; font-weight:700; color:rgba(255,255,255,0.95); margin:0; font-family: var(--font-code); }
   .ac  { /* colour set inline */ }
-  .sub { font-weight:400; font-size:0.88rem; color:rgba(255,255,255,0.55); font-family:'Geist','Inter',system-ui,sans-serif; }
-  .desc { font-size:0.72rem; color:rgba(255,255,255,0.52); margin:2px 0 0; font-family:'Geist','Inter',system-ui,sans-serif; }
+  .sub { font-weight:400; font-size:0.88rem; color:rgba(255,255,255,0.55); font-family: var(--font-ui); }
+  .desc { font-size:0.72rem; color:rgba(255,255,255,0.52); margin:2px 0 0; font-family: var(--font-ui); }
 
   /* ── Share button + toast ────────────────────────────────────────────── */
   .share-btn {
@@ -688,7 +733,7 @@
     border:1px solid color-mix(in srgb, var(--acc) 30%, transparent);
     border-radius:6px; color:var(--acc);
     font-size:0.72rem; font-weight:600; padding:5px 12px;
-    cursor:pointer; font-family:'Geist','Inter',system-ui,sans-serif;
+    cursor:pointer; font-family: var(--font-ui);
     transition:all 0.15s; white-space:nowrap; flex-shrink:0;
   }
   .share-btn:hover {
@@ -703,7 +748,7 @@
     border:1px solid color-mix(in srgb, var(--acc) 40%, transparent);
     border-radius:6px; padding:5px 12px;
     font-size:0.68rem; color:var(--acc); font-weight:600;
-    font-family:'Geist','Inter',system-ui,sans-serif;
+    font-family: var(--font-ui);
     white-space:nowrap; z-index:20;
     animation:toast-in 0.2s ease-out;
     box-shadow:0 4px 16px rgba(0,0,0,0.4);
@@ -716,16 +761,24 @@
   /* ── Example picker ────────────────────────────────────────────────────── */
   .run-hint { margin:0; font-size:0.85rem; color:var(--a11y-text-muted); }
   .ex-bar  { display:flex; gap:6px; align-items:center; flex-wrap:wrap; flex-shrink:0; }
-  .ex-lbl  { font-size:0.68rem; color:rgba(255,255,255,0.42); font-family:'Geist','Inter',system-ui,sans-serif; }
-  .ex-btn  { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:rgba(255,255,255,0.58); font-size:0.72rem; padding:4px 11px; cursor:pointer; font-family:'Geist','Inter',system-ui,sans-serif; transition:all 0.2s; }
+  .ex-lbl  { font-size:0.68rem; color:rgba(255,255,255,0.42); font-family: var(--font-ui); }
+  .ex-btn  { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:rgba(255,255,255,0.58); font-size:0.72rem; padding:4px 11px; cursor:pointer; font-family: var(--font-ui); transition:all 0.2s; }
   .ex-btn:hover { border-color:color-mix(in srgb, var(--acc) 45%, transparent); color:rgba(255,255,255,0.88); }
   .ex-btn.act   { border-color:color-mix(in srgb, var(--acc) 65%, transparent); color:var(--acc); background:color-mix(in srgb, var(--acc) 12%, transparent); box-shadow:0 0 0 1px color-mix(in srgb, var(--acc) 25%, transparent); font-weight:600; }
 
-  /* ── Split main area ───────────────────────────────────────────────────── */
+  /* ── Split main area ─────────────────────────────────────────────────────
+     Golden-ratio split: visualization (φ ≈ 62%) dominates, code editor is
+     the narrower input pane (≈ 38%). At 1440 px viewport this resolves to
+     roughly 550 px code / 890 px visualization.                            */
   .main { flex:1; display:flex; gap:14px; min-height:0; overflow:hidden; }
 
-  /* ── Code panel (left) ─────────────────────────────────────────────────── */
-  .code-panel { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
+  /* ── Code panel (input) ──────────────────────────────────────────────── */
+  .code-panel {
+    flex: 0 1 38%;
+    min-width: 320px;
+    max-width: 640px;
+    display:flex; flex-direction:column; gap:6px;
+  }
   .ph  {
     display:flex; justify-content:space-between; align-items:center;
     padding:5px 10px;
@@ -749,57 +802,68 @@
   .pa  { display:flex; gap:6px; }
   .rb  { border:none; border-radius:5px; padding:4px 14px; font-family:inherit; font-size:0.65rem; font-weight:700; cursor:pointer; transition:filter 0.15s, box-shadow 0.15s; }
   .rb:hover { filter:brightness(1.12); box-shadow:0 0 12px color-mix(in srgb, var(--acc) 30%, transparent); }
-  .eb  { background:transparent; color:rgba(255,255,255,0.35); border:1px solid rgba(255,255,255,0.1); border-radius:5px; padding:3px 10px; font-family:inherit; font-size:0.65rem; cursor:pointer; transition:all 0.2s; }
-  .eb:hover { color:rgba(255,255,255,0.75); border-color:rgba(255,255,255,0.22); }
-
-  .code-disp {
-    flex:1; background:var(--a11y-code-bg);
-    border:1px solid color-mix(in srgb, var(--acc) 12%, rgba(255,255,255,0.05));
-    border-top:none; border-radius:0 0 8px 8px;
-    padding:6px 0; overflow-y:auto;
-    font-family:'SF Mono','Fira Code','Consolas',monospace; font-size:0.85rem; line-height:1.8;
+  /* Dirty-code indicator: appears next to the Visualize button once the
+     user has edited the code since the last run. Low-key by design —
+     just a muted pulsing dot + tiny label, never obstructs the editor. */
+  .dirty-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: color-mix(in srgb, var(--acc) 80%, white 20%);
+    background: color-mix(in srgb, var(--acc) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--acc) 25%, transparent);
+    letter-spacing: 0.1px;
+    white-space: nowrap;
   }
-  .cl       { display:flex; align-items:center; padding:0 10px 0 0; transition:background 0.25s; min-height:1.8em; }
-  .cl-exec  { background:color-mix(in srgb, var(--acc) 9%, transparent); }
-  .cl-next  { background:#f59e0b0c; }
-  .cl-true  { background:#4ade8014; }
-  .cl-false { background:#f8717114; }
-  .ln      { width:30px; text-align:right; color:rgba(255,255,255,0.18); font-size:0.72rem; padding-right:4px; flex-shrink:0; user-select:none; }
-  .ac-col  { width:20px; text-align:center; flex-shrink:0; }
-  .ae      { font-size:0.7rem; }
-  .an      { color:#f59e0b; font-size:0.7rem; }
-  .ax      { opacity:0; }
-  .lt      { white-space:pre; color:var(--a11y-text-sec); }
+  .dirty-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--acc);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc) 60%, transparent);
+    animation: dirty-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes dirty-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc) 55%, transparent); }
+    50%      { box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc)  0%, transparent); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dirty-dot { animation: none; }
+  }
 
   /* ── Step controls ─────────────────────────────────────────────────────── */
   .ctrls  { display:flex; gap:4px; align-items:center; flex-shrink:0; }
-  .cb     { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:rgba(255,255,255,0.65); font-size:0.82rem; padding:4px 11px; cursor:pointer; transition:all 0.15s; font-family:'Geist','Inter',system-ui,sans-serif; }
+  .cb     { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:rgba(255,255,255,0.65); font-size:0.82rem; padding:4px 11px; cursor:pointer; transition:all 0.15s; font-family: var(--font-ui); }
   .cb:hover:not(:disabled) { border-color:rgba(255,255,255,0.25); color:rgba(255,255,255,0.92); background:rgba(255,255,255,0.07); }
   .cb:disabled { opacity:0.22; cursor:default; }
   .abtn   { /* colour set inline */ }
-  .sc     { font-size:0.62rem; color:rgba(255,255,255,0.38); margin-left:6px; font-family:'Geist','Inter',system-ui,sans-serif; }
+  .sc     { font-size:0.62rem; color:rgba(255,255,255,0.38); margin-left:6px; font-family: var(--font-ui); }
   /* ── Error card ──────────────────────────────────────────────────────── */
   .err-card     { background:#ef444410; border:1px solid #ef444433; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .err-head     { display:flex; align-items:flex-start; gap:8px; padding:8px 12px; background:#ef44440a; border-bottom:1px solid #ef444418; }
   .err-icon     { flex-shrink:0; width:20px; height:20px; display:flex; align-items:center; justify-content:center; background:#ef4444; color:var(--a11y-bg, #0a0a0f); font-size:0.7rem; font-weight:800; border-radius:50%; margin-top:1px; }
   .err-friendly { font-size:0.78rem; color:#fca5a5; line-height:1.5; font-weight:600; }
-  .err-hint     { padding:8px 12px; font-size:0.7rem; color:#d4a0a0; line-height:1.65; white-space:pre-wrap; font-family:'SF Mono','Fira Code','Consolas',monospace; background:transparent; margin:0; border:none; }
+  .err-hint     { padding:8px 12px; font-size:0.7rem; color:#d4a0a0; line-height:1.65; white-space:pre-wrap; font-family: var(--font-code); background:transparent; margin:0; border:none; }
   .err-details  { border-top:1px solid #ef444418; }
-  .err-toggle   { padding:5px 12px; font-size:0.58rem; color:#ef444488; cursor:pointer; font-family:monospace; letter-spacing:0.3px; }
+  .err-toggle   { padding:5px 12px; font-size:0.58rem; color:#ef444488; cursor:pointer; font-family: var(--font-code); letter-spacing:0.3px; }
   .err-toggle:hover { color:#ef4444cc; }
-  .err-raw      { display:block; padding:6px 12px; font-size:0.62rem; color:#ef4444aa; font-family:'SF Mono','Fira Code','Consolas',monospace; word-break:break-all; white-space:pre-wrap; }
+  .err-raw      { display:block; padding:6px 12px; font-size:0.62rem; color:#ef4444aa; font-family: var(--font-code); word-break:break-all; white-space:pre-wrap; }
 
   /* ── Speed selector ────────────────────────────────────────────────────── */
   .speed-row { display:flex; gap:2px; align-items:center; margin-left:auto; }
-  .spd-btn   { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.10); border-radius:4px; color:rgba(255,255,255,0.50); font-size:0.62rem; padding:3px 7px; cursor:pointer; font-family:'Geist','Inter',system-ui,sans-serif; letter-spacing:0.2px; transition:all 0.15s; }
+  .spd-btn   { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.10); border-radius:4px; color:rgba(255,255,255,0.50); font-size:0.62rem; padding:3px 7px; cursor:pointer; font-family: var(--font-ui); letter-spacing:0.2px; transition:all 0.15s; }
   .spd-btn:hover  { border-color:rgba(255,255,255,0.22); color:rgba(255,255,255,0.85); }
   .spd-btn.spd-act { border-color:color-mix(in srgb, var(--acc) 50%, transparent); color:var(--acc); background:color-mix(in srgb, var(--acc) 8%, transparent); }
 
   /* ── Keyboard shortcut hints ──────────────────────────────────────────── */
   .kbd-hints  { display:flex; gap:10px; justify-content:center; padding:3px 8px; flex-wrap:wrap; }
   .kbd-hints  { display:flex; gap:10px; justify-content:center; padding:3px 8px; flex-wrap:wrap; }
-  .kbd-hint   { font-size:0.62rem; color:rgba(255,255,255,0.50); font-family:'Geist','Inter',system-ui,sans-serif; display:flex; align-items:center; gap:4px; }
-  .kbd-hint kbd { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:4px; padding:2px 6px; font-size:0.58rem; color:rgba(255,255,255,0.70); font-family:'SF Mono',monospace; }
+  .kbd-hint   { font-size:0.62rem; color:rgba(255,255,255,0.50); font-family: var(--font-ui); display:flex; align-items:center; gap:4px; }
+  .kbd-hint kbd { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:4px; padding:2px 6px; font-size:0.58rem; color:rgba(255,255,255,0.70); font-family: var(--font-code); }
 
   /* ── Timeline scrubber ─────────────────────────────────────────────────── */
   .timeline { flex-shrink:0; padding:6px 0 2px; }
@@ -880,20 +944,26 @@
   .tl-active .tl-icon { color:var(--a11y-bg, #0a0a0f); font-size:0.6rem; font-weight:700; }
   .tl-past .tl-icon { color:color-mix(in srgb, var(--acc) 60%, transparent); }
 
-  /* ── Visual panel (right) ──────────────────────────────────────────────── */
-  .vis-panel { width:520px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; overflow-y:auto; overflow-x:hidden; padding-right:2px; }
+  /* ── Visual panel (output) — dominant golden-ratio column ─────────────── */
+  .vis-panel {
+    flex: 1 1 62%;
+    min-width: 0;
+    display:flex; flex-direction:column; gap:8px;
+    overflow-y:auto; overflow-x:hidden; padding-right:2px;
+  }
 
   /* ── Heap memory card ──────────────────────────────────────────────────── */
+  /* Elevation: 'surface' level — container panel without a hard border */
   .heap-card  {
-    background: color-mix(in srgb, var(--acc) 3%, var(--a11y-surface1));
-    border: 1px solid color-mix(in srgb, var(--acc) 18%, rgba(255,255,255,0.05));
+    background: color-mix(in srgb, var(--acc) 3%, var(--elevation-surface));
+    border: none;
     border-radius:10px; overflow:hidden; flex-shrink:0;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 16px rgba(0,0,0,0.3);
+    box-shadow: var(--elevation-shadow-raised);
   }
+  /* Elevation difference (+ accent wash) separates the header — no 1px line */
   .heap-hdr   {
-    display:flex; align-items:center; gap:6px; padding:7px 10px;
-    background: color-mix(in srgb, var(--acc) 5%, var(--a11y-surface2));
-    border-bottom: 1px solid color-mix(in srgb, var(--acc) 12%, rgba(255,255,255,0.04));
+    display:flex; align-items:center; gap:6px; padding:9px 12px;
+    background: color-mix(in srgb, var(--acc) 5%, var(--elevation-raised));
     position: relative;
   }
   .heap-hdr::before {
@@ -902,29 +972,33 @@
     top:0; left:0; right:0; height:1.5px;
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 50%, transparent), transparent);
   }
-  .heap-title { font-size:0.72rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .heap-title { font-size:0.72rem; color:rgba(255,255,255,0.45); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .panel-subtitle { display:block; color:var(--a11y-text-muted); font-size:0.65rem; font-weight:400; letter-spacing:0; text-transform:none; margin-top:1px; }
-  .heap-count { margin-left:auto; font-size:0.65rem; color:rgba(255,255,255,0.2); font-family:monospace; }
+  .heap-count { margin-left:auto; font-size:0.65rem; color:rgba(255,255,255,0.2); font-family: var(--font-code); }
   .heap-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; padding:8px; }
+  /* Elevation: 'raised' level for interactive memory cards */
   .heap-box   {
-    background: color-mix(in srgb, var(--acc) 4%, #08080e);
-    border: 1px solid color-mix(in srgb, var(--acc) 20%, rgba(255,255,255,0.06));
-    border-radius:8px; overflow:hidden; transition:border-color .3s, box-shadow .3s;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    background: color-mix(in srgb, var(--acc) 4%, var(--elevation-raised));
+    border: none;
+    border-radius:8px; overflow:hidden;
+    box-shadow: var(--elevation-shadow-raised);
+    transition: background .25s, box-shadow .25s, transform .25s;
   }
+  /* Elevation: 'overlay' level on hover */
   .heap-box:hover {
-    border-color: color-mix(in srgb, var(--acc) 40%, transparent);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 12px color-mix(in srgb, var(--acc) 10%, transparent);
+    background: color-mix(in srgb, var(--acc) 8%, var(--elevation-overlay));
+    box-shadow: var(--elevation-shadow-overlay);
+    transform: translateY(-1px);
   }
-  .heap-addr  { background:rgba(0,0,0,0.25); padding:2px 8px; font-size:0.42rem; color:rgba(255,255,255,0.2); font-family:monospace; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .heap-addr  { background:rgba(0,0,0,0.25); padding:2px 8px; font-size:0.42rem; color:rgba(255,255,255,0.2); font-family: var(--font-code); border-bottom:1px solid rgba(255,255,255,0.04); }
   .heap-head  { display:flex; justify-content:space-between; align-items:center; padding:6px 10px 2px; }
-  .heap-name  { font-size:0.82rem; color:var(--a11y-text); font-weight:700; font-family:'SF Mono',monospace; }
-  .heap-type  { font-size:0.45rem; padding:1px 5px; border-radius:3px; border:1px solid; font-family:monospace; letter-spacing:0.5px; font-weight:600; }
-  .heap-val   { padding:4px 10px 8px; font-size:1.3rem; font-weight:800; font-family:'SF Mono',monospace; display:inline-block; }
+  .heap-name  { font-size:0.82rem; color:var(--a11y-text); font-weight:700; font-family: var(--font-code); }
+  .heap-type  { font-size:0.45rem; padding:1px 5px; border-radius:3px; border:1px solid; font-family: var(--font-code); letter-spacing:0.5px; font-weight:600; }
+  .heap-val   { padding:4px 10px 8px; font-size:1.3rem; font-weight:800; font-family: var(--font-code); display:inline-block; }
   .heap-change { display:flex; align-items:center; gap:4px; padding:2px 10px 6px; }
-  .heap-old   { font-size:0.55rem; color:rgba(255,255,255,0.30); font-family:monospace; text-decoration:line-through; }
+  .heap-old   { font-size:0.55rem; color:rgba(255,255,255,0.30); font-family: var(--font-code); text-decoration:line-through; }
   .heap-arrow { font-size:0.5rem; color:#f59e0b; }
-  .heap-new   { font-size:0.55rem; font-family:monospace; font-weight:600; }
+  .heap-new   { font-size:0.55rem; font-family: var(--font-code); font-weight:600; }
 
   /* ── STDOUT ────────────────────────────────────────────────────────────── */
   .out-card {
@@ -937,7 +1011,7 @@
     display:flex; align-items:center; gap:6px; padding:5px 10px;
     background: color-mix(in srgb, var(--acc) 5%, #0a0a12);
     border-bottom: 1px solid color-mix(in srgb, var(--acc) 10%, rgba(255,255,255,0.04));
-    font-size:0.72rem; color:rgba(255,255,255,0.4); font-family:monospace; letter-spacing:1px; font-weight:700;
+    font-size:0.72rem; color:rgba(255,255,255,0.4); font-family: var(--font-code); letter-spacing:1px; font-weight:700;
     position:relative;
   }
   .out-hdr::before {
@@ -946,7 +1020,7 @@
     top:0; left:0; right:0; height:1.5px;
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 50%, transparent), transparent);
   }
-  .out-ln   { padding:4px 12px; font-size:0.78rem; color:#e0e0e0; font-family:'SF Mono',monospace; }
+  .out-ln   { padding:4px 12px; font-size:0.78rem; color:#e0e0e0; font-family: var(--font-code); }
 
   /* ── Complexity card ───────────────────────────────────────────────────── */
   .cx-card       {
@@ -967,26 +1041,22 @@
     top:0; left:0; right:0; height:1.5px;
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 50%, transparent), transparent);
   }
-  .cx-title      { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
-  .cx-live-badge { font-size:0.42rem; color:#4ade80; border:1px solid #4ade8044; border-radius:3px; padding:1px 5px; font-family:monospace; letter-spacing:0.5px; }
+  .cx-title      { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
+  .cx-live-badge { font-size:0.42rem; color:#4ade80; border:1px solid #4ade8044; border-radius:3px; padding:1px 5px; font-family: var(--font-code); letter-spacing:0.5px; }
   .cx-chart      { display:flex; align-items:flex-end; gap:4px; height:76px; padding:8px 10px 0; }
   .cx-col        { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; }
   .cx-bar        { width:100%; border-radius:3px 3px 0 0; min-height:2px; }
-  .cx-lbl        { font-family:monospace; font-size:0.42rem; text-align:center; margin-top:2px; font-weight:600; }
+  .cx-lbl        { font-family: var(--font-code); font-size:0.42rem; text-align:center; margin-top:2px; font-weight:600; }
   .cx-detail-grid { padding:8px 10px; border-top:1px solid #1a1a2e; display:flex; flex-direction:column; gap:4px; }
   .cx-row        { display:flex; justify-content:space-between; align-items:center; }
-  .cx-label      { font-size:0.68rem; color:rgba(255,255,255,0.60); font-family:monospace; }
-  .cx-badge      { font-size:0.65rem; font-family:monospace; font-weight:800; padding:2px 10px; border-radius:4px; }
+  .cx-label      { font-size:0.68rem; color:rgba(255,255,255,0.60); font-family: var(--font-code); }
+  .cx-badge      { font-size:0.65rem; font-family: var(--font-code); font-weight:800; padding:2px 10px; border-radius:4px; }
   .cx-explain-toggle  { margin-bottom:4px; }
-  .cx-explain-summary { font-size:0.6rem; color:rgba(255,255,255,0.38); cursor:pointer; font-family:monospace; letter-spacing:0.3px; padding:2px 0; user-select:none; transition:color 0.15s; }
+  .cx-explain-summary { font-size:0.6rem; color:rgba(255,255,255,0.38); cursor:pointer; font-family: var(--font-code); letter-spacing:0.3px; padding:2px 0; user-select:none; transition:color 0.15s; }
   .cx-explain-summary:hover { color:rgba(255,255,255,0.70); }
   .cx-why        { font-size:0.68rem; color:rgba(255,255,255,0.55); line-height:1.55; margin-bottom:6px; }
   .cx-stats      { display:flex; gap:14px; padding:5px 10px; border-top:1px solid #1a1a2e; }
-  .cx-s          { display:flex; align-items:center; gap:4px; font-size:0.58rem; color:rgba(255,255,255,0.45); font-family:monospace; }
-
-  /* ── Placeholder ───────────────────────────────────────────────────────── */
-  .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
-  .ph-text         { font-size:0.8rem; color:rgba(255,255,255,0.45); text-align:center; }
+  .cx-s          { display:flex; align-items:center; gap:4px; font-size:0.58rem; color:rgba(255,255,255,0.45); font-family: var(--font-code); }
 
   /* ── Mobile tab switcher (hidden on desktop) ─────────────────────────── */
   .mob-tabs { display:none; }
@@ -1004,7 +1074,6 @@
     .main       { flex-direction:column; overflow:visible; min-height:0; flex:1; gap:10px; }
     .code-panel { min-height:auto; flex:1; }
     .vis-panel  { width:100%; flex:1; max-height:none; overflow-y:auto; }
-    .code-disp  { max-height:260px; min-height:180px; }
     .ctrls      { flex-wrap:wrap; gap:4px; justify-content:center; }
     .cb         { padding:6px 12px; font-size:0.75rem; min-height:44px; min-width:44px; display:flex; align-items:center; justify-content:center; }
     .sc         { font-size:0.58rem; width:100%; text-align:center; order:10; margin:2px 0 0; }
@@ -1025,8 +1094,6 @@
     .err-friendly { font-size:0.7rem; }
     .err-hint     { font-size:0.62rem; padding:6px 10px; }
     .err-raw      { font-size:0.55rem; }
-    .vis-placeholder { padding:16px 12px; gap:14px; }
-    .ph-text    { font-size:0.75rem; }
 
     /* ── Mobile tab switcher ── */
     .mob-tabs {
@@ -1039,7 +1106,7 @@
       flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
       padding:10px 0; border:none; background:transparent;
       color:rgba(255,255,255,0.45); font-size:0.72rem; font-weight:600;
-      font-family:'Geist','Inter',system-ui,sans-serif;
+      font-family: var(--font-ui);
       cursor:pointer; transition:all 0.15s;
     }
     .mob-tab-act {
@@ -1066,9 +1133,6 @@
     .sub        { font-size:0.68rem; }
     .desc       { display:none; }
     .ex-btn     { font-size:0.6rem; padding:5px 10px; min-height:44px; min-width:44px; display:inline-flex; align-items:center; justify-content:center; }
-    .code-disp  { max-height:200px; min-height:140px; font-size:0.75rem; line-height:1.6; }
-    .ln         { width:22px; font-size:0.62rem; }
-    .ac-col     { width:16px; }
 
     /* ── Fixed bottom bar for step controls ── */
     .ctrls {
@@ -1099,7 +1163,6 @@
     .ph         { padding:4px 8px; }
     .pt         { font-size:0.58rem; }
     .rb         { font-size:0.62rem; padding:5px 14px; min-height:44px; }
-    .eb         { font-size:0.62rem; padding:5px 10px; min-height:44px; }
     .err-head   { padding:6px 8px; gap:6px; }
     .err-icon   { width:16px; height:16px; font-size:0.58rem; }
     .err-friendly { font-size:0.65rem; }
@@ -1110,8 +1173,6 @@
     .tl-dot.tl-active { width:14px; height:14px; }
     .tl-icon    { font-size:0.3rem; }
     .tl-active .tl-icon { font-size:0.42rem; }
-    .vis-placeholder { padding:10px 8px; gap:8px; min-height:180px; }
-    .ph-text    { font-size:0.68rem; padding:0 6px; }
 
     /* ── Share button even more compact ── */
     .share-btn  { padding:3px 8px; font-size:0.6rem; }
@@ -1125,12 +1186,9 @@
   @media (max-width: 360px) {
     .mod        { padding:4px 6px; gap:4px; }
     h2          { font-size:0.85rem; }
-    .code-disp  { max-height:160px; min-height:120px; font-size:0.7rem; }
     .heap-grid  { grid-template-columns:1fr; }
     .heap-val   { font-size:0.8rem; }
     .cx-chart   { height:36px; }
     .cb         { padding:5px 8px; font-size:0.65rem; min-height:36px; min-width:36px; }
-    .vis-placeholder { padding:8px 6px; gap:6px; }
-    .ph-text    { font-size:0.62rem; }
   }
 </style>

@@ -3,10 +3,12 @@
   import Home from './lib/Home.svelte';
   import ErrorBoundary from './lib/ErrorBoundary.svelte';
   import { initTheme } from './lib/a11y-theme.js';
+  import { initDepthLevel } from './lib/depth-level.js';
   import { parseHashState } from './lib/url-state.js';
 
-  // Initialize accessibility theme from localStorage on load
+  // Initialize accessibility theme + progressive-disclosure depth
   initTheme();
+  initDepthLevel();
 
   // ── Lazy-loaded route map ──────────────────────────────────────────────────
   // Each module is loaded on-demand via dynamic import() to reduce initial bundle.
@@ -23,6 +25,7 @@
     'promise-chain':    () => import('./lib/PromiseChain.svelte'),
     'event-listeners':  () => import('./lib/EventListeners.svelte'),
     'api-calls':        () => import('./lib/ApiCalls.svelte'),
+    'free-form':        () => import('./lib/FreeForm.svelte'),
   };
 
   let route = $state(getRoute());
@@ -140,7 +143,7 @@
   }
 
   .not-found a {
-    color: #00ff88;
+    color: #00FFD1;
     text-decoration: none;
     font-size: 0.8rem;
   }
@@ -152,7 +155,7 @@
   .not-found .error-detail {
     color: #f87171;
     font-size: 0.75rem;
-    font-family: monospace;
+    font-family: var(--font-code);
   }
 
   .loading-spinner {
@@ -173,7 +176,7 @@
     width: 28px;
     height: 28px;
     border: 3px solid #1a1a2e;
-    border-top-color: #00ff88;
+    border-top-color: #00FFD1;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
   }

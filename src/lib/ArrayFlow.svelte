@@ -72,23 +72,23 @@
   {#snippet cpuRegisters(sd)}
     <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
       stroke={sd.arrOps > 0 ? '#88aaff33' : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">ARR-OPS</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.arrOps > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="monospace">{sd.arrOps}</text>
+    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">ARR-OPS</text>
+    <text x="272" y="29" text-anchor="end" fill={sd.arrOps > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.arrOps}</text>
 
     <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="290" y="22" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">COMPS</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.comps > 0 ? '#a78bfa' : '#222'} font-size="12" font-weight="800" font-family="monospace">{sd.comps || 0}</text>
+    <text x="290" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">COMPS</text>
+    <text x="344" y="29" text-anchor="end" fill={sd.comps > 0 ? '#a78bfa' : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.comps || 0}</text>
 
     <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="monospace" letter-spacing="0.5">TARGET</text>
-    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="10" font-weight="700" font-family="monospace">{sd.highlight || '—'}</text>
+    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
+    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="10" font-weight="700" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
   {/snippet}
 
   <!-- CPU right gauge: array ops -->
   {#snippet cpuGauge(sd)}
     <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
     <rect x="247" y="69" width={Math.min(102, sd.arrOps * 15)} height="14" rx="2" fill={ACCENT} opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="monospace">{sd.arrOps} ARRAY OPS</text>
+    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.arrOps} ARRAY OPS</text>
   {/snippet}
 
   <!-- Array visualization -->
@@ -259,28 +259,28 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
         <!-- O(n) left side -->
-        <text x="28" y="92" fill="rgba(248,113,113,0.80)" font-size="14" font-family="monospace" font-weight="800">O(n)</text>
-        <text x="24" y="110" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">shift</text>
-        <text x="14" y="126" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">unshift</text>
+        <text x="28" y="92" fill="rgba(248,113,113,0.80)" font-size="14" font-family="'Geist Mono', monospace" font-weight="800">O(n)</text>
+        <text x="24" y="110" fill="rgba(255,255,255,0.65)" font-size="12" font-family="'Geist Mono', monospace">shift</text>
+        <text x="14" y="126" fill="rgba(255,255,255,0.65)" font-size="12" font-family="'Geist Mono', monospace">unshift</text>
         <!-- Array cells -->
         <rect x="68"  y="62" width="62" height="52" rx="4" fill="rgba(136,170,255,0.06)" stroke="rgba(136,170,255,0.45)" stroke-width="2"/>
-        <text x="99"  y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="monospace" font-weight="600">[0]</text>
+        <text x="99"  y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">[0]</text>
         <rect x="134" y="62" width="62" height="52" rx="4" fill="rgba(136,170,255,0.06)" stroke="rgba(136,170,255,0.45)" stroke-width="2"/>
-        <text x="165" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="monospace" font-weight="600">[1]</text>
+        <text x="165" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">[1]</text>
         <rect x="200" y="62" width="62" height="52" rx="4" fill="rgba(136,170,255,0.06)" stroke="rgba(136,170,255,0.45)" stroke-width="2"/>
-        <text x="231" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="monospace" font-weight="600">[2]</text>
+        <text x="231" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">[2]</text>
         <rect x="266" y="62" width="62" height="52" rx="4" fill="rgba(136,170,255,0.06)" stroke="rgba(136,170,255,0.45)" stroke-width="2"/>
-        <text x="297" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="monospace" font-weight="600">[3]</text>
+        <text x="297" y="94" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">[3]</text>
         <!-- O(1) right side -->
-        <text x="344" y="84" fill="rgba(74,222,128,0.80)" font-size="14" font-family="monospace" font-weight="800">O(1)</text>
-        <text x="344" y="102" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">push</text>
-        <text x="344" y="118" fill="rgba(255,255,255,0.65)" font-size="12" font-family="monospace">pop</text>
+        <text x="344" y="84" fill="rgba(74,222,128,0.80)" font-size="14" font-family="'Geist Mono', monospace" font-weight="800">O(1)</text>
+        <text x="344" y="102" fill="rgba(255,255,255,0.65)" font-size="12" font-family="'Geist Mono', monospace">push</text>
+        <text x="344" y="118" fill="rgba(255,255,255,0.65)" font-size="12" font-family="'Geist Mono', monospace">pop</text>
         <!-- Memory addresses -->
-        <text x="99"  y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="monospace">0x00</text>
-        <text x="165" y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="monospace">0x08</text>
-        <text x="231" y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="monospace">0x10</text>
-        <text x="297" y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="monospace">0x18</text>
-        <text x="200" y="170" text-anchor="middle" fill="rgba(255,255,255,0.50)" font-size="14" font-family="monospace">contiguous memory layout</text>
+        <text x="99"  y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="'Geist Mono', monospace">0x00</text>
+        <text x="165" y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="'Geist Mono', monospace">0x08</text>
+        <text x="231" y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="'Geist Mono', monospace">0x10</text>
+        <text x="297" y="128" text-anchor="middle" fill="rgba(136,170,255,0.55)" font-size="10" font-family="'Geist Mono', monospace">0x18</text>
+        <text x="200" y="170" text-anchor="middle" fill="rgba(255,255,255,0.50)" font-size="14" font-family="'Geist Mono', monospace">contiguous memory layout</text>
       </svg>
       <p class="ph-text">Write code and click <strong style="color:{ACCENT}">▶ Visualize</strong> to see arrays in action</p>
     </div>
@@ -292,10 +292,10 @@
   /* Array cards */
   .arr-card      { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .arr-card-hdr  { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .arr-card-title { font-size:0.88rem; color:#88aaff; font-family:'SF Mono',monospace; font-weight:700; }
-  .arr-card-len  { margin-left:auto; font-size:0.72rem; color:#666; font-family:monospace; }
+  .arr-card-title { font-size:0.88rem; color:#88aaff; font-family: var(--font-code); font-weight:700; }
+  .arr-card-len  { margin-left:auto; font-size:0.72rem; color:#666; font-family: var(--font-code); }
 
-  .op-badge      { font-size:0.72rem; padding:3px 9px; border-radius:4px; font-family:monospace; font-weight:700; }
+  .op-badge      { font-size:0.72rem; padding:3px 9px; border-radius:4px; font-family: var(--font-code); font-weight:700; }
   .op-fast       { color:#4ade80; background:#4ade8018; border:1px solid #4ade8030; }
   .op-slow       { color:#f87171; background:#f8717118; border:1px solid #f8717130; }
 
@@ -305,59 +305,59 @@
   .end-left      { border-right:1px solid #1a1a2e; align-items:flex-start; }
   .end-right     { border-left:1px solid #1a1a2e; align-items:flex-end; }
   .end-active    { background:#ffffff06; border-color:#ffffff10 !important; }
-  .end-cost-label { font-size:0.88rem; font-weight:900; font-family:monospace; letter-spacing:1px; }
+  .end-cost-label { font-size:0.88rem; font-weight:900; font-family: var(--font-code); letter-spacing:1px; }
   .end-ops       { display:flex; flex-direction:column; gap:2px; }
-  .end-ops span  { font-size:0.72rem; font-family:monospace; letter-spacing:0.3px; }
-  .end-arrow     { font-size:0.65rem; font-family:monospace; letter-spacing:0.2px; white-space:nowrap; }
+  .end-ops span  { font-size:0.72rem; font-family: var(--font-code); letter-spacing:0.3px; }
+  .end-arrow     { font-size:0.65rem; font-family: var(--font-code); letter-spacing:0.2px; white-space:nowrap; }
 
   .end-middle    { flex:1; display:flex; align-items:center; justify-content:center; padding:0 6px; }
   .memory-strip  { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
   .mem-addr      { display:flex; align-items:center; justify-content:center; width:40px; height:28px; border:1px solid rgba(136,170,255,0.25); border-radius:4px; background:#08080e; }
-  .mem-addr-val  { font-size:0.6rem; color:rgba(136,170,255,0.65); font-family:monospace; }
-  .mem-empty     { font-size:0.65rem; color:rgba(255,255,255,0.25); font-family:monospace; }
+  .mem-addr-val  { font-size:0.6rem; color:rgba(136,170,255,0.65); font-family: var(--font-code); }
+  .mem-empty     { font-size:0.65rem; color:rgba(255,255,255,0.25); font-family: var(--font-code); }
 
   /* Array cells */
   .arr-cells     { display:flex; flex-wrap:wrap; gap:6px; padding:10px; }
   .arr-cell      { display:flex; flex-direction:column; align-items:center; background:#08080e; border:1px solid #1a1a2e; border-radius:6px; padding:6px 12px; min-width:58px; transition:all 0.3s; }
   .cell-hl       { border-color:#88aaff66; background:#88aaff12; box-shadow:0 0 10px #88aaff22, inset 0 0 0 1px #88aaff33; }
   .cell-scan     { border-color:#a78bfa22; }
-  .cell-idx      { font-size:0.62rem; color:#555; font-family:monospace; }
-  .cell-val      { font-size:0.88rem; font-weight:700; font-family:'SF Mono',monospace; }
-  .arr-empty     { font-size:0.72rem; color:#2a2a3e; padding:8px; font-family:monospace; }
+  .cell-idx      { font-size:0.62rem; color:#555; font-family: var(--font-code); }
+  .cell-val      { font-size:0.88rem; font-weight:700; font-family: var(--font-code); }
+  .arr-empty     { font-size:0.72rem; color:#2a2a3e; padding:8px; font-family: var(--font-code); }
 
   /* Shift panel */
   .shift-panel   { background:#f8717108; border-top:1px solid #f8717122; padding:8px 12px; }
-  .shift-title   { font-size:0.62rem; color:#f87171; font-family:monospace; letter-spacing:0.3px; text-transform:uppercase; display:block; margin-bottom:6px; }
+  .shift-title   { font-size:0.62rem; color:#f87171; font-family: var(--font-code); letter-spacing:0.3px; text-transform:uppercase; display:block; margin-bottom:6px; }
   .shift-steps   { display:flex; gap:8px; flex-wrap:wrap; }
   .shift-step    { display:flex; align-items:center; gap:4px; }
-  .ss-from       { font-size:0.72rem; color:#666; font-family:monospace; }
+  .ss-from       { font-size:0.72rem; color:#666; font-family: var(--font-code); }
   .ss-arrow      { font-size:0.72rem; color:#f87171; }
-  .ss-to         { font-size:0.72rem; color:#f87171; font-family:monospace; font-weight:700; }
-  .ss-more       { font-size:0.65rem; color:#444; font-family:monospace; align-self:center; }
+  .ss-to         { font-size:0.72rem; color:#f87171; font-family: var(--font-code); font-weight:700; }
+  .ss-more       { font-size:0.65rem; color:#444; font-family: var(--font-code); align-self:center; }
 
   /* Scan panel */
   .scan-panel    { background:#a78bfa08; border-top:1px solid #a78bfa22; padding:8px 12px; }
-  .scan-title    { font-size:0.62rem; color:#a78bfa; font-family:monospace; letter-spacing:0.3px; text-transform:uppercase; display:block; margin-bottom:6px; }
+  .scan-title    { font-size:0.62rem; color:#a78bfa; font-family: var(--font-code); letter-spacing:0.3px; text-transform:uppercase; display:block; margin-bottom:6px; }
   .scan-cells    { display:flex; gap:10px; flex-wrap:wrap; }
   .scan-cell     { display:flex; flex-direction:column; align-items:center; gap:2px; }
-  .scan-idx      { font-size:0.65rem; color:#666; font-family:monospace; }
-  .scan-arrow    { font-size:0.6rem; color:#a78bfa; font-family:monospace; }
+  .scan-idx      { font-size:0.65rem; color:#666; font-family: var(--font-code); }
+  .scan-arrow    { font-size:0.6rem; color:#a78bfa; font-family: var(--font-code); }
 
   /* Scalar vars */
   .scalars-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scalars-hdr   { display:flex; align-items:center; gap:6px; padding:8px 12px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .scalars-label { font-size:0.68rem; color:#666; font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+  .scalars-label { font-size:0.68rem; color:#666; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .scalars-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; padding:8px; }
   .sc-box        { background:#08080e; border:1px solid #1a1a2e; border-radius:6px; padding:8px; display:flex; flex-direction:column; gap:3px; transition:all 0.3s; }
   .sc-flash      { border-color:#88aaff44; background:#88aaff08; box-shadow:inset 3px 0 0 #88aaff; }
   .sc-hdr        { display:flex; justify-content:space-between; align-items:center; }
-  .sc-name       { font-size:0.8rem; color:#e0e0e0; font-weight:700; font-family:'SF Mono',monospace; }
-  .sc-type       { font-size:0.6rem; font-weight:600; padding:1px 5px; border-radius:3px; background:#ffffff08; font-family:monospace; }
-  .sc-val        { font-size:0.85rem; font-weight:700; font-family:'SF Mono',monospace; }
+  .sc-name       { font-size:0.8rem; color:#e0e0e0; font-weight:700; font-family: var(--font-code); }
+  .sc-type       { font-size:0.6rem; font-weight:600; padding:1px 5px; border-radius:3px; background:#ffffff08; font-family: var(--font-code); }
+  .sc-val        { font-size:0.85rem; font-weight:700; font-family: var(--font-code); }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.62rem; color:#555; font-family:monospace; }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.62rem; color:#555; font-family: var(--font-code); }
 </style>
