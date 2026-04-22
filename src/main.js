@@ -13,11 +13,10 @@
 import { posthog } from './lib/posthog.js';
 export { posthog };
 
-// Vite `?url` imports with relative paths bypass the package exports
-// restriction on the `geist` package and resolve to the hashed asset
-// path in production (/dev path in development).
-import geistSansUrl   from '../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2?url';
-import geistMonoUrl   from '../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2?url';
+// Fonts are vendored into src/assets/fonts to avoid the `geist` npm package
+// which declares `next` as a peerDep and breaks CI on strict npm versions.
+import geistSansUrl   from './assets/fonts/Geist-Variable.woff2?url';
+import geistMonoUrl   from './assets/fonts/GeistMono-Variable.woff2?url';
 import spaceGroteskUrl from '../node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-700-normal.woff2?url';
 
 function preloadFont(href) {
