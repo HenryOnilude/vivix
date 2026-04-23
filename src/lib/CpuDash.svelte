@@ -1,6 +1,6 @@
 <script>
   /**
-   * CpuDash — reusable CPU dashboard SVG shared by all 8 modules.
+   * CpuDash — reusable CPU dashboard SVG shared by all 12 modules.
    *
    * Props:
    *   sd          — current step data (raw interpreter step)

@@ -545,7 +545,7 @@
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M10 6v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         </span>
         <div class="hl-text">
-          <strong>9 interactive concepts</strong>
+          <strong>12 interactive concepts</strong>
           <span>Variables, loops, functions, closures, async/await, and more</span>
         </div>
       </div>

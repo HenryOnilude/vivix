@@ -53,7 +53,7 @@ https://github.com/user-attachments/assets/40b2d503-50bc-45df-bbc6-b1950e017141
 
 ---
 
-## 9 Interactive Modules
+## 12 Interactive Modules
 
 Each module teaches a core JavaScript concept with a purpose-built visualization:
 
