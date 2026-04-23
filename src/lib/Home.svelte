@@ -1400,14 +1400,53 @@
     .ep-lane-macro  { grid-column: 2 / 3; grid-row: 3 / 4; }
   }
   @media (max-width: 768px) {
-    .stage-wrap { margin-top: 120px; padding: 0 16px; }
-    .stage { min-height: auto; padding: 32px 0; gap: 20px; }
+    /* Fix 2: collapse the 120px + 32px stacked gap between stages into
+       a ~48px inter-stage beat. Mobile viewports don't have the vertical
+       real estate for the desktop breathing room. */
+    .stage-wrap { margin-top: 48px; padding: 0 16px; }
+    .stage { min-height: auto; padding: 8px 0; gap: 16px; }
     .stage-title { font-size: clamp(1.35rem, 5.5vw, 1.8rem); }
     .stage-sub { font-size: 0.88rem; }
     .sr-dashboard { padding: 16px; min-height: 280px; }
     .sr-dash-row { grid-template-columns: 1fr; }
     .sr-zone { min-height: 120px; }
-    .ep-tooltip { font-size: 0.76rem; max-width: 86%; }
+
+    /* Fix 1: the hero snippet's `white-space: pre` would overflow on a
+       ~320–400px viewport. Reducing the font a notch keeps all four
+       lines within the snippet box without horizontal scrolling, which
+       is what was causing "nsole.log" / "tTimeout" edge clipping. */
+    .hero-snippet {
+      font-size: 0.66rem;
+      line-height: 1.65;
+      padding: 12px 14px;
+      max-width: 100%;
+    }
+
+    /* Fix 3: reposition the Epiphany tooltip to sit above the entire
+       event-loop diagram on mobile, rather than centred over the ring
+       where it covers the Microtask/Macrotask queue labels beneath. */
+    .ep-tooltip {
+      font-size: 0.76rem;
+      max-width: 92%;
+      top: 8px;
+      transform: translate(-50%, 0);
+    }
+    .ep-tooltip-arrow { display: none; }
+
+    /* Fix 4: the macro/micro token chips follow MotionPaths authored
+       against the desktop 4-column ep-board grid. On the mobile 2-col
+       stacked layout those coordinates land on top of the queue labels
+       (the "TASK QUEUE" header), so we hide them here — the static
+       rotating ring and labelled lanes still tell the story. */
+    .ep-token-macro, .ep-token-micro { display: none; }
+
+    /* Fix 5: drop the 520px min-height imposed at ≤960px — it creates a
+       tall empty middle band on small phones. Let the grid size to
+       content; the event-loop ring itself already has a fixed 120×120
+       intrinsic size. */
+    .ep-board { min-height: auto; padding: 16px; gap: 12px; }
+    .ep-loop-wrap { min-height: 96px; }
+
     .stage-action-ide-body { font-size: 0.82rem; padding: 22px 16px; }
   }
 
