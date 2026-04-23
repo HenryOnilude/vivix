@@ -85,8 +85,17 @@
     // are authored so they look complete without any animation — the CSS
     // fallback simply skips the pinned intro pan and renders the final
     // frame of each stage inline.
+    // On narrow viewports (≤768px) we skip scrollytelling entirely. The
+    // ScrollTrigger pin-spacers add ~1600px of virtual scroll per stage,
+    // which reads as enormous empty gaps on a phone; the MotionPaths are
+    // authored against desktop grid coordinates and land on top of the
+    // mobile-rearranged labels; and GSAP's inline transforms override the
+    // mobile CSS that positions the Epiphany tooltip. The CSS fallback
+    // (mirrored from prefers-reduced-motion) renders every stage in its
+    // final, legible frame without any motion.
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
     let cancelled = false;
-    if (!prefersReducedMotion) {
+    if (!prefersReducedMotion && !isMobile) {
       (async () => {
         const [{ gsap }, { ScrollTrigger }, { MotionPathPlugin }] = await Promise.all([
           import('gsap'),
@@ -1400,52 +1409,87 @@
     .ep-lane-macro  { grid-column: 2 / 3; grid-row: 3 / 4; }
   }
   @media (max-width: 768px) {
-    /* Fix 2: collapse the 120px + 32px stacked gap between stages into
-       a ~48px inter-stage beat. Mobile viewports don't have the vertical
-       real estate for the desktop breathing room. */
+    /* Collapse the 120px + 32px stacked gap between stages into a ~48px
+       inter-stage beat. Mobile viewports don't have the vertical real
+       estate for the desktop breathing room. */
     .stage-wrap { margin-top: 48px; padding: 0 16px; }
     .stage { min-height: auto; padding: 8px 0; gap: 16px; }
     .stage-title { font-size: clamp(1.35rem, 5.5vw, 1.8rem); }
     .stage-sub { font-size: 0.88rem; }
-    .sr-dashboard { padding: 16px; min-height: 280px; }
-    .sr-dash-row { grid-template-columns: 1fr; }
-    .sr-zone { min-height: 120px; }
 
-    /* Fix 1: the hero snippet's `white-space: pre` would overflow on a
-       ~320–400px viewport. Reducing the font a notch keeps all four
-       lines within the snippet box without horizontal scrolling, which
-       is what was causing "nsole.log" / "tTimeout" edge clipping. */
+    /* Clear the ~70px iOS URL bar when headings are scrolled into view. */
+    .stage-head { scroll-margin-top: 80px; }
+
+    /* Because scrollytelling is disabled on mobile (see Home.svelte JS —
+       GSAP skipped when innerWidth ≤ 768), we force every stage into
+       its final, legible frame here. This mirrors the prefers-reduced-
+       motion fallback below. Without this block the dashboard stays
+       blurred at opacity 0.2 and tokens/tooltip stay hidden. */
+    .sr-dashboard { filter: none !important; opacity: 1 !important; transform: none !important; padding: 16px; min-height: 280px; }
+    .sr-dash-row  { grid-template-columns: 1fr; }
+    .sr-zone      { min-height: 120px; }
+    .sr-line      { opacity: 1 !important; }
+    /* The "log" token follows a MotionPath authored for the desktop
+       split-pane; on mobile it lands on top of the TASK QUEUE label.
+       Hide it — the highlighted lines + stack-frame chip tell the story. */
+    .sr-token     { display: none !important; }
+
+    /* Hero snippet — cap width, let it scroll rather than hard-clip. */
     .hero-snippet {
       font-size: 0.66rem;
       line-height: 1.65;
       padding: 12px 14px;
       max-width: 100%;
+      overflow-x: auto;
     }
 
-    /* Fix 3: reposition the Epiphany tooltip to sit above the entire
-       event-loop diagram on mobile, rather than centred over the ring
-       where it covers the Microtask/Macrotask queue labels beneath. */
+    /* Code blocks inside the Stage 2 & 3 window-chromes must scroll
+       horizontally rather than being hard-clipped by the shell. The
+       shell itself has overflow:hidden for its rounded corners, so we
+       ensure the inner <pre> is the scroll container with min-width:0
+       so flex/grid parents don't force it wider than the viewport. */
+    .sr-code-shell { max-width: 100%; }
+    .sr-code       {
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      font-size: 0.78rem;
+      padding: 16px 14px;
+    }
+
+    /* Stage 3 — Epiphany tooltip. GSAP is off on mobile so the tooltip
+       otherwise stays at opacity 0. Take it out of absolute positioning,
+       span it across the grid, and place it as a normal flow child
+       AFTER the Microtask/Macrotask row so it never covers the diagram. */
     .ep-tooltip {
-      font-size: 0.76rem;
-      max-width: 92%;
-      top: 8px;
-      transform: translate(-50%, 0);
+      position: static !important;
+      transform: none !important;
+      top: auto;
+      left: auto;
+      grid-column: 1 / -1;
+      grid-row: auto;
+      max-width: 100%;
+      margin-top: 4px;
+      font-size: 0.78rem;
+      opacity: 1 !important;
     }
     .ep-tooltip-arrow { display: none; }
 
-    /* Fix 4: the macro/micro token chips follow MotionPaths authored
-       against the desktop 4-column ep-board grid. On the mobile 2-col
-       stacked layout those coordinates land on top of the queue labels
-       (the "TASK QUEUE" header), so we hide them here — the static
-       rotating ring and labelled lanes still tell the story. */
-    .ep-token-macro, .ep-token-micro { display: none; }
+    /* Motion-path tokens in Stage 3 — same rationale as sr-token. */
+    .ep-token-macro, .ep-token-micro { display: none !important; }
 
-    /* Fix 5: drop the 520px min-height imposed at ≤960px — it creates a
-       tall empty middle band on small phones. Let the grid size to
-       content; the event-loop ring itself already has a fixed 120×120
-       intrinsic size. */
-    .ep-board { min-height: auto; padding: 16px; gap: 12px; }
+    /* Drop the 520px min-height imposed at ≤960px — it creates a tall
+       empty middle band. Let the grid size to content; the event-loop
+       ring itself already has a fixed 120×120 intrinsic size. */
+    .ep-board     { min-height: auto; padding: 16px; gap: 12px; }
     .ep-loop-wrap { min-height: 96px; }
+    .ep-loop      { animation: none; }
+
+    /* Stage 4 — force peak/CTA visible since GSAP isn't running. */
+    .stage-peak-pulse { display: none; }
+    .stage-peak-line  { opacity: 1 !important; }
+    .stage-action-cta { opacity: 1 !important; transform: none !important; }
 
     .stage-action-ide-body { font-size: 0.82rem; padding: 22px 16px; }
   }
