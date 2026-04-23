@@ -1486,9 +1486,23 @@
     .ep-loop-wrap { min-height: 96px; }
     .ep-loop      { animation: none; }
 
-    /* Stage 4 — force peak/CTA visible since GSAP isn't running. */
+    /* Stage 4 — force peak/CTA visible since GSAP isn't running.
+       Desktop positions `.stage-peak-line` absolutely on top of
+       `.stage-action-cta` (the two elements share the same slot). On
+       mobile with no animations that becomes a literal text overlap —
+       "The engine is no longer invisible." sitting on top of "Now try
+       it with your own code." Convert the peak line to normal flow with
+       a 24px gap so the two read as a two-line header. */
     .stage-peak-pulse { display: none; }
-    .stage-peak-line  { opacity: 1 !important; }
+    .stage-peak-line  {
+      position: static !important;
+      top: auto;
+      left: auto;
+      transform: none !important;
+      white-space: normal;
+      margin: 0 0 24px;
+      opacity: 1 !important;
+    }
     .stage-action-cta { opacity: 1 !important; transform: none !important; }
 
     .stage-action-ide-body { font-size: 0.82rem; padding: 22px 16px; }
@@ -2601,6 +2615,13 @@
     .hl-icon { width: 32px; height: 32px; }
     .demo-shell { margin-top: 28px; }
     .demo-body { flex-direction: column; }
+
+    /* Desktop fixes .demo-viz at 220px (right rail). Once .demo-body
+       flips to column the viz panel is still 220px wide — so the heap
+       memory cards (res, msg) render left-aligned against a much wider
+       parent. Stretch the viz to the full column width so its children
+       (heap cards, CPU row, stack) centre naturally within the shell. */
+    .demo-viz { width: 100%; }
 
     .modules-grid {
       grid-template-columns: 1fr;
