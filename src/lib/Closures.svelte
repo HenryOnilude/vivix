@@ -133,6 +133,11 @@
   }
 </script>
 
+<svelte:head>
+  <title>JavaScript Closure Memory & Scope Tracer | Vivix</title>
+  <meta name="description" content="See how JavaScript closures capture variables in memory. Watch the scope chain form in real-time and understand why closures work the way they do." />
+</svelte:head>
+
 <!-- ── Closures module ─────────────────────────────────────────────────────── -->
 <ModuleShell
   {examples}

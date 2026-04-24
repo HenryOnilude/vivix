@@ -24,6 +24,11 @@
   }
 </script>
 
+<svelte:head>
+  <title>JavaScript Variable Scope & Heap Visualizer | Vivix</title>
+  <meta name="description" content="See exactly where JavaScript variables are stored in heap memory. Step through every declaration and watch the engine allocate memory in real-time." />
+</svelte:head>
+
 <!-- ── Variables module ─────────────────────────────────────────────────── -->
 <ModuleShell
   {examples}

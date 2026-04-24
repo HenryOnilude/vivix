@@ -262,6 +262,11 @@
   const hasWebGPU = typeof navigator !== 'undefined' && 'gpu' in navigator;
 </script>
 
+<svelte:head>
+  <title>Custom JavaScript Execution Tracer & Visualizer | Vivix</title>
+  <meta name="description" content="Paste any JavaScript and watch the engine execute it step by step. Trace your own code through the call stack, heap memory, and event loop." />
+</svelte:head>
+
 <div class="ff-wrap">
 
   <!-- ── LLM banner ──────────────────────────────────────────────────

@@ -22,8 +22,8 @@ const BASE_URL  = 'https://vivix.dev'; // Update when you have a real domain
 const MODULES = [
   {
     slug: 'variables',
-    title: 'JavaScript Variables & Memory Visualizer',
-    description: 'Watch how JavaScript allocates memory for variables. Step through let, const, and reassignment — see V8 store numbers, strings, and booleans in real time.',
+    title: 'JavaScript Variable Scope & Heap Visualizer',
+    description: 'See exactly where JavaScript variables are stored in heap memory. Step through every declaration and watch the engine allocate memory in real-time.',
     h1: 'See How JavaScript Variables Work',
     body: `<p>JavaScript variables are the building blocks of every program. But what actually happens when you write <code>let x = 42</code>?</p>
 <p>This interactive visualizer shows you step-by-step how the V8 engine:</p>
@@ -38,8 +38,8 @@ const MODULES = [
   },
   {
     slug: 'if-gate',
-    title: 'JavaScript If/Else Conditionals Visualizer',
-    description: 'See how JavaScript evaluates conditions and chooses branches. Watch the CPU compare values, evaluate boolean expressions, and execute the correct code path.',
+    title: 'JS Branching Logic & Condition Visualizer',
+    description: 'Watch how the JavaScript engine evaluates conditions and processes if-else branching. See exactly which path the engine takes and why.',
     h1: 'See How JavaScript Conditionals Work',
     body: `<p>Conditional logic is how programs make decisions. But how does the engine actually evaluate <code>if (x > 10)</code>?</p>
 <p>This visualizer shows the complete decision-making process:</p>
@@ -53,8 +53,8 @@ const MODULES = [
   },
   {
     slug: 'for-loop',
-    title: 'JavaScript For Loop Visualizer — Watch Iteration Step by Step',
-    description: 'Visualize how JavaScript for loops iterate. See the initialization, condition check, body execution, and update phases animated in real time.',
+    title: 'Step-by-Step JavaScript Loop Execution Visualizer',
+    description: 'Watch how the JavaScript engine processes for loops instruction by instruction. See the call stack and memory update with every iteration.',
     h1: 'See How JavaScript Loops Iterate',
     body: `<p>Loops are where most beginners get confused. What does <code>i++</code> actually do? When does the condition get checked?</p>
 <p>This visualizer breaks down each phase:</p>
@@ -69,8 +69,8 @@ const MODULES = [
   },
   {
     slug: 'function',
-    title: 'JavaScript Functions & Call Stack Visualizer',
-    description: 'Watch the JavaScript call stack grow and shrink. See how arguments are passed, return values travel back, and stack frames are created and destroyed.',
+    title: 'JS Call Stack & Execution Context Visualizer',
+    description: 'Visualize how JavaScript functions create execution contexts and push onto the call stack. See exactly what happens when a function returns.',
     h1: 'See How JavaScript Functions Execute',
     body: `<p>Functions are the core abstraction in JavaScript. But what happens under the hood when you call one?</p>
 <p>This visualizer shows:</p>
@@ -84,8 +84,8 @@ const MODULES = [
   },
   {
     slug: 'array',
-    title: 'JavaScript Array Visualizer — See Memory Layout',
-    description: 'Visualize how JavaScript arrays are stored in contiguous memory. Watch push, pop, splice, map, and filter operations animated step by step.',
+    title: 'Visualizing JavaScript Array Memory & Operations',
+    description: 'Step through JavaScript array operations and watch memory allocation in real-time. See exactly how the engine handles array methods.',
     h1: 'See How JavaScript Arrays Work in Memory',
     body: `<p>Arrays in JavaScript are more complex than they appear. How does <code>push()</code> grow the array? What happens during <code>splice()</code>?</p>
 <p>This visualizer reveals:</p>
@@ -99,8 +99,8 @@ const MODULES = [
   },
   {
     slug: 'objects',
-    title: 'JavaScript Objects & Hash Maps Visualizer',
-    description: 'See how JavaScript objects use hash maps for O(1) property access. Watch key-value pairs being stored, accessed, and deleted in real time.',
+    title: 'JavaScript Object Allocation & Heap Visualizer',
+    description: 'See how JavaScript objects are allocated and stored in heap memory. Watch property assignment and object creation at the engine level.',
     h1: 'See How JavaScript Objects Store Data',
     body: `<p>Objects are JavaScript's most flexible data structure. But how does <code>obj.name</code> find the value so quickly?</p>
 <p>This visualizer shows:</p>
@@ -129,8 +129,8 @@ const MODULES = [
   },
   {
     slug: 'async',
-    title: 'JavaScript Async/Await & Event Loop Visualizer',
-    description: 'Watch the JavaScript event loop in action. See how async/await, Promises, and the microtask queue work together — animated step by step.',
+    title: 'Async/Await & Microtask Queue Visualizer',
+    description: 'Watch async/await execution step by step. See how the event loop, microtask queue, and call stack interact when JavaScript processes promises.',
     h1: 'See How Async JavaScript Actually Works',
     body: `<p>Async JavaScript is the #1 source of confusion for intermediate developers. What does <code>await</code> actually do?</p>
 <p>This visualizer shows the complete async execution model:</p>
@@ -144,8 +144,8 @@ const MODULES = [
   },
   {
     slug: 'closures',
-    title: 'JavaScript Closures & Scope Visualizer',
-    description: 'Finally understand closures. Watch scope boxes nest inside each other — see which variables are captured, why they persist, and how closures actually work.',
+    title: 'JavaScript Closure Memory & Scope Tracer',
+    description: 'See how JavaScript closures capture variables in memory. Watch the scope chain form in real-time and understand why closures work the way they do.',
     h1: 'See How JavaScript Closures Work',
     body: `<p>Closures are one of the most powerful — and misunderstood — concepts in JavaScript. This visualizer makes them obvious.</p>
 <p>Watch in real time as:</p>
@@ -157,6 +157,22 @@ const MODULES = [
 </ul>
 <p><strong>If you've ever been confused by closures in a job interview</strong>, spend 2 minutes stepping through the examples here.</p>`,
     keywords: 'JavaScript closures, scope, lexical scope, closure explained, learn JavaScript closures',
+  },
+  {
+    slug: 'free-form',
+    title: 'Custom JavaScript Execution Tracer & Visualizer',
+    description: 'Paste any JavaScript and watch the engine execute it step by step. Trace your own code through the call stack, heap memory, and event loop.',
+    h1: 'Run Your Own JavaScript Through the Engine',
+    body: `<p>Every other Vivix module teaches one specific concept with curated examples. Free-form mode turns the visualiser loose on <em>any</em> code you paste.</p>
+<p>Paste a snippet from a tutorial, a job-interview question, a gnarly bug you're debugging — and watch the engine:</p>
+<ul>
+  <li>Push and pop stack frames as functions are called and return</li>
+  <li>Allocate variables and objects in heap memory, byte-by-byte</li>
+  <li>Schedule tasks on the event loop when you hit <code>await</code>, <code>setTimeout</code>, or <code>.then()</code></li>
+  <li>Detect patterns — recursion, closures, async/await, hoisting — and narrate what's happening</li>
+</ul>
+<p>No install, no account, no sign-up. The interpreter runs entirely in your browser.</p>`,
+    keywords: 'JavaScript execution tracer, custom code visualizer, JS debugger, step through JavaScript, event loop visualizer, learn JavaScript by running code',
   },
 ];
 

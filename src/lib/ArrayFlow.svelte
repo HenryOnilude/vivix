@@ -54,6 +54,11 @@
   }
 </script>
 
+<svelte:head>
+  <title>Visualizing JavaScript Array Memory & Operations | Vivix</title>
+  <meta name="description" content="Step through JavaScript array operations and watch memory allocation in real-time. See exactly how the engine handles array methods." />
+</svelte:head>
+
 <!-- ── ArrayFlow module ─────────────────────────────────────────────────── -->
 <ModuleShell
   {examples}

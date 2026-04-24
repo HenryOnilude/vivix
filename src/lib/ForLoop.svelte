@@ -47,6 +47,11 @@
   }
 </script>
 
+<svelte:head>
+  <title>Step-by-Step JavaScript Loop Execution Visualizer | Vivix</title>
+  <meta name="description" content="Watch how the JavaScript engine processes for loops instruction by instruction. See the call stack and memory update with every iteration." />
+</svelte:head>
+
 <ModuleShell
   {examples}
   accent={ACCENT}

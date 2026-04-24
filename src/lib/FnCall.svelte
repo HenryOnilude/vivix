@@ -45,6 +45,11 @@
   }
 </script>
 
+<svelte:head>
+  <title>JS Call Stack & Execution Context Visualizer | Vivix</title>
+  <meta name="description" content="Visualize how JavaScript functions create execution contexts and push onto the call stack. See exactly what happens when a function returns." />
+</svelte:head>
+
 <!-- ── FnCall module ───────────────────────────────────────────────────────── -->
 <ModuleShell
   {examples}

@@ -38,6 +38,11 @@
   }
 </script>
 
+<svelte:head>
+  <title>JavaScript Object Allocation & Heap Visualizer | Vivix</title>
+  <meta name="description" content="See how JavaScript objects are allocated and stored in heap memory. Watch property assignment and object creation at the engine level." />
+</svelte:head>
+
 <!-- ── ObjExplorer module ───────────────────────────────────────────────── -->
 <ModuleShell
   {examples}

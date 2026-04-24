@@ -49,6 +49,11 @@
   }
 </script>
 
+<svelte:head>
+  <title>Async/Await & Microtask Queue Visualizer | Vivix</title>
+  <meta name="description" content="Watch async/await execution step by step. See how the event loop, microtask queue, and call stack interact when JavaScript processes promises." />
+</svelte:head>
+
 <!-- ── AsyncAwait module ──────────────────────────────────────────────────── -->
 <ModuleShell
   {examples}

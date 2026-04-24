@@ -77,6 +77,11 @@
   }
 </script>
 
+<svelte:head>
+  <title>JS Branching Logic & Condition Visualizer | Vivix</title>
+  <meta name="description" content="Watch how the JavaScript engine evaluates conditions and processes if-else branching. See exactly which path the engine takes and why." />
+</svelte:head>
+
 <ModuleShell
   {examples}
   accent={ACCENT}
