@@ -8,10 +8,6 @@
    * than arbitrary switches. Writes through depth-level.js which sets
    * `<html data-depth="...">`; CSS rules across the app consume this.
    *
-   * Also renders a one-line first-visit hint ("New to JavaScript
-   * internals? Start with Learn.") that persists dismissal in
-   * localStorage, so returning users never see it again.
-   *
    * Usage: <DepthToggle accent={accent} />
    */
   import { onMount, onDestroy } from 'svelte';
@@ -20,25 +16,10 @@
   /** @type {{ accent?: string }} */
   let { accent = '#00FFD1' } = $props();
 
-  const HINT_KEY = 'vivix-depth-hint-dismissed';
-
   let current = $state(getLevel());
-  let hintVisible = $state(readHintState());
-
-  function readHintState() {
-    try { return localStorage.getItem(HINT_KEY) !== '1'; }
-    catch { return true; }
-  }
-
-  function dismissHint() {
-    hintVisible = false;
-    try { localStorage.setItem(HINT_KEY, '1'); } catch { /* storage unavailable */ }
-  }
 
   function onChange(lvl) {
     current = setLevel(lvl);
-    // Any interaction with the toggle counts as acknowledging it — auto-dismiss the hint.
-    if (hintVisible) dismissHint();
   }
 
   // Stay in sync if another component / tab changes the level.
@@ -66,19 +47,6 @@
       </button>
     {/each}
   </div>
-
-  {#if hintVisible}
-    <!-- First-visit hint: inline, dismissible, never modal. -->
-    <p class="depth-hint" role="note">
-      <span class="depth-hint-text">New to JavaScript internals? Start with <strong>Learn</strong>.</span>
-      <button
-        type="button"
-        class="depth-hint-close"
-        onclick={dismissHint}
-        aria-label="Dismiss hint"
-      >×</button>
-    </p>
-  {/if}
 </div>
 
 <style>
@@ -171,54 +139,13 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
-  /* ── First-visit hint ────────────────────────────────────────────────
-     One-line, text-only (no modal), dismissible via × and auto-dismissed
-     the moment the user picks any depth level. */
-  .depth-hint {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin: 0;
-    padding: 3px 8px;
-    border-radius: 6px;
-    background: color-mix(in srgb, var(--acc) 6%, transparent);
-    border: 1px solid color-mix(in srgb, var(--acc) 18%, transparent);
-    font-size: 0.68rem;
-    color: rgba(255, 255, 255, 0.62);
-    line-height: 1.3;
-    animation: depth-hint-in 0.18s ease both;
-  }
-  .depth-hint-text strong {
-    color: var(--acc);
-    font-weight: 700;
-  }
-  .depth-hint-close {
-    border: none;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.45);
-    font-size: 0.95rem;
-    line-height: 1;
-    padding: 0 2px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: color 0.15s ease;
-  }
-  .depth-hint-close:hover { color: rgba(255, 255, 255, 0.95); }
-
-  @keyframes depth-hint-in {
-    from { opacity: 0; transform: translateY(-2px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
   @media (max-width: 720px) {
     .depth-opt { padding: 5px 9px; gap: 6px; }
     .depth-label { font-size: 0.74rem; }
     .depth-desc { display: none; }
-    .depth-hint { display: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .depth-opt, .depth-dot, .depth-hint-close { transition: none; }
-    .depth-hint { animation: none; }
+    .depth-opt, .depth-dot { transition: none; }
   }
 </style>
