@@ -126,6 +126,14 @@
   /** @type {'code'|'visual'} Mobile tab switcher */
   let mobileTab  = $state('code');
 
+  /** Complexity card open state — default closed; persists to localStorage so
+   *  power users open it once and stay open across visits. */
+  const CX_OPEN_KEY = 'vivix-cx-open';
+  let cxOpen = $state(false);
+  $effect(() => {
+    try { localStorage.setItem(CX_OPEN_KEY, cxOpen ? '1' : '0'); } catch { /* ignore */ }
+  });
+
   // ── Web Worker for off-main-thread interpretation ──
   let interpWorker = null;
 
@@ -301,6 +309,9 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKey);
+
+    // Restore complexity-card open state from localStorage (default closed).
+    try { cxOpen = localStorage.getItem(CX_OPEN_KEY) === '1'; } catch { /* ignore */ }
 
     // Analytics: record that this module was opened. We only send the
     // identifier (never code), and guard against missing routeKey.
@@ -625,12 +636,17 @@
           </div>
         {/if}
 
-        <!-- COMPLEXITY ANALYSIS — Explore level and above -->
-        <div class="cx-card dl-explore">
-          <div class="cx-hdr">
+        <!-- COMPLEXITY ANALYSIS — Explore level and above; collapsible, default closed -->
+        <details class="cx-card dl-explore" bind:open={cxOpen}>
+          <summary class="cx-hdr">
             <span class="cx-title">COMPLEXITY ANALYSIS<span class="panel-subtitle">performance cost</span></span>
-            {#if cx.dynamic}<span class="cx-live-badge">live</span>{/if}
-          </div>
+            <span class="cx-hdr-right">
+              {#if cx.dynamic}<span class="cx-live-badge">live</span>{/if}
+              <svg class="cx-chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </summary>
           <div class="cx-chart">
             {#each COMPLEXITY_BARS as b}
               {@const active = cx.time === b.label || (b.label === 'O(1)' && cx.time === 'O(1)')}
@@ -683,7 +699,7 @@
               </span>
             {/if}
           </div>
-        </div>
+        </details>
 
       {:else if !hasRun}
         <!-- Blank canvas before Visualize is clicked — no decorative
@@ -1034,13 +1050,21 @@
     background: color-mix(in srgb, var(--acc) 5%, var(--a11y-surface2));
     border-bottom: 1px solid color-mix(in srgb, var(--acc) 12%, rgba(255,255,255,0.04));
     position:relative;
+    /* <summary> as flex container — strip default disclosure marker. */
+    cursor:pointer; list-style:none; user-select:none;
   }
+  .cx-hdr::-webkit-details-marker { display:none; }
   .cx-hdr::before {
     content:'';
     position:absolute;
     top:0; left:0; right:0; height:1.5px;
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 50%, transparent), transparent);
   }
+  .cx-hdr-right { display:inline-flex; align-items:center; gap:6px; color:rgba(255,255,255,0.55); }
+  .cx-chevron   { transition: transform 0.18s ease; flex-shrink:0; }
+  .cx-card[open] > .cx-hdr .cx-chevron { transform: rotate(180deg); }
+  /* When closed, hide the bottom border so the card reads as a single pill. */
+  .cx-card:not([open]) > .cx-hdr { border-bottom-color: transparent; }
   .cx-title      { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .cx-live-badge { font-size:0.42rem; color:#4ade80; border:1px solid #4ade8044; border-radius:3px; padding:1px 5px; font-family: var(--font-code); letter-spacing:0.5px; }
   .cx-chart      { display:flex; align-items:flex-end; gap:4px; height:76px; padding:8px 10px 0; }

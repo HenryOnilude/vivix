@@ -35,7 +35,7 @@ export function executePromiseChainCode(code) {
 
   snap(-1, 0, 'start',
     'Promise chain execution begins.\n\nKey concepts:\n  • .then() registers a microtask callback\n  • Microtasks run after all synchronous code finishes\n  • Each .then() returns a NEW Promise — enabling chaining\n  • Values flow through the chain as return values\n  • .catch() handles any rejection in the chain above it\n\nEngine ready. Call stack: [Global]',
-    'Ready | Microtask queue: empty'
+    'Ready · queue empty'
   );
 
   let li = 0;

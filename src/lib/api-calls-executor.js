@@ -33,7 +33,7 @@ export function executeApiCallsCode(code) {
 
   snap(-1, 0, 'start',
     'API call execution begins.\n\nKey concepts:\n  • fetch() returns a Promise — it does NOT block the thread\n  • await suspends the current function, freeing the event loop\n  • Two awaits needed: fetch() for the Response, res.json() for the body\n  • Network errors throw at the fetch() level\n  • HTTP errors (4xx/5xx) do NOT throw — check res.ok\n\nEngine ready. Call stack: [Global]',
-    'Ready | No requests | Event loop: idle'
+    'Ready · stack: [Global]'
   );
 
   let li = 0;

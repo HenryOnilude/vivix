@@ -34,7 +34,7 @@ export function executeEventListenerCode(code) {
 
   snap(-1, 0, 'start',
     'Event listener execution begins.\n\nKey concepts:\n  • Events are asynchronous signals — they fire from the event queue\n  • addEventListener() registers a callback for a specific event type\n  • When an event fires, JS calls all matching listeners synchronously\n  • removeEventListener() cleans up — prevents memory leaks\n  • { once: true } auto-removes the listener after one fire\n\nEngine ready. Call stack: [Global]',
-    'Ready | Event queue: empty | No listeners registered'
+    'Ready · no listeners'
   );
 
   let li = 0;

@@ -25,7 +25,7 @@ export function executeAsyncCode(code) {
     callStack: [...callStack], eventLoop: [...eventLoop], microTasks: [...microTasks],
     highlight: null, phase: 'start',
     brain: 'The engine initialises the call stack with a single Global frame and sets the event loop to idle. A single-threaded runtime can execute only one frame at a time, so V8 relies on suspending and resuming frames rather than spawning threads — async/await is the syntax that controls this state machine. The async function declaration coming next registers the coroutine the engine will later suspend.',
-    memLabel: 'Engine ready | Call Stack: [Global] | Event Loop: idle',
+    memLabel: 'Ready · stack: [Global]',
     memOps, awaits, promises, timeline: [...timeline],
   });
 

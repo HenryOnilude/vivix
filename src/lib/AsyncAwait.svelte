@@ -68,8 +68,10 @@
 >
 
   {#snippet topPanel(sd)}
-    <!-- Brain / engine explanation -->
-    <div class="brain-panel">
+    <!-- Brain / engine explanation — Deep Dive only.
+         On Learn/Explore the call-stack, event-loop, and microtask-queue
+         panels below carry the same information visually. -->
+    <div class="brain-panel dl-deep">
       <div class="brain-hdr">
         <span class="brain-title">Inside the Engine</span>
         {#if sd.phase === 'suspended'}
