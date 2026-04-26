@@ -24,8 +24,8 @@ describe('Home.svelte', () => {
   it('renders all module cards', () => {
     render(Home);
     const cards = screen.getAllByRole('listitem');
-    // 9 module cards (hero features are now divs, not list items)
-    expect(cards.length).toBe(9);
+    // 12 module cards (hero features are divs, not list items)
+    expect(cards.length).toBe(12);
   });
 
   it('renders correct module titles', () => {

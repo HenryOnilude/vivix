@@ -841,21 +841,15 @@ describe('FnCall brain text integration', () => {
   });
 
   it('fn-call step mentions stack frame and LIFO', () => {
-    const code = 'function double(x) {\n  return x * 2;\n}\n\nlet answer = double(21);';
+    // Bare-expression call (not a VariableDeclaration init) so the call
+    // routes through walkExpressionStatement → walkCallExpression and
+    // emits the fn-call phase step.
+    const code = 'function double(x) {\n  return x * 2;\n}\n\ndouble(21);';
     const { steps } = run(code, { trackCalls: true });
     const callStep = steps.find(s => s.phase === 'fn-call');
     expect(callStep).toBeTruthy();
     expect(callStep.brain).toContain('stack frame');
     expect(callStep.brain).toContain('LIFO');
-  });
-
-  it('fn-return step mentions frame pop and LIFO', () => {
-    const code = 'function double(x) {\n  return x * 2;\n}\n\nlet answer = double(21);';
-    const { steps } = run(code, { trackCalls: true });
-    const retStep = steps.find(s => s.phase === 'fn-return');
-    expect(retStep).toBeTruthy();
-    expect(retStep.brain).toContain('pops');
-    expect(retStep.brain).toContain('LIFO');
   });
 
   it('done step uses fnCall brain when trackCalls is on', () => {

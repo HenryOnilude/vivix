@@ -1,195 +1,118 @@
-<div align="center">
-
 # Vivix
-
 ### See Inside JavaScript As It Thinks
 
-#### Instruction-level JavaScript execution with simultaneous heap visualization
+Instruction-level JavaScript execution visualizer mapping the call stack, heap memory, and event loop in real time.
 
-<img width="1319" height="844" alt="Screenshot 2026-04-10 at 17 26 56" src="https://github.com/user-attachments/assets/a9c4435a-2262-4166-8dae-41d7c6c99076" />
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://vivix.dev)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/tests-490%20passing-blue)](https://github.com/HenryOnilude/vivix)
+[![Built with Svelte 5](https://img.shields.io/badge/built%20with-Svelte%205-orange)](https://svelte.dev)
+[![Open Source](https://img.shields.io/badge/open%20source-heart-red)](https://github.com/HenryOnilude/vivix)
 
-Most JavaScript visualizers show you the event loop at a high level. Vivix steps through every individual instruction — subexpression evaluation, heap mutations, stack operations — one tick at a time via the CPU dashboard. No account required, no install, completely free and open source.
+> ⭐ If Vivix helps you understand JavaScript, a star helps other developers find it.
 
-[![Tests](https://img.shields.io/badge/tests-332%20passing-brightgreen)](https://github.com/HenryOnilude/visual-learning-javascript)
-[![Svelte 5](https://img.shields.io/badge/svelte-5-FF3E00?logo=svelte&logoColor=white)](https://svelte.dev)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/HenryOnilude/visual-learning-javascript/pulls)
+<!-- HERO GIF: Add a GIF here showing the asyncFlow or event loop module in action. Recommended dimensions: 1200x675px -->
 
-</div>
+## The Origin Story
 
----
-## What is this?
+"I was using Python Tutor — it's really good but it was only showing the bones. I needed to see the muscles and flesh."
 
-Most JS tutorials tell you what code does. **Vivix shows you.**
+Vivix was built to move beyond high-level syntax explanations. While existing tools provide a logical overview, Vivix provides a physical narrative of how the engine processes code.
 
-https://github.com/user-attachments/assets/e122c133-234b-4c5f-b483-c1ffc928f778
+## Positioning
 
-You write JavaScript, hit play, and step through execution one instruction at a time watching variables appear in heap memory, call stack frames push and pop, byte sizes update, and the CPU dashboard tick through each operation. It's like having X-ray vision for JavaScript.
+- Python Tutor shows **WHAT** your code does.
+- Loupe shows **WHEN** your code does it.
+- Vivix shows **HOW** the machine physically processes it.
 
-**No sign-up. No install. Runs entirely in your browser.**
+## Feature Comparison
 
----
+Vivix is the only tool that visualizes instruction-level execution alongside simultaneous heap memory. Existing tools often lack support for modern asynchronous patterns or physical memory states.
 
-## 🎬 Demo
+| Feature | Vivix | Python Tutor | Loupe | JSV9000 |
+|---|---|---|---|---|
+| Instruction-level stepping | Yes | Yes | No | No |
+| Heap memory visualization | Yes | Partial | No | No |
+| Async/Await support | Yes | No | No | No |
+| Event loop visualization | Yes | No | Yes | Yes |
+| Free-form input | Yes | Yes | Yes | No |
+| No account required | Yes | Yes | Yes | Yes |
 
-https://github.com/user-attachments/assets/40b2d503-50bc-45df-bbc6-b1950e017141
+## 12 Modules + Free-Form Mode
 
----
+**Free-Form Mode** — Paste any JavaScript and watch the engine narrate every step. Pattern detection identifies recursion, closures, async/await, scope chains, hoisting, and prototype patterns automatically.
 
-## What You Get
+1. **varStore** — Variables & Memory: Watch the CPU store values in memory.
+2. **ifGate** — Conditionals: See how true and false control the flow.
+3. **forLoop** — Iteration: Watch counters climb as the loop runs.
+4. **fnCall** — Functions: Values go in, transformations come out.
+5. **arrayFlow** — Array Methods: Elements flow through map, filter, and reduce.
+6. **objExplorer** — Objects & Hash Maps: See key-value pairs stored in hash maps.
+7. **dataStruct** — Data Structures: Stacks, queues, and maps — organized data.
+8. **asyncFlow** — Async / Await: Watch promises resolve on a timeline.
+9. **closureScope** — Closures & Scope: See which variables a closure captures.
+10. **promiseChain** — Promise Methods: Watch .then() and .catch() chain through the microtask queue.
+11. **eventListeners** — DOM Events: See how addEventListener registers callbacks and events dispatch.
+12. **apiCalls** — HTTP & Fetch(): Trace fetch() requests through suspend, response, and parse.
 
-| | Feature | Details |
-|---|---|---|
-| 🔬 | **Step-by-step execution** | Scrub through every instruction with ⟪ ◁ ▷ ⟫ controls |
-| 🧠 | **Live memory view** | Watch variables, types, and byte sizes appear in real time |
-| 📊 | **CPU dashboard** | SVG registers, program counter, operation phase, write counter |
-| 📦 | **Memory map** | See exactly how many bytes each variable occupies |
-| 🔗 | **Shareable URLs** | Share any code + step position via a single link |
-| ⏩ | **Auto-play** | Adjustable speed (0.5x – 4x) with keyboard shortcuts |
-| 📱 | **Mobile responsive** | Stacked layout with Code/Visual tab switcher on small screens |
-| 🎓 | **Guided onboarding** | 4-step tour for first-time users |
-| ♿ | **Accessibility themes** | Default dark, comfort, and dyslexia-friendly modes |
-| 🛡️ | **Infinite loop protection** | 500-step limit with friendly truncation message |
+## Getting Started
 
----
+Vivix runs entirely in the browser at [vivix.dev](https://vivix.dev). Works in all modern browsers — Chrome, Firefox, Safari, and Edge. No account. No install. No configuration.
 
-## 12 Interactive Modules
-
-Each module teaches a core JavaScript concept with a purpose-built visualization:
-
-<img width="945" height="715" alt="Screenshot 2026-04-10 at 17 54 33" src="https://github.com/user-attachments/assets/f1f40866-1f66-4bf7-b967-df7a90ea5f62" />
-
-
-| Module | Concept | What You See |
-|--------|---------|-------------|
-| **varStore** | Variables & Memory | Heap memory slots, byte sizes, type tags |
-| **ifGate** | Conditionals | Branch flowchart — true/false paths light up |
-| **forLoop** | Iteration | Loop ring with iteration counter and body highlighting |
-| **fnCall** | Functions | Call stack frames push/pop, return values flow back |
-| **arrayFlow** | Array Methods | Array cells with index scanning and O(n) cost badges |
-| **objExplorer** | Objects & Hash Maps | Property hash map, key→bucket→O(1) visualization |
-| **dataStruct** | Data Structures | Stack/queue push-pop, Map/Set operations |
-| **asyncFlow** | Async / Await | Event loop, microtask queue, Promise timeline |
-| **closureScope** | Closures & Scope | Nested scope boxes with captured variable highlighting |
-
----
-
-Quick Start
+To run the repository locally:
 
 ```bash
 git clone https://github.com/HenryOnilude/vivix.git
 cd vivix
 npm install
-npm run dev      # → http://localhost:5173
+npm run dev
 ```
 
-```bash
-npm run test     # 332 unit tests
-npm run build    # production build + SEO pages
-```
+The development server will start at http://localhost:5173.
 
----
+## Tech Stack
 
-## 🏗️ How It Works
+- **Framework:** Svelte 5 (using Runes: $state, $derived)
+- **Parser:** Acorn AST
+- **Code Editor:** CodeMirror 6
+- **Animation:** GSAP (GreenSock Animation Platform)
+- **Data Visualization:** D3.js
+- **Build Tool:** Vite 7
 
-```
-Your Code → Acorn Parser → AST → Custom Interpreter → Step Array → Visualizer
-```
+<details>
+<summary><strong>Architecture note — how the AST step stream drives animation</strong></summary>
 
-1. **Acorn** parses user code into an AST
-2. **Custom interpreter** (`interpreter.js`) walks the AST and produces an array of execution steps each step captures line index, variables, memory ops, call stack, phase, and output
-3. **Step controls** let you scrub forward/backward through the step array
-4. **CpuDash** renders each step as an SVG CPU visualization (registers, phase, program counter)
-5. **Module panels** render step-specific data (heap cards, scope chains, array cells, etc.)
+The interpreter runs once per edit inside a Web Worker (`src/lib/interpreter.worker.js`) and produces a flat, immutable array of step snapshots — one per stack push, heap write, loop iteration, or branch evaluation. The UI never re-executes. Scrubbing the timeline, jumping to step 47, or hitting ⟵ at step 300 is a constant-time array index swap into reactive Svelte 5 `$state`.
 
-The interpreter runs in a **Web Worker** for non-blocking execution, with a **500-step limit** to prevent infinite loops.
+That separation is what makes the animation layer possible. When the step index advances, `computeVarDiff` (`src/lib/shell-logic.js`) diffs the current step's `vars` against the previous step's, tagging each binding `new`, `changed`, or `same`. GSAP is then fired imperatively from that diff — a three-stage causal flourish (100 ms source-line pulse → 300 ms particle travel → 200 ms landing with `back.out(1.4)` + 600 ms glow fade, defined in `src/lib/animations.js`). Animations describe *cause* rather than clock time, so scrubbing backwards through an `await` resolution or a microtask-queue drain stays visually consistent instead of unwinding a linear timeline.
 
-### Key Design Decisions
+Two smaller decisions fell out of this shape:
 
-- **No runtime eval** — the interpreter walks the AST directly, so we capture every intermediate state
-- **Shared shell** — `ModuleShell.svelte` handles code editing, step controls, playback, timeline, and keyboard shortcuts; modules only provide the visualization
-- **Accessibility themes** — 3 themes via CSS custom properties (`--a11y-*`)
-- **Hash routing** — SPA with `#/module` routes, no server config needed
-- **Shareable URLs** — base64-encoded code + step index in the URL hash
+- **Selective worker sanitization.** `postMessage` attempts the raw step array first (zero cost); only on `DataCloneError` does the worker run a `needsSanitize` probe and replace functions / symbols / regexps with descriptive placeholders. Closures-in-loops pay the sanitization cost; a `for` over primitives doesn't.
+- **No linear easing, anywhere.** Data doesn't move linearly in the real world, so nothing in Vivix does either. Every animation has a `prefers-reduced-motion` branch that collapses to a single fade.
 
----
+</details>
 
-## 🧰 Tech Stack
+## Testing
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Svelte 5 (runes: `$state`, `$derived`) |
-| Parser | Acorn (ESTree AST) |
-| Code Editor | CodeMirror 6 |
-| Build | Vite 7 |
-| Tests | Vitest + Testing Library + happy-dom (332 tests) |
-| Styling | Custom CSS with CSS custom properties |
+- 490 tests passing
+- Tests cover AST walker logic, async/await step execution, and shared shell utilities.
+- Run tests locally using: `npm run test`
 
----
+## Known Limitations
 
-## 📁 Project Structure
+Vivix is an educational interpreter, not a full JavaScript engine. These trade-offs keep visualizations clear and focused on the concepts that matter most for learning.
 
-```
-src/lib/
-  interpreter.js         ← AST walker, step generator (99 + 71 + 62 tests)
-  async-executor.js      ← async/await step executor (38 tests)
-  shell-logic.js         ← shared step utilities (35 tests)
-  url-state.js           ← shareable URL encoding (20 tests)
-  a11y-theme.js          ← accessibility theme system
-  ModuleShell.svelte     ← shared module layout
-  CodeEditor.svelte      ← CodeMirror 6 wrapper
-  CpuDash.svelte         ← SVG CPU dashboard
-  OnboardingTour.svelte  ← first-run guided tooltips
-  Home.svelte            ← landing page with live demo
-  Variables.svelte       ← varStore module
-  IfGate.svelte          ← ifGate module
-  ForLoop.svelte         ← forLoop module
-  FnCall.svelte          ← fnCall module
-  ArrayFlow.svelte       ← arrayFlow module
-  ObjExplorer.svelte     ← objExplorer module
-  DataStructures.svelte  ← dataStruct module
-  AsyncAwait.svelte      ← asyncFlow module
-  Closures.svelte        ← closureScope module
-scripts/
-  generate-seo-pages.js  ← build-time SEO pages + sitemap
-```
-
----
-
-## ⚠️ Known Limitations
-
-The interpreter is an educational tool, not a full JS engine. A few simplifications:
-
-- **Flat scope** — `let`/`const` inside blocks (if, for, while) share the outer scope. Variables declared in a block are visible outside it. This means the classic "closure in a loop with `let`" pattern behaves like `var` (all closures share the final value).
+- **Flat scope** — `let`/`const` inside blocks (if, for, while) share the outer scope. The classic "closure in a loop with `let`" pattern behaves like `var`.
 - **No `this` in standalone functions** — `this` is only supported for class method calls, not general `this` binding.
-- **Limited built-ins** — supports core methods (`push`, `pop`, `map`, `filter`, `reduce`, `Object.keys`, `Math.*`, etc.) but not the full standard library.
-- **No prototypes or `new` (outside classes)** — constructor functions with `new` are not supported; use the class syntax instead.
+- **Limited built-ins** — supports core methods (`push`, `pop`, `map`, `filter`, `reduce`, `Object.keys`, `Math.*`) but not the full standard library.
+- **No prototypes or `new` outside classes** — use class syntax instead of constructor functions with `new`.
 - **500-step limit** — prevents infinite loops but caps very long programs.
 
-These trade-offs keep the visualizations clear and the codebase manageable while covering the concepts that matter most for learning.
+## Contributing
 
----
+Contributions are welcome across all 12 modules. If you are interested in improving the visualization logic or pattern detection, please follow the tech stack guidelines (Svelte 5 / Acorn) and ensure all tests pass before submitting a PR.
 
-## 🤝 Contributing
+## License
 
-Contributions are welcome! Feel free to open an issue or submit a PR.
-
-```bash
-npm run test     # run before submitting
-```
-
----
-
-## 📄 License
-
-MIT — use it, learn from it, build on it.
-
----
-
-<div align="center">
-
-**Built by [Henry Onilude](https://github.com/HenryOnilude)**
-
-If this helped you understand JavaScript better, consider giving it a ⭐
-
-</div>
+MIT — Free and open source.
