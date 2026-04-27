@@ -65,6 +65,7 @@
     {@const varArr = Object.entries(sd.vars || {})}
     {#if varArr.length > 0}
       {#key sd}
+        {@const isApprox = varArr.some(([, v]) => typeof v === 'string' || (v !== null && typeof v === 'object'))}
         <div class="bytemap-card">
           <div class="bytemap-hdr">
             <svg width="12" height="12" viewBox="0 0 12 12">
@@ -74,7 +75,6 @@
               <rect x="7" y="7" width="4" height="4" rx="1" fill={ACCENT} opacity="0.3"/>
             </svg>
             <span class="bytemap-title">MEMORY MAP</span>
-            {@const isApprox = varArr.some(([, v]) => typeof v === 'string' || (v !== null && typeof v === 'object'))}
             <span class="bytemap-total" title="Total heap memory allocated by your variables">{isApprox ? '~' : ''}{sd.bytes ?? 0}B used so far</span>
           </div>
           <p class="bytemap-caption">Each square = 1 byte of memory. A number always takes 8 bytes. Strings grow with their length.</p>
