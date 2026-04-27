@@ -18,13 +18,49 @@
   let _snapshots = [];
   let _loopBody = [];
   let _loopPhase = 'idle'; // idle | init | condition | body | update | done
+  /** Previous step's vars — captured at interpret-time so each body step can
+   *  display the arithmetic it just performed (e.g. "0 + 1 = 1"). Reset on
+   *  every fresh run via the `start` phase. */
+  let _prevVars = {};
+
+  /** Build "substituted-RHS = result" strings for each body line so beginners
+   *  see the actual arithmetic, e.g. "0 + 1 = 1" then "1 + 2 = 3". Only simple
+   *  single-assignment lines (X = expr) are handled; anything else is skipped. */
+  function deriveCalc(bodyLines, prevVars, curVars) {
+    if (!bodyLines || bodyLines.length === 0) return [];
+    const localVars = { ...prevVars };
+    const out = [];
+    for (const raw of bodyLines) {
+      const line = String(raw).trim();
+      const m = line.match(/^(\w+)\s*=\s*(.+?);?$/);
+      if (!m) continue;
+      const [, lhs, rhs] = m;
+      if (!(lhs in curVars)) continue;
+      const sub = rhs.replace(/\b([a-zA-Z_]\w*)\b/g, (id) => {
+        if (id in localVars) {
+          const v = localVars[id];
+          return typeof v === 'string' ? JSON.stringify(v) : String(v);
+        }
+        return id;
+      });
+      const newV = curVars[lhs];
+      const resStr = typeof newV === 'string' ? JSON.stringify(newV) : String(newV);
+      if (sub !== resStr) out.push(`${sub} = ${resStr}`);
+      localVars[lhs] = newV;
+    }
+    return out;
+  }
 
   function mapStep(s, codeLines) {
     if (s.phase === 'start') {
       _snapshots = [];
       _loopBody = extractLoopBody(codeLines || []);
       _loopPhase = 'idle';
+      _prevVars = {};
     }
+
+    const capturedPrevVars = { ..._prevVars };
+    _prevVars = { ...(s.vars || {}) };
 
     // Track loop phase for the phase indicator
     if (s.phase === 'loop-init')      _loopPhase = 'init';
@@ -43,6 +79,7 @@
       iterHistory:     _snapshots.slice(),
       loopBody:        _loopBody,
       loopPhase:       _loopPhase,
+      prevVars:        capturedPrevVars,
     };
   }
 </script>
@@ -97,13 +134,19 @@
         {@const maxIter  = Math.max(sd.iterHistory ? sd.iterHistory.length : 0, iters, 1)}
         {@const loopVars = Object.entries(sd.vars || {})}
         {@const isDone   = sd.conditionResult === false}
-        {@const r = 52}
-        {@const cx = 74}
-        {@const cy = 80}
+        {@const r = 13}
+        {@const cx = 22}
+        {@const cy = 22}
         {@const circ = 2 * Math.PI * r}
         {@const phase = sd.loopPhase || 'idle'}
         {@const bodyLines = sd.loopBody || []}
         {@const phases = ['init', 'condition', 'body', 'update']}
+        {@const tileCount = Math.max(1, Math.min(loopVars.length, 4))}
+        {@const tileGap = 6}
+        {@const tilesStartY = 52}
+        {@const tileH = Math.min(50, Math.floor((162 - tilesStartY - 4 - tileGap * (tileCount - 1)) / Math.max(tileCount, 1)))}
+        {@const valueFont = Math.min(28, Math.max(14, Math.floor(tileH * 0.55)))}
+        {@const calcs = phase === 'body' ? deriveCalc(bodyLines, sd.prevVars || {}, sd.vars || {}) : []}
         <div class="loop-vis">
           <div class="loop-vis-hdr">
             <svg width="14" height="14" viewBox="0 0 14 14">
@@ -136,69 +179,61 @@
 
           <svg viewBox="0 0 300 162" class="loop-svg">
 
-            <!-- outer glow ring -->
-            <circle cx={cx} cy={cy} r={r + 8} fill="none" stroke={ACCENT} stroke-width="1" opacity="0.05"/>
+            <!-- ── Compact iteration tracker — top-left corner ── -->
+            <circle cx={cx} cy={cy} r={r + 3} fill="none" stroke={ACCENT} stroke-width="1" opacity="0.12"/>
+            <circle cx={cx} cy={cy} r={r} fill="#0b0b14" stroke="#1a1a2e" stroke-width="2.5"/>
 
-            <!-- track ring -->
-            <circle cx={cx} cy={cy} r={r} fill="#0b0b14" stroke="#1a1a2e" stroke-width="10"/>
-
-            <!-- filled progress arc -->
             {#if iters > 0}
-              <circle cx={cx} cy={cy} r={r} fill="none" stroke={ACCENT} stroke-width="10"
+              <circle cx={cx} cy={cy} r={r} fill="none" stroke={ACCENT} stroke-width="2.5"
                 stroke-dasharray={circ}
                 stroke-dashoffset={circ * (1 - iters / maxIter)}
                 stroke-linecap="butt"
                 transform="rotate(-90 {cx} {cy})"
-                opacity="0.35"/>
+                opacity="0.55"/>
             {/if}
 
-            <!-- orbit dots — one per iteration -->
-            {#each Array(Math.min(iters, 36)) as _, k}
-              {@const angle = ((k + 0.5) / maxIter) * Math.PI * 2 - Math.PI / 2}
-              <circle
-                cx={cx + r * Math.cos(angle)}
-                cy={cy + r * Math.sin(angle)}
-                r="2.8"
-                fill={ACCENT}
-                opacity={0.25 + (k / Math.max(iters - 1, 1)) * 0.75}
-              />
-            {/each}
-
-            <!-- hero iteration number with pulse -->
             <g use:animateLoopPulse={{ active: phase === 'body' || phase === 'update' }}>
-              <text x={cx} y={cy - 8} text-anchor="middle" fill={ACCENT}
-                font-size="38" font-weight="900" font-family="'Geist Mono', monospace">{iters}</text>
+              <text x={cx} y={cy + 4} text-anchor="middle" fill={ACCENT}
+                font-size="12" font-weight="900" font-family="'Geist Mono', monospace">{iters}</text>
             </g>
-            <text x={cx} y={cy + 12} text-anchor="middle" fill="#3a3a55"
-              font-size="7" font-family="'Geist Mono', monospace" letter-spacing="2">ITERATIONS</text>
 
-            <!-- running / done badge -->
+            <!-- Running / Done badge — inline to the right of the tracker -->
             {#if isDone}
-              <circle cx={cx} cy={cy + 28} r="4" fill="#f87171" opacity="0.9"/>
-              <text x={cx + 8} y={cy + 32} fill="#f87171" font-size="7" font-weight="700" font-family="'Geist Mono', monospace">DONE</text>
+              <circle cx="46" cy={cy} r="3" fill="#f87171" opacity="0.9"/>
+              <text x="53" y={cy + 2.5} fill="#f87171" font-size="7" font-weight="700" font-family="'Geist Mono', monospace">DONE</text>
             {:else if sd.conditionResult === true}
-              <circle cx={cx} cy={cy + 28} r="4" fill="#4ade80" opacity="0.9"/>
-              <text x={cx + 8} y={cy + 32} fill="#4ade80" font-size="7" font-weight="700" font-family="'Geist Mono', monospace">RUNNING</text>
+              <circle cx="46" cy={cy} r="3" fill="#4ade80" opacity="0.9"/>
+              <text x="53" y={cy + 2.5} fill="#4ade80" font-size="7" font-weight="700" font-family="'Geist Mono', monospace">RUNNING</text>
             {/if}
 
-            <!-- variable tiles — right column -->
+            <!-- Variable tiles — full-width, dominant visual element -->
             {#each loopVars.slice(0, 4) as [name, val], idx}
-              {@const ty = 4 + idx * 37}
+              {@const ty = tilesStartY + idx * (tileH + tileGap)}
               {@const isActive = sd.highlight === name}
-              <rect x="158" y={ty} width="136" height="32" rx="5"
+              <rect x="12" y={ty} width="276" height={tileH} rx="6"
                 fill="#08080e"
                 stroke={isActive ? ACCENT + '77' : '#1a1a2e'}
                 stroke-width={isActive ? 1.5 : 0.5}/>
               {#if isActive}
-                <rect x="158" y={ty} width="3" height="32" rx="1.5" fill={ACCENT} opacity="0.8"/>
+                <rect x="12" y={ty} width="4" height={tileH} rx="2" fill={ACCENT} opacity="0.8"/>
               {/if}
-              <text x="170" y={ty + 12} fill="#3a3a55" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">{name}</text>
-              <text x="288" y={ty + 27} text-anchor="end"
+              <text x="26" y={ty + 13} fill="rgba(255,255,255,0.55)" font-size="7" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="1">{name}</text>
+              <text x="276" y={ty + tileH - 8} text-anchor="end"
                 fill={isActive ? ACCENT : tc(val)}
-                font-size="16" font-weight="900" font-family="'Geist Mono', monospace">{fv(val)}</text>
+                font-size={valueFont} font-weight="900" font-family="'Geist Mono', monospace">{fv(val)}</text>
             {/each}
 
           </svg>
+
+          <!-- ── Live calculation — shows the arithmetic for this body step ── -->
+          {#if calcs.length > 0}
+            <div class="calc-card" aria-live="polite">
+              <span class="calc-label">Calculation</span>
+              {#each calcs as c}
+                <div class="calc-line">{c}</div>
+              {/each}
+            </div>
+          {/if}
 
           <!-- ── Loop body code card ──────────────────────────── -->
           {#if bodyLines.length > 0}
@@ -313,7 +348,12 @@
   .phase-arrow      { font-size:0.45rem; color:#222; }
   .phase-arrow-active { color:#555; }
 
-  /* ── Loop body code card ───────────────────────────── */
+  /* ── Calculation display (body phase only) ──────── */
+  .calc-card  { padding:6px 10px; background:#08080e; border-top:1px solid #1a1a2e; display:flex; flex-direction:column; gap:2px; }
+  .calc-label { font-size:0.5rem; color:#555; font-family: var(--font-code); letter-spacing:1px; font-weight:700; text-transform:uppercase; }
+  .calc-line  { font-size:0.78rem; color:#ffcc66; font-family: var(--font-code); font-weight:700; }
+
+  /* ── Loop body code card ───────────────────── */
   .body-card  { margin:0; border-top:1px solid #1a1a2e; overflow:hidden; }
   .body-hdr   { display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:var(--a11y-bg, #0a0a12); }
   .body-label { font-size:0.5rem; color:#555; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
