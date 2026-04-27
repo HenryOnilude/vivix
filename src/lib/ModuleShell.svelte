@@ -705,12 +705,16 @@
         </details>
 
       {:else if !hasRun}
-        <!-- Blank canvas before Visualize is clicked — no decorative
-             preview boxes, no phase hints, nothing that could be
-             mistaken for real execution state. The module-specific
-             `placeholder` snippet is intentionally ignored here so the
-             visualisation panel is empty and clean. -->
-        <div class="vis-idle" aria-hidden="true"></div>
+        {#if placeholder}
+          {@render placeholder()}
+        {:else}
+          <div class="vis-placeholder">
+            <p class="ph-text">Write code and click
+              <strong style="color:{accent}">▶ Visualize</strong>
+              to see execution
+            </p>
+          </div>
+        {/if}
       {/if}
     </div>
 
@@ -776,6 +780,12 @@
     from { opacity:0; transform:translateY(-4px); }
     to   { opacity:1; transform:translateY(0); }
   }
+
+  /* ── Pre-Visualize fallback placeholder (used when a module does not
+       provide its own `placeholder` snippet). Each module that supplies
+       a snippet defines its own decorative styling. */
+  .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
+  .ph-text         { font-size:0.8rem; color:rgba(255,255,255,0.45); text-align:center; }
 
   /* ── Example picker ────────────────────────────────────────────────────── */
   .run-hint { margin:0; font-size:0.85rem; color:var(--a11y-text-muted); }
