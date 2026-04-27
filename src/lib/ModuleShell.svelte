@@ -279,6 +279,8 @@
     if (playing) { clearInterval(timer); timer = null; playing = false; }
   }
 
+  function editCode() { _reset(); mobileTab = 'code'; }
+
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   function handleKey(e) {
     if (!hasRun) return;
@@ -465,6 +467,7 @@
       <div class="ph">
         <span class="pt">Source Code</span>
         <div class="pa">
+          <button class="eb" onclick={editCode} aria-label="Edit code">✎ Edit</button>
           {#if codeDirty}
             <!-- Subtle cue that the editor content no longer matches the
                  current visualization. Tapping Visualize re-runs with the
@@ -818,6 +821,8 @@
   .pa  { display:flex; gap:6px; }
   .rb  { border:none; border-radius:5px; padding:4px 14px; font-family:inherit; font-size:0.65rem; font-weight:700; cursor:pointer; transition:filter 0.15s, box-shadow 0.15s; }
   .rb:hover { filter:brightness(1.12); box-shadow:0 0 12px color-mix(in srgb, var(--acc) 30%, transparent); }
+  .eb  { background:transparent; color:rgba(255,255,255,0.35); border:1px solid rgba(255,255,255,0.1); border-radius:5px; padding:3px 10px; font-family:inherit; font-size:0.65rem; cursor:pointer; transition:all 0.2s; }
+  .eb:hover { color:rgba(255,255,255,0.75); border-color:rgba(255,255,255,0.22); }
   /* Dirty-code indicator: appears next to the Visualize button once the
      user has edited the code since the last run. Low-key by design —
      just a muted pulsing dot + tiny label, never obstructs the editor. */
@@ -1187,6 +1192,7 @@
     .ph         { padding:4px 8px; }
     .pt         { font-size:0.58rem; }
     .rb         { font-size:0.62rem; padding:5px 14px; min-height:44px; }
+    .eb         { font-size:0.62rem; padding:5px 10px; min-height:44px; }
     .err-head   { padding:6px 8px; gap:6px; }
     .err-icon   { width:16px; height:16px; font-size:0.58rem; }
     .err-friendly { font-size:0.65rem; }
