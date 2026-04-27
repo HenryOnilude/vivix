@@ -17,11 +17,16 @@
   // Track iteration snapshots for sparkline + history
   let _snapshots = [];
   let _loopBody = [];
-  let _loopPhase = 'idle'; // idle | init | condition | body | update | done
+  let _loopPhase = 'idle'; // idle | condition | body | done
   /** Previous step's vars — captured at interpret-time so each body step can
-   *  display the arithmetic it just performed (e.g. "0 + 1 = 1"). Reset on
-   *  every fresh run via the `start` phase. */
+   *  display the arithmetic it just performed (e.g. "sum = 0 + 1 = 1"). Reset
+   *  on every fresh run via the `start` phase. */
   let _prevVars = {};
+  /** True between a continue-loop-test step and the next loop-test / end-of
+   *  program. Any step emitted inside this window is part of the loop body
+   *  (assignments, nested ifs, etc.) — the interpreter does not emit an
+   *  explicit 'loop-body' phase of its own. */
+  let _inBodyWindow = false;
 
   /** Build "substituted-RHS = result" strings for each body line so beginners
    *  see the actual arithmetic, e.g. "0 + 1 = 1" then "1 + 2 = 3". Only simple
@@ -45,7 +50,14 @@
       });
       const newV = curVars[lhs];
       const resStr = typeof newV === 'string' ? JSON.stringify(newV) : String(newV);
-      if (sub !== resStr) out.push(`${sub} = ${resStr}`);
+      if (sub !== resStr) {
+        const prevV = prevVars[lhs];
+        const prevStr = prevV === undefined ? '—' : (typeof prevV === 'string' ? JSON.stringify(prevV) : String(prevV));
+        out.push({
+          expr:   `${lhs} = ${sub} = ${resStr}`,
+          change: `${lhs}: ${prevStr} → ${resStr}`,
+        });
+      }
       localVars[lhs] = newV;
     }
     return out;
@@ -57,29 +69,45 @@
       _loopBody = extractLoopBody(codeLines || []);
       _loopPhase = 'idle';
       _prevVars = {};
+      _inBodyWindow = false;
     }
 
     const capturedPrevVars = { ..._prevVars };
     _prevVars = { ...(s.vars || {}) };
 
-    // Track loop phase for the phase indicator
-    if (s.phase === 'loop-init')      _loopPhase = 'init';
-    else if (s.phase === 'condition') _loopPhase = 'condition';
-    else if (s.phase === 'loop-body') _loopPhase = 'body';
-    else if (s.phase === 'loop-update') _loopPhase = 'update';
-    else if (s.cond === false && s.phase !== 'start') _loopPhase = 'done';
+    // Body-window detection. The interpreter emits a 'loop-test' step for
+    // the for-loop condition check, whose memLabel is either
+    //   "LOOP: continue | JIT"   (cond true  → body will run)
+    // or
+    //   "LOOP: exit"             (cond false → loop ends)
+    // Every non-loop-test step between a continue loop-test and the next
+    // loop-test is part of the body.
+    let isBodyStep = false;
+    let condResult;
+    if (s.phase === 'loop-test') {
+      const isExit = typeof s.memLabel === 'string' && /LOOP:\s*exit/.test(s.memLabel);
+      _inBodyWindow = !isExit;
+      _loopPhase    = isExit ? 'done' : 'condition';
+      condResult    = !isExit;
+    } else if (_inBodyWindow && s.phase !== 'start') {
+      isBodyStep = true;
+      _loopPhase = 'body';
+    }
 
-    if (s.phase === 'loop-update' || (s.phase === 'loop-body' && s.loopIters > (_snapshots.length))) {
+    // Capture a per-iteration snapshot on the first body step of each iter.
+    if (isBodyStep && s.loopIters > _snapshots.length) {
       _snapshots = [..._snapshots, { iter: _snapshots.length + 1, vars: { ...s.vars } }];
     }
+
     return {
       ...s,
       loopIterations:  s.loopIters || 0,
-      conditionResult: s.cond,
+      conditionResult: condResult ?? s.cond,
       iterHistory:     _snapshots.slice(),
       loopBody:        _loopBody,
       loopPhase:       _loopPhase,
       prevVars:        capturedPrevVars,
+      isBodyStep,
     };
   }
 </script>
@@ -144,9 +172,9 @@
         {@const tileCount = Math.max(1, Math.min(loopVars.length, 4))}
         {@const tileGap = 6}
         {@const tilesStartY = 52}
-        {@const tileH = Math.min(50, Math.floor((162 - tilesStartY - 4 - tileGap * (tileCount - 1)) / Math.max(tileCount, 1)))}
-        {@const valueFont = Math.min(28, Math.max(14, Math.floor(tileH * 0.55)))}
-        {@const calcs = phase === 'body' ? deriveCalc(bodyLines, sd.prevVars || {}, sd.vars || {}) : []}
+        {@const tileH = Math.min(32, Math.floor((162 - tilesStartY - 4 - tileGap * (tileCount - 1)) / Math.max(tileCount, 1)))}
+        {@const valueFont = Math.min(18, Math.max(12, Math.floor(tileH * 0.55)))}
+        {@const calcs = sd.isBodyStep ? deriveCalc(bodyLines, sd.prevVars || {}, sd.vars || {}) : []}
         <div class="loop-vis">
           <div class="loop-vis-hdr">
             <svg width="14" height="14" viewBox="0 0 14 14">
@@ -237,9 +265,15 @@
           <!-- ── Live calculation — shows the arithmetic for this body step ── -->
           {#if calcs.length > 0}
             <div class="calc-card" aria-live="polite">
-              <span class="calc-label">Calculation</span>
+              <div class="calc-hdr">
+                <span class="calc-label">Calculation</span>
+                <span class="calc-sub">Current values substituted into the expression — the result replaces the old variable</span>
+              </div>
               {#each calcs as c}
-                <div class="calc-line">{c}</div>
+                <div class="calc-block">
+                  <div class="calc-line">{c.expr}</div>
+                  <div class="calc-change">{c.change}</div>
+                </div>
               {/each}
             </div>
           {/if}
@@ -340,10 +374,10 @@
   .loop-vis-hdr { display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
   .loop-title   { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .loop-count   { margin-left:auto; font-size:0.5rem; color:#ffcc66; font-family: var(--font-code); }
-  .loop-svg     { width:100%; height:auto; display:block; }
+  .loop-svg     { width:100%; height:auto; display:block; max-width:520px; max-height:300px; margin:0 auto; }
 
-  .sparkline-wrap { padding:4px 10px 8px; background:#08080e; border-top:1px solid #1a1a2e; }
-  .spark-label    { font-size:0.45rem; color:#333; font-family: var(--font-code); letter-spacing:0.5px; text-transform:uppercase; display:block; margin-bottom:2px; }
+  .sparkline-wrap { padding:8px 12px 10px; background:#08080e; border-top:1px solid #1a1a2e; }
+  .spark-label    { font-size:13px; color:rgba(255,255,255,0.72); font-family: var(--font-code); letter-spacing:0.5px; text-transform:uppercase; display:block; margin-bottom:6px; font-weight:600; }
   .sparkline-svg  { width:100%; height:auto; display:block; }
 
   /* ── Phase indicator row ─────────────────────────────── */
@@ -358,9 +392,13 @@
   .phase-arrow-active { color:#555; }
 
   /* ── Calculation display (body phase only) ──────── */
-  .calc-card  { padding:6px 10px; background:#08080e; border-top:1px solid #1a1a2e; display:flex; flex-direction:column; gap:2px; }
-  .calc-label { font-size:0.5rem; color:#555; font-family: var(--font-code); letter-spacing:1px; font-weight:700; text-transform:uppercase; }
-  .calc-line  { font-size:0.78rem; color:#ffcc66; font-family: var(--font-code); font-weight:700; }
+  .calc-card   { padding:10px 12px 12px; background:#08080e; border-top:1px solid #1a1a2e; display:flex; flex-direction:column; gap:8px; }
+  .calc-hdr    { display:flex; flex-direction:column; gap:2px; }
+  .calc-label  { font-size:13px; color:rgba(255,255,255,0.72); font-family: var(--font-code); letter-spacing:1px; font-weight:700; text-transform:uppercase; }
+  .calc-sub    { font-size:11.5px; color:rgba(255,255,255,0.48); font-family: var(--font-ui); line-height:1.35; }
+  .calc-block  { display:flex; flex-direction:column; gap:3px; }
+  .calc-line   { font-size:16px; color:#ffcc66; font-family: var(--font-code); font-weight:700; letter-spacing:0.3px; }
+  .calc-change { font-size:12px; color:rgba(255,255,255,0.55); font-family: var(--font-code); }
 
   /* ── Loop body code card ───────────────────── */
   .body-card  { margin:0; border-top:1px solid #1a1a2e; overflow:hidden; }
@@ -370,8 +408,8 @@
   .body-lines { padding:4px 8px 6px; background:#08080e; }
   .body-line  { display:flex; align-items:center; gap:8px; padding:2px 4px; border-radius:3px; opacity:0.4; transition:opacity 0.3s, background 0.3s; }
   .body-line-active { opacity:1; background:#ffcc6608; }
-  .body-ln    { font-size:0.5rem; color:#333; font-family: var(--font-code); min-width:12px; text-align:right; }
-  .body-code  { font-size:0.65rem; color:#bbb; font-family: var(--font-code); }
+  .body-ln    { font-size:12px; color:#555; font-family: var(--font-code); min-width:16px; text-align:right; }
+  .body-code  { font-size:14px; color:#cfcfcf; font-family: var(--font-code); }
   .body-line-active .body-code { color:#ffcc66; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
@@ -383,6 +421,6 @@
   @media (max-width: 480px) {
     .phase-row  { padding:4px 6px; gap:2px; }
     .phase-name { font-size:0.42rem; }
-    .body-code  { font-size:0.55rem; }
+    .body-code  { font-size:13px; }
   }
 </style>
