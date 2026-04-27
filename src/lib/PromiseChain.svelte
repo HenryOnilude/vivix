@@ -78,8 +78,10 @@
 >
 
   {#snippet topPanel(sd)}
-    <!-- Brain: engine explanation -->
-    <div class="brain-panel">
+    <!-- Brain: engine explanation — Deep Dive only.
+         On Learn/Explore the promise-timeline + microtask-queue panels
+         below carry the same information visually. -->
+    <div class="brain-panel dl-deep">
       <div class="brain-hdr">
         <span class="brain-title">Engine</span>
         {#if sd.phase === 'promise-resolve'}

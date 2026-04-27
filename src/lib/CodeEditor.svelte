@@ -151,17 +151,25 @@
     if (view) view.destroy();
   });
 
-  // Sync external value changes into the editor
+  // Sync external value changes into the editor.
+  //
+  // IMPORTANT (Svelte 5): we must read `value` and `loaded` unconditionally
+  // on every run so the effect's reactive dependency graph is established
+  // even when the early-exit guards are hit. Previously the guard
+  // `if (view && !updating)` short-circuited before `value` was read, so
+  // Svelte never registered `value` as a dep and subsequent prop changes
+  // (e.g. example-tab clicks setting codeText) never re-fired the effect.
   $effect(() => {
-    if (view && !updating) {
-      const current = view.state.doc.toString();
-      if (value !== current) {
-        updating = true;
-        view.dispatch({
-          changes: { from: 0, to: current.length, insert: value },
-        });
-        updating = false;
-      }
+    const v = value;
+    const isLoaded = loaded;
+    if (!isLoaded || !view || updating) return;
+    const current = view.state.doc.toString();
+    if (v !== current) {
+      updating = true;
+      view.dispatch({
+        changes: { from: 0, to: current.length, insert: v },
+      });
+      updating = false;
     }
   });
 </script>

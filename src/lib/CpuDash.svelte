@@ -242,10 +242,11 @@
   </div>
 
   {#if (sd.brain && parsed) || sd._brainHtml}
-    <!-- Visual explanation panel — Explore+ only. The engine narration
-         belongs to the "See how the engine handles it" tier; Learn mode
-         keeps the surface clear for a code + variables + output focus. -->
-    <div class="cpu-explain-panel dl-explore">
+    <!-- Visual explanation panel — Deep Dive only. The engine narration
+         belongs to the "See why the engine was designed this way" tier;
+         Learn and Explore rely on the visual panels (variables, heap,
+         call stack, etc.) to show engine state without prose. -->
+    <div class="cpu-explain-panel dl-deep">
 
       <!-- Phase badge row with mode toggle -->
       <div class="phase-row">

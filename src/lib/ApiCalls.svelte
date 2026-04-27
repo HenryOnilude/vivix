@@ -82,8 +82,10 @@
 >
 
   {#snippet topPanel(sd)}
-    <!-- Brain explanation -->
-    <div class="brain-panel">
+    <!-- Brain explanation — Deep Dive only.
+         On Learn/Explore the request-timeline + response panels below
+         carry the same information visually. -->
+    <div class="brain-panel dl-deep">
       <div class="brain-hdr">
         <span class="brain-title">Engine</span>
         {#if sd.phase === 'fetch-call'}

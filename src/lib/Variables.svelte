@@ -76,6 +76,7 @@
             <span class="bytemap-title">MEMORY MAP</span>
             <span class="bytemap-total">~{sd.bytes ?? 0}B used</span>
           </div>
+          <p class="bytemap-caption">Each square represents 1 byte. Watch memory grow as variables are declared.</p>
 
           <div class="bytemap-body">
             {#each varArr as [name, val]}
@@ -165,6 +166,13 @@
   .bytemap-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
   .bytemap-title { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .bytemap-total { margin-left:auto; font-size:0.5rem; color:#38bdf8; font-family: var(--font-code); }
+  .bytemap-caption {
+    margin:0; padding:5px 10px 0;
+    font-family: var(--font-ui);
+    font-size:0.62rem;
+    color:rgba(255,255,255,0.42);
+    line-height:1.35;
+  }
 
   .bytemap-body  { padding:6px 8px; display:flex; flex-direction:column; gap:5px; }
 
