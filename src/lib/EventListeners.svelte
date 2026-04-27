@@ -50,6 +50,79 @@
   function executeCode(code) {
     return executeEventListenerCode(code);
   }
+
+  // ──────────────────────────────────────────────────────────
+  // Plain-English step narrative
+  // For each phase emitted by the event-listener executor, give
+  // beginners a one-paragraph explanation in everyday language.
+  // ──────────────────────────────────────────────────────────
+  function explainStep(sd) {
+    if (!sd) return null;
+    const ph = sd.phase;
+    const elNames = sd.elements ? Object.keys(sd.elements) : [];
+    const lastEl  = elNames[elNames.length - 1];
+    const tag     = lastEl && sd.elements[lastEl]?.tag;
+
+    if (ph === 'start') return {
+      title: 'Starting',
+      body:  'The script is about to run. No DOM elements exist yet and no listeners are registered. The Call Stack only holds the Global execution context.',
+    };
+    if (ph === 'create-element') return {
+      title: 'Element created',
+      body:  `document.createElement("${tag}") allocated a fresh <${tag}> in memory and bound it to the variable "${lastEl}". The element is NOT in the page yet — it lives only as a JavaScript object until you appendChild it somewhere.`,
+    };
+    if (ph === 'add-listener') {
+      const el = sd.elements?.[lastEl];
+      const last = el?.listeners?.[el.listeners.length - 1];
+      const evt = last?.event || 'event';
+      const once = last?.once;
+      return {
+        title: 'Listener registered',
+        body:  `addEventListener('${evt}', …${once ? ', { once: true }' : ''}) saved your callback inside ${lastEl}'s internal listener list. Nothing runs yet — the browser is just remembering: "when '${evt}' fires on this element, call this function."${once ? ' Because once:true was set, the browser will auto-remove this listener after it fires once.' : ''}`,
+      };
+    }
+    if (ph === 'dispatch-event') return {
+      title: 'Event dispatched',
+      body:  `${lastEl}.click() created a synthetic click Event object and pushed it onto the event queue. The browser now walks ${lastEl}'s listener list looking for 'click' handlers to invoke — in the order they were registered.`,
+    };
+    if (ph === 'dispatch-custom') return {
+      title: 'Custom event dispatched',
+      body:  `dispatchEvent(new CustomEvent(…)) is the same machinery as a real click — the event is queued and every matching listener is invoked in registration order. CustomEvents can carry any data you like in their detail field.`,
+    };
+    if (ph === 'handler-run') return {
+      title: 'Handler running',
+      body:  `The registered callback is now executing. A new frame was pushed onto the Call Stack; any code inside (like console.log) runs synchronously before the frame pops back off and control returns to the dispatcher.`,
+    };
+    if (ph === 'remove-listener') return {
+      title: 'Listener removed',
+      body:  `The once:true listener has done its job and the browser auto-removed it from the listener list. Future events of the same type will find no matching handler — they fire into the void (no-op).`,
+    };
+    if (ph === 'done') return {
+      title: 'Finished',
+      body:  `All synchronous code has finished. Final tally: ${sd.listenersRegistered || 0} listener${(sd.listenersRegistered || 0) !== 1 ? 's' : ''} registered, ${sd.eventsDispatched || 0} event${(sd.eventsDispatched || 0) !== 1 ? 's' : ''} dispatched.`,
+    };
+    return null;
+  }
+
+  // Lifecycle stages — used by the progress strip. Each step lights up
+  // when its phase has been reached at least once during this run.
+  const LIFECYCLE = [
+    { id: 'create',   label: 'Create element',     match: ['create-element']                        },
+    { id: 'register', label: 'Register listener',  match: ['add-listener']                          },
+    { id: 'dispatch', label: 'Dispatch event',     match: ['dispatch-event', 'dispatch-custom']     },
+    { id: 'handle',   label: 'Run handler',        match: ['handler-run']                           },
+    { id: 'cleanup',  label: 'Cleanup',            match: ['remove-listener', 'done']               },
+  ];
+
+  function lifecycleState(sd, stage) {
+    if (!sd || !sd.phase) return 'pending';
+    if (stage.match.includes(sd.phase)) return 'active';
+    // Mark earlier stages as done if we're past them.
+    const order = LIFECYCLE.findIndex(s => s.id === stage.id);
+    const curr  = LIFECYCLE.findIndex(s => s.match.includes(sd.phase));
+    if (curr > order) return 'done';
+    return 'pending';
+  }
 </script>
 
 <!-- ── EventListeners module ─────────────────────────────────────────────── -->
@@ -90,6 +163,34 @@
       >
         <pre class="brain-text">{sd.brain}</pre>
       </div>
+    </div>
+
+    <!-- Step narrative — plain-English breakdown for Learn/Explore.
+         The Deep Dive brain panel above has the technical detail; this
+         panel speaks to beginners. -->
+    {@const explain = explainStep(sd)}
+    <div class="step-narrative dl-learn dl-explore">
+      <div class="sn-hdr">
+        <span class="sn-label">What's happening</span>
+        {#if explain}
+          <span class="sn-title">{explain.title}</span>
+        {/if}
+      </div>
+
+      <!-- Lifecycle progress strip — 5 ordered stages -->
+      <ol class="lc-row">
+        {#each LIFECYCLE as stage, i}
+          {@const state = lifecycleState(sd, stage)}
+          <li class="lc-step lc-{state}">
+            <span class="lc-num">{i + 1}</span>
+            <span class="lc-label">{stage.label}</span>
+          </li>
+        {/each}
+      </ol>
+
+      {#if explain}
+        <p class="sn-text">{explain.body}</p>
+      {/if}
     </div>
 
     <!-- Elements + listeners -->
@@ -211,40 +312,59 @@
   .ev-badge.remove   { background: rgba(148,163,184,0.12); color: #94a3b8; }
   .ev-badge.create   { background: rgba(74,222,128,0.12);  color: #4ade80; }
 
-  /* ── Elements + listeners ────────────────────────────────────────── */
+  /* ── Step narrative (Learn/Explore) ─────────────────────── */
+  .step-narrative { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+  .sn-hdr   { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .sn-label { font-size: 12px; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
+  .sn-title { font-size: 14px; color: #ec4899; font-weight: 700; font-family: var(--font-ui); }
+  .sn-text  { font-size: 13px; color: rgba(255,255,255,0.78); font-family: var(--font-ui); line-height: 1.55; margin: 0; }
+
+  /* Lifecycle progress strip */
+  .lc-row     { display: flex; gap: 4px; padding: 0; margin: 0; list-style: none; flex-wrap: wrap; }
+  .lc-step    { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: all 0.25s ease; }
+  .lc-num     { font-size: 11px; font-weight: 700; font-family: var(--font-code); color: rgba(255,255,255,0.35); width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,0.06); display: inline-flex; align-items: center; justify-content: center; }
+  .lc-label   { font-size: 12px; font-family: var(--font-ui); color: rgba(255,255,255,0.45); white-space: nowrap; }
+  .lc-active  { border-color: rgba(236,72,153,0.6); background: rgba(236,72,153,0.10); box-shadow: 0 0 0 1px rgba(236,72,153,0.3); }
+  .lc-active .lc-num   { background: #ec4899; color: #fff; }
+  .lc-active .lc-label { color: #fff; font-weight: 600; }
+  .lc-done    { border-color: rgba(74,222,128,0.25); background: rgba(74,222,128,0.05); }
+  .lc-done .lc-num   { background: rgba(74,222,128,0.7); color: #021; }
+  .lc-done .lc-label { color: rgba(255,255,255,0.65); }
+
+  /* ── Elements + listeners ──────────────────────────────── */
   .elements-row { display: flex; gap: 6px; flex-shrink: 0; }
   .runtime-panel { flex: 1; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; }
-  .runtime-hdr  { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
+  .runtime-hdr  { font-size: 12px; color: rgba(255,255,255,0.65); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .el-panel     { flex: 1.5; }
   .el-box       { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; min-height: 60px; }
-  .el-empty     { font-size: 0.58rem; color: #333; font-family: var(--font-code); }
+  .el-empty     { font-size: 12px; color: #555; font-family: var(--font-code); }
 
-  .el-card      { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 6px 8px; }
-  .el-tag       { font-size: 0.7rem; font-weight: 700; font-family: var(--font-code); color: #ec4899; }
-  .el-name      { font-size: 0.5rem; color: #555; font-family: var(--font-code); margin-bottom: 4px; }
-  .el-listeners { display: flex; flex-direction: column; gap: 3px; }
-  .el-listener  { display: flex; align-items: center; gap: 5px; font-size: 0.55rem; font-family: var(--font-code); background: color-mix(in srgb, var(--lcolor) 8%, transparent); border-radius: 4px; padding: 2px 6px; }
+  .el-card      { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 8px 10px; }
+  .el-tag       { font-size: 14px; font-weight: 700; font-family: var(--font-code); color: #ec4899; }
+  .el-name      { font-size: 11px; color: #888; font-family: var(--font-code); margin-bottom: 6px; }
+  .el-listeners { display: flex; flex-direction: column; gap: 4px; }
+  .el-listener  { display: flex; align-items: center; gap: 6px; font-size: 12px; font-family: var(--font-code); background: color-mix(in srgb, var(--lcolor) 8%, transparent); border-radius: 4px; padding: 4px 8px; }
   .l-event   { color: #fbbf24; }
-  .l-arrow   { color: rgba(255,255,255,0.2); }
-  .l-handler { color: rgba(255,255,255,0.6); }
-  .l-once    { font-size: 0.42rem; background: rgba(248,113,113,0.15); color: #f87171; border-radius: 4px; padding: 1px 4px; }
-  .el-no-listeners { font-size: 0.52rem; color: #333; font-family: var(--font-code); }
+  .l-arrow   { color: rgba(255,255,255,0.4); }
+  .l-handler { color: rgba(255,255,255,0.78); }
+  .l-once    { font-size: 10px; background: rgba(248,113,113,0.15); color: #f87171; border-radius: 4px; padding: 2px 5px; font-weight: 700; }
+  .el-no-listeners { font-size: 11.5px; color: #555; font-family: var(--font-code); font-style: italic; }
 
-  .stack-box    { display: flex; flex-direction: column-reverse; gap: 3px; padding: 8px 10px; min-height: 60px; }
-  .stack-frame  { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 4px 8px; }
+  .stack-box    { display: flex; flex-direction: column-reverse; gap: 4px; padding: 8px 10px; min-height: 60px; }
+  .stack-frame  { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 5px 10px; }
   .stack-frame.stack-top { border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.06); }
-  .stack-name   { font-size: 0.6rem; font-family: var(--font-code); color: rgba(255,255,255,0.6); }
-  .stack-arrow  { font-size: 0.48rem; color: #ec4899; }
-  .stack-empty  { font-size: 0.55rem; color: #333; font-family: var(--font-code); }
+  .stack-name   { font-size: 13px; font-family: var(--font-code); color: rgba(255,255,255,0.78); }
+  .stack-arrow  { font-size: 11px; color: #ec4899; font-weight: 600; }
+  .stack-empty  { font-size: 12px; color: #555; font-family: var(--font-code); font-style: italic; }
 
-  /* ── Event queue ─────────────────────────────────────────────────── */
+  /* ── Event queue ──────────────────────────────────── */
   .eq-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .eq-box   { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
-  .eq-item  { font-size: 0.58rem; font-family: var(--font-code); color: #fbbf24; background: rgba(251,191,36,0.08); border-radius: 4px; padding: 3px 8px; }
+  .eq-item  { font-size: 12.5px; font-family: var(--font-code); color: #fbbf24; background: rgba(251,191,36,0.10); border-radius: 4px; padding: 4px 10px; font-weight: 600; }
 
   .vis-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
   .ph-svg   { width: 360px; height: auto; }
   .ph-text  { font-size: 0.78rem; color: rgba(255,255,255,0.45); text-align: center; }
 
-  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #444; font-family: var(--font-code); }
+  .cx-s { display: flex; align-items: center; gap: 5px; font-size: 13px; color: rgba(255,255,255,0.72); font-family: var(--font-code); }
 </style>
