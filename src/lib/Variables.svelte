@@ -201,14 +201,15 @@
   .byterow-size  { font-size:0.55rem; font-family: var(--font-code); font-weight:700; min-width:32px; text-align:right; }
 
   /* Type legend */
-  .byte-legend   { display:flex; flex-wrap:wrap; gap:8px; padding:5px 10px 7px; background:#07070f; border-top:1px solid #1a1a2e; }
-  .leg-item      { display:flex; align-items:center; gap:4px; }
-  .leg-sq        { width:8px; height:8px; border-radius:1.5px; flex-shrink:0; opacity:0.7; }
-  .leg-label     { font-size:0.45rem; color:#444; font-family: var(--font-code); }
+  .byte-legend   { display:flex; flex-wrap:wrap; gap:10px 14px; padding:8px 10px 10px; background:#07070f; border-top:1px solid #1a1a2e; }
+  .leg-item      { display:flex; align-items:center; gap:6px; }
+  .leg-sq        { width:13px; height:13px; border-radius:2px; flex-shrink:0; opacity:0.85; }
+  .leg-label     { font-size:13px; color:rgba(255,255,255,0.72); font-family: var(--font-code); }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
+  /* Footer live-stats row — raised to match legend readability */
+  .cx-s { display:flex; align-items:center; gap:5px; font-size:13px; color:rgba(255,255,255,0.72); font-family: var(--font-code); }
 </style>
