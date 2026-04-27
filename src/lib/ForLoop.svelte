@@ -206,10 +206,19 @@
               <text x="53" y={cy + 2.5} fill="#4ade80" font-size="7" font-weight="700" font-family="'Geist Mono', monospace">RUNNING</text>
             {/if}
 
-            <!-- Variable tiles — full-width, dominant visual element -->
+            <!-- Variable tiles — full-width, dominant visual element.
+                 Numbers + booleans get the large dominant font; arrays,
+                 objects, and strings render at a compact readable size
+                 (and truncate with ellipsis) so structures like
+                 ["apple", "banana", "cherry"] never overflow the tile. -->
             {#each loopVars.slice(0, 4) as [name, val], idx}
               {@const ty = tilesStartY + idx * (tileH + tileGap)}
               {@const isActive = sd.highlight === name}
+              {@const valStr = fv(val)}
+              {@const isBigDisplay = typeof val === 'number' || typeof val === 'boolean'}
+              {@const valFontSize = isBigDisplay ? valueFont : Math.min(13, Math.max(9, Math.floor(tileH * 0.30)))}
+              {@const MAX_CHARS = 30}
+              {@const valDisplay = isBigDisplay ? valStr : (valStr.length > MAX_CHARS ? valStr.slice(0, MAX_CHARS - 1) + '…' : valStr)}
               <rect x="12" y={ty} width="276" height={tileH} rx="6"
                 fill="#08080e"
                 stroke={isActive ? ACCENT + '77' : '#1a1a2e'}
@@ -218,9 +227,9 @@
                 <rect x="12" y={ty} width="4" height={tileH} rx="2" fill={ACCENT} opacity="0.8"/>
               {/if}
               <text x="26" y={ty + 13} fill="rgba(255,255,255,0.55)" font-size="7" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="1">{name}</text>
-              <text x="276" y={ty + tileH - 8} text-anchor="end"
+              <text x="276" y={isBigDisplay ? ty + tileH - 8 : ty + tileH / 2 + valFontSize / 3} text-anchor="end"
                 fill={isActive ? ACCENT : tc(val)}
-                font-size={valueFont} font-weight="900" font-family="'Geist Mono', monospace">{fv(val)}</text>
+                font-size={valFontSize} font-weight="900" font-family="'Geist Mono', monospace">{valDisplay}</text>
             {/each}
 
           </svg>
