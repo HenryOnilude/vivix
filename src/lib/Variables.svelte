@@ -77,7 +77,7 @@
             {@const isApprox = varArr.some(([, v]) => typeof v === 'string' || (v !== null && typeof v === 'object'))}
             <span class="bytemap-total" title="Total heap memory allocated by your variables">{isApprox ? '~' : ''}{sd.bytes ?? 0}B used so far</span>
           </div>
-          <p class="bytemap-caption">Each square represents 1 byte. Watch memory grow as variables are declared.</p>
+          <p class="bytemap-caption">Each square = 1 byte of memory. A number always takes 8 bytes. Strings grow with their length.</p>
 
           <div class="bytemap-body">
             {#each varArr as [name, val]}
@@ -86,6 +86,15 @@
               {@const rawBytes = tp === 'number' ? 8 : tp === 'boolean' ? 4 : tp === 'string' ? (String(val).length * 2) + 16 : 8}
               {@const color = tc(val)}
               {@const isActive = sd.highlight === name}
+              {@const sizeExplain = tp === 'number'
+                ? 'Always 8B — JavaScript numbers are 64-bit floats'
+                : tp === 'boolean'
+                  ? '4B — stored as an integer internally'
+                  : tp === 'string'
+                    ? `16B base + 2B per character (UTF-16) — here ${String(val).length} char${String(val).length === 1 ? '' : 's'} × 2B + 16B = ${rawBytes}B`
+                    : tp === 'undefined' || val === null
+                      ? '8B — fixed-size pointer-tag for null/undefined'
+                      : '8B — pointer-tag (object lives elsewhere on the heap)'}
               <div class="byterow" class:byterow-active={isActive}>
                 <div class="byterow-meta">
                   <span class="byterow-name" style="color:{isActive ? '#fbbf24' : '#888'}">{name}</span>
@@ -103,7 +112,7 @@
                     <span class="bytes-overflow">+{rawBytes - 32}B</span>
                   {/if}
                 </div>
-                <span class="byterow-size" style="color:{isActive ? color : '#444'}">{rawBytes}B</span>
+                <span class="byterow-size" title={sizeExplain} style="color:{isActive ? color : '#444'}">{rawBytes}B</span>
               </div>
             {/each}
           </div>
