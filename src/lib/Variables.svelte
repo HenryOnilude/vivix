@@ -74,7 +74,8 @@
               <rect x="7" y="7" width="4" height="4" rx="1" fill={ACCENT} opacity="0.3"/>
             </svg>
             <span class="bytemap-title">MEMORY MAP</span>
-            <span class="bytemap-total">~{sd.bytes ?? 0}B used</span>
+            {@const isApprox = varArr.some(([, v]) => typeof v === 'string' || (v !== null && typeof v === 'object'))}
+            <span class="bytemap-total" title="Total heap memory allocated by your variables">{isApprox ? '~' : ''}{sd.bytes ?? 0}B used so far</span>
           </div>
           <p class="bytemap-caption">Each square represents 1 byte. Watch memory grow as variables are declared.</p>
 
