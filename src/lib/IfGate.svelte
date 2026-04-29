@@ -92,32 +92,137 @@
   {mapStep}
   dataFlow
   interpreterOptions={{ trackIf: true }}
+  moduleCaption="condition evaluation — operands fed into the comparison, boolean result, branch taken"
 >
 
-  {#snippet cpuRegisters(sd)}
-    <rect x="210" y="14" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.highlight ? '#fbbf24' : '#222'} font-size="10" font-weight="700" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
+  <!-- Truth-evaluation diagram: condition → diamond → branch path -->
+  {#snippet cpuModuleVisual(sd)}
+    {@const cond  = sd.lastCond}
+    {@const raw   = sd.lastRaw || ''}
+    {@const comps = sd.comps || 0}
+    {@const W = 520}
+    {@const H = 110}
 
-    <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">RESULT</text>
+    <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <!-- Header -->
+      <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+        font-family="'Geist Mono', monospace" letter-spacing="1">CONDITION EVALUATION</text>
+      <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+        font-family="'Geist Mono', monospace">expression → diamond → branch</text>
+
+      <!-- Condition expression box -->
+      <rect x="12" y="28" width="180" height="32" rx="4"
+        fill="#0b0b14" stroke={raw ? ACCENT : '#1a1a2e'} stroke-width={raw ? 1.5 : 1}/>
+      <text x="20" y="40" fill="#94a3b8" font-size="6.5" font-weight="600"
+        font-family="'Geist Mono', monospace" letter-spacing="0.8">EXPRESSION</text>
+      <text x="20" y="54" fill={raw ? '#f1f5f9' : '#64748b'} font-size="9" font-weight="700"
+        font-family="'Geist Mono', monospace">{raw ? (raw.length > 24 ? raw.slice(0, 22) + '…' : raw) : 'awaiting if/else'}</text>
+
+      <!-- Arrow from expression to diamond -->
+      <line x1="195" y1="44" x2="225" y2="44"
+        stroke={raw ? ACCENT : '#334155'} stroke-width="1.5"
+        marker-end="url(#ifg-arrow-{raw ? 'a' : 'i'})"/>
+
+      <!-- Decision diamond -->
+      {@const dx = 250} {@const dy = 44}
+      <polygon points="{dx},{dy-18} {dx+30},{dy} {dx},{dy+18} {dx-30},{dy}"
+        fill={cond === true ? '#4ade8014' : cond === false ? '#f8717114' : '#0b0b14'}
+        stroke={cond === true ? '#4ade80' : cond === false ? '#f87171' : raw ? ACCENT : '#334155'}
+        stroke-width="1.5"/>
+      <text x={dx} y={dy + 3} text-anchor="middle"
+        fill={cond === true ? '#4ade80' : cond === false ? '#f87171' : raw ? ACCENT : '#94a3b8'}
+        font-size="9" font-weight="800"
+        font-family="'Geist Mono', monospace">
+        {cond === true ? 'T' : cond === false ? 'F' : '?'}
+      </text>
+
+      <!-- TRUE branch (top arrow) -->
+      <line x1={dx + 24} y1={dy - 10} x2="380" y2="32"
+        stroke={cond === true ? '#4ade80' : '#1a1a2e'}
+        stroke-width={cond === true ? 2 : 1}
+        opacity={cond === true ? 1 : 0.4}
+        marker-end="url(#ifg-arrow-t)"/>
+      <rect x="382" y="20" width="86" height="22" rx="3"
+        fill={cond === true ? '#4ade8014' : '#0b0b14'}
+        stroke={cond === true ? '#4ade80' : '#334155'}
+        stroke-width={cond === true ? 1.5 : 1}/>
+      <text x="425" y="34" text-anchor="middle"
+        fill={cond === true ? '#4ade80' : '#64748b'}
+        font-size="8.5" font-weight="700"
+        font-family="'Geist Mono', monospace">if &#123; ... &#125;</text>
+
+      <!-- FALSE branch (bottom arrow) -->
+      <line x1={dx + 24} y1={dy + 10} x2="380" y2="58"
+        stroke={cond === false ? '#f87171' : '#1a1a2e'}
+        stroke-width={cond === false ? 2 : 1}
+        opacity={cond === false ? 1 : 0.4}
+        marker-end="url(#ifg-arrow-f)"/>
+      <rect x="382" y="48" width="86" height="22" rx="3"
+        fill={cond === false ? '#f8717114' : '#0b0b14'}
+        stroke={cond === false ? '#f87171' : '#334155'}
+        stroke-width={cond === false ? 1.5 : 1}/>
+      <text x="425" y="62" text-anchor="middle"
+        fill={cond === false ? '#f87171' : '#64748b'}
+        font-size="8.5" font-weight="700"
+        font-family="'Geist Mono', monospace">else &#123; ... &#125;</text>
+
+      <!-- Comparison counter -->
+      <text x="476" y="34" fill="#94a3b8" font-size="6"
+        font-family="'Geist Mono', monospace" letter-spacing="0.5">CMPS</text>
+      <text x="476" y="46" fill={ACCENT} font-size="11" font-weight="800"
+        font-family="'Geist Mono', monospace">{comps}</text>
+
+      <!-- Footer caption -->
+      <text x={W/2} y={H - 6} text-anchor="middle"
+        fill={cond === true ? '#4ade80' : cond === false ? '#f87171' : ACCENT}
+        font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace">
+        {cond === true  ? 'condition truthy → if-branch executes, else-branch skipped'
+        : cond === false ? 'condition falsy → if-branch skipped, else-branch executes'
+        : raw            ? 'evaluating operands…'
+        : 'awaiting condition'}
+      </text>
+
+      <defs>
+        <marker id="ifg-arrow-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill={ACCENT}/>
+        </marker>
+        <marker id="ifg-arrow-i" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#334155"/>
+        </marker>
+        <marker id="ifg-arrow-t" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill={cond === true ? '#4ade80' : '#334155'}/>
+        </marker>
+        <marker id="ifg-arrow-f" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill={cond === false ? '#f87171' : '#334155'}/>
+        </marker>
+      </defs>
+    </svg>
+  {/snippet}
+
+  {#snippet cpuRegisters(sd)}
+    <rect x="210" y="12" width="140" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="216" y="22" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
+    <text x="344" y="32" text-anchor="end" fill={sd.highlight ? '#fbbf24' : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
+
+    <rect x="210" y="42" width="140" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="216" y="52" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">RESULT</text>
     {#if sd.lastCond === true}
-      <circle cx="338" cy="51" r="5" fill="#4ade80"/>
-      <text x="330" y="55" text-anchor="end" fill="#4ade80" font-size="9" font-weight="700" font-family="'Geist Mono', monospace">TRUE</text>
+      <circle cx="334" cy="56" r="5" fill="#4ade80"/>
+      <text x="324" y="61" text-anchor="end" fill="#4ade80" font-size="13" font-weight="800" font-family="'Geist Mono', monospace">TRUE</text>
     {:else if sd.lastCond === false}
-      <circle cx="338" cy="51" r="5" fill="#f87171"/>
-      <text x="330" y="55" text-anchor="end" fill="#f87171" font-size="9" font-weight="700" font-family="'Geist Mono', monospace">FALSE</text>
+      <circle cx="334" cy="56" r="5" fill="#f87171"/>
+      <text x="324" y="61" text-anchor="end" fill="#f87171" font-size="13" font-weight="800" font-family="'Geist Mono', monospace">FALSE</text>
     {:else if sd.changed}
-      <text x="344" y="55" text-anchor="end" fill="#f59e0b" font-size="9" font-weight="600" font-family="'Geist Mono', monospace">{fv(sd.changed.to)}</text>
+      <text x="344" y="61" text-anchor="end" fill="#f59e0b" font-size="12" font-weight="700" font-family="'Geist Mono', monospace">{fv(sd.changed.to)}</text>
     {:else}
-      <text x="344" y="55" text-anchor="end" fill="#222" font-size="9" font-family="'Geist Mono', monospace">—</text>
+      <text x="344" y="61" text-anchor="end" fill="#bbb" font-size="12" font-family="'Geist Mono', monospace">—</text>
     {/if}
   {/snippet}
 
   {#snippet cpuGauge(sd)}
-    <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-    <rect x="247" y="69" width={Math.min(102, (sd.comps || 0) * 25)} height="14" rx="2" fill="#a78bfa" opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.comps || 0} COMPARES</text>
+    <rect x="210" y="72" width="140" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
+    <rect x="211" y="73" width={Math.min(138, (sd.comps || 0) * 30)} height="14" rx="2" fill="#a78bfa" opacity="0.25"/>
+    <text x="280" y="83" text-anchor="middle" fill="#a78bfa" font-size="9" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="0.5">{sd.comps || 0} COMPARES</text>
   {/snippet}
 
   {#snippet topPanel(sd)}
@@ -194,13 +299,10 @@
               stroke={takenColor} stroke-width="2.5"
               use:animateDiamondFlash={{ active: isLive, color: takenColor }}/>
 
-            <!-- Diamond text: raw condition (truncated) -->
-            <text x="150" y="37" text-anchor="middle" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace">
-              {sd.condRaw.length > 22 ? sd.condRaw.slice(0, 20) + '...' : sd.condRaw}
-            </text>
-            <!-- Diamond text: substituted values -->
-            <text x="150" y="50" text-anchor="middle" fill="#777" font-size="6.5" font-family="'Geist Mono', monospace">
-              {sd.condSub.length > 28 ? sd.condSub.slice(0, 26) + '...' : sd.condSub}
+            <!-- Diamond label: 'if' keyword on top, boolean result below -->
+            <text x="150" y="34" text-anchor="middle" fill="#e0e0e0" font-size="8" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">if (…)</text>
+            <text x="150" y="54" text-anchor="middle" fill={takenColor} font-size="15" font-weight="900" font-family="'Geist Mono', monospace" letter-spacing="1">
+              {cond ? 'TRUE' : 'FALSE'}
             </text>
 
             <!-- ── TRUE path (left) with glow — sequenced 0.3s after diamond ── -->

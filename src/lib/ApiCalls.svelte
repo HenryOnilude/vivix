@@ -79,7 +79,96 @@
   desc="See how fetch() suspends execution and heap mutations track the request lifecycle"
   {executeCode}
   showHeap={false}
+  moduleCaption="event-loop runtime — fetch() is handed off to Web APIs, its .then/await resolution goes on the microtask queue; the event loop drains microtasks before any macrotask (setTimeout, I/O)"
 >
+
+  <!-- Event-loop runtime: Call Stack · Web APIs · Microtask queue · Callback queue -->
+  {#snippet cpuModuleVisual(sd)}
+    {@const phase = sd.phase}
+    {@const stack = sd.stack || ['Global']}
+    {@const reqs = sd.requests || []}
+    {@const inFlight = reqs.filter(r => r.state === 'sending' || r.state === 'parsing')}
+    {@const microtaskActive = phase === 'fetch-response' || phase === 'json-done' || phase === 'async-call'}
+    {@const W = 520}
+    {@const H = 110}
+    {@const colW = 120}
+    {@const gap = 8}
+    {@const startX = 8}
+
+    <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <!-- Header -->
+      <text x={W/2} y="12" text-anchor="middle" fill="#e2e8f0" font-size="7.5"
+        font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="1">JS RUNTIME · EVENT LOOP</text>
+
+      <!-- 4 columns: stack | Web APIs | microtask queue | callback queue -->
+      {#each [
+        { label: 'CALL STACK', sub: 'synchronous', color: '#60a5fa', items: [...stack].reverse().slice(0, 3), active: stack.length > 0, tag: stack[stack.length - 1] || '' },
+        { label: 'WEB APIs', sub: 'fetch / timers', color: ACCENT, items: inFlight.map(r => `${r.method} ${r.url.split('/').pop() || r.url}`).slice(0, 3), active: inFlight.length > 0, tag: `${inFlight.length} in flight` },
+        { label: 'MICROTASK Q', sub: '.then / await', color: '#a78bfa', items: microtaskActive ? ['resolve()'] : [], active: microtaskActive, tag: 'drained first' },
+        { label: 'CALLBACK Q', sub: 'setTimeout / I/O', color: '#fbbf24', items: [], active: false, tag: 'drained after' },
+      ] as col, i}
+        {@const cx = startX + i * (colW + gap)}
+        <rect x={cx} y="18" width={colW} height="70" rx="4"
+          fill={col.active ? `${col.color}14` : '#0b0b14'}
+          stroke={col.active ? col.color : '#1a1a2e'}
+          stroke-width={col.active ? 1.5 : 1}/>
+
+        <!-- Column header -->
+        <text x={cx + 6} y="30"
+          fill={col.active ? col.color : '#cbd5e1'}
+          font-size="7" font-weight="800"
+          font-family="'Geist Mono', monospace" letter-spacing="0.6">{col.label}</text>
+        <text x={cx + colW - 6} y="30" text-anchor="end"
+          fill="#64748b" font-size="5.5"
+          font-family="'Geist Mono', monospace">{col.sub}</text>
+
+        <!-- Items -->
+        {#if col.items.length === 0}
+          <text x={cx + colW/2} y="56" text-anchor="middle"
+            fill="#64748b" font-size="6.5" font-style="italic"
+            font-family="'Geist Mono', monospace">empty</text>
+        {:else}
+          {#each col.items as item, j}
+            <rect x={cx + 4} y={36 + j * 13} width={colW - 8} height={11} rx="2"
+              fill="#0b0b14" stroke={col.color} stroke-width="0.8" opacity="0.85"/>
+            <text x={cx + 8} y={44 + j * 13}
+              fill={col.color} font-size="6.5" font-weight="700"
+              font-family="'Geist Mono', monospace">
+              {item.length > 18 ? item.slice(0, 17) + '…' : item}
+            </text>
+          {/each}
+        {/if}
+
+        <!-- Tag -->
+        <text x={cx + colW/2} y="82" text-anchor="middle"
+          fill={col.active ? col.color : '#64748b'} font-size="5.5" font-weight="600"
+          font-family="'Geist Mono', monospace" letter-spacing="0.3">{col.tag}</text>
+      {/each}
+
+      <!-- Event loop arrow underneath queues → stack -->
+      <path d="M {startX + 2 * (colW + gap) + colW/2} 92 Q {startX + colW/2} 104 {startX + colW/2} 92"
+        fill="none" stroke="#a78bfa" stroke-width="1" stroke-dasharray="2 2"
+        opacity={microtaskActive ? 1 : 0.4} marker-end="url(#api-loop-arrow)"/>
+
+      <!-- Footer caption -->
+      <text x={W/2} y={H - 1} text-anchor="middle"
+        fill={ACCENT} font-size="7.5" font-weight="600"
+        font-family="'Geist Mono', monospace">
+        {phase === 'fetch-call' ? 'fetch() handed off to Web APIs — stack continues immediately'
+          : phase === 'fetch-response' ? 'response ready — resolution queued as microtask'
+          : phase === 'json-parse' ? 'parsing body — another microtask'
+          : phase === 'json-done' ? 'microtask executes — value returns to await'
+          : phase === 'throw' ? 'rejection propagates to nearest try/catch'
+          : 'event loop drains microtasks before every macrotask'}
+      </text>
+
+      <defs>
+        <marker id="api-loop-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#a78bfa"/>
+        </marker>
+      </defs>
+    </svg>
+  {/snippet}
 
   {#snippet topPanel(sd)}
     <!-- Brain explanation — Deep Dive only.
@@ -229,7 +318,7 @@
 <style>
   .brain-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .brain-hdr   { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
-  .brain-title { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
+  .brain-title { font-size: 0.62rem; color: rgba(255,255,255,0.92); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
   .brain-box   { padding: 8px 10px; transition: background 0.3s; }
   .brain-box.brain-fetch { background: rgba(139,92,246,0.05); }
   .brain-box.brain-json  { background: rgba(74,222,128,0.04); }
@@ -247,45 +336,45 @@
 
   /* ── Requests ─────────────────────────────────────────────────────── */
   .requests-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
-  .requests-hdr   { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
+  .requests-hdr   { font-size: 0.62rem; color: rgba(255,255,255,0.92); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .requests-list  { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; }
-  .req-empty      { font-size: 0.58rem; color: #333; font-family: var(--font-code); padding: 8px 10px; }
+  .req-empty      { font-size: 0.62rem; color: rgba(255,255,255,0.7); font-family: var(--font-code); padding: 8px 10px; }
 
   .req-card        { background: color-mix(in srgb, var(--rcolor) 6%, transparent); border: 1px solid color-mix(in srgb, var(--rcolor) 25%, transparent); border-radius: 6px; padding: 6px 10px; display: flex; flex-direction: column; gap: 3px; transition: all 0.3s; }
   .req-method-url  { display: flex; align-items: center; gap: 8px; }
   .req-method      { font-size: 0.62rem; font-weight: 800; font-family: var(--font-code); }
-  .req-url         { font-size: 0.58rem; font-family: var(--font-code); color: rgba(255,255,255,0.55); }
+  .req-url         { font-size: 0.62rem; font-family: var(--font-code); color: rgba(255,255,255,0.88); }
   .req-status-row  { display: flex; align-items: center; gap: 6px; }
   .req-state-icon  { font-size: 0.6rem; }
   .req-state       { font-size: 0.52rem; font-family: var(--font-code); }
   .req-status      { font-size: 0.52rem; font-family: var(--font-code); font-weight: 700; margin-left: auto; }
-  .req-data        { font-size: 0.5rem; font-family: var(--font-code); color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.03); border-radius: 3px; padding: 2px 5px; margin-top: 2px; }
+  .req-data        { font-size: 0.55rem; font-family: var(--font-code); color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.04); border-radius: 3px; padding: 2px 5px; margin-top: 2px; }
 
   /* ── Runtime row ─────────────────────────────────────────────────── */
   .runtime-row   { display: flex; gap: 6px; flex-shrink: 0; }
   .runtime-panel { flex: 1; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; }
-  .runtime-hdr   { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
+  .runtime-hdr   { font-size: 0.62rem; color: rgba(255,255,255,0.92); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
 
   .stack-box   { display: flex; flex-direction: column-reverse; gap: 3px; padding: 8px 10px; min-height: 56px; }
   .stack-frame { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 4px 8px; transition: all 0.3s; }
   .stack-frame.stack-top        { border-color: rgba(139,92,246,0.3); background: rgba(139,92,246,0.06); }
   .stack-frame.stack-suspended  { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.05); }
-  .stack-name  { font-size: 0.6rem; font-family: var(--font-code); color: rgba(255,255,255,0.6); }
+  .stack-name  { font-size: 0.65rem; font-family: var(--font-code); color: rgba(255,255,255,0.92); font-weight: 600; }
   .stack-state { font-size: 0.48rem; font-family: var(--font-code); color: #8b5cf6; }
   .stack-state { color: #8b5cf6; }
   .stack-frame.stack-suspended .stack-state { color: #f59e0b; }
-  .stack-empty { font-size: 0.55rem; color: #333; font-family: var(--font-code); }
+  .stack-empty { font-size: 0.6rem; color: rgba(255,255,255,0.6); font-family: var(--font-code); }
 
   .vars-box  { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; min-height: 56px; }
   .var-row   { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 6px; border-radius: 4px; transition: all 0.3s; }
   .var-row.var-flash { background: rgba(139,92,246,0.08); }
   .var-name  { font-size: 0.6rem; font-weight: 700; font-family: var(--font-code); color: #8b5cf6; min-width: 40px; }
-  .var-value { font-size: 0.55rem; font-family: var(--font-code); color: rgba(255,255,255,0.55); text-align: right; }
-  .var-empty { font-size: 0.55rem; color: #333; font-family: var(--font-code); }
+  .var-value { font-size: 0.6rem; font-family: var(--font-code); color: rgba(255,255,255,0.88); text-align: right; }
+  .var-empty { font-size: 0.6rem; color: rgba(255,255,255,0.6); font-family: var(--font-code); }
 
   .vis-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
   .ph-svg   { width: 380px; height: auto; }
-  .ph-text  { font-size: 0.78rem; color: rgba(255,255,255,0.45); text-align: center; }
+  .ph-text  { font-size: 0.78rem; color: rgba(255,255,255,0.78); text-align: center; }
 
-  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #444; font-family: var(--font-code); }
+  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.58rem; color: rgba(255,255,255,0.78); font-family: var(--font-code); }
 </style>

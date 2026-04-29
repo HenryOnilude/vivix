@@ -344,23 +344,109 @@
     hideExamples
     runHint=""
     editorPlaceholder="Paste your JavaScript here"
+    moduleCaption="pattern-detection meter — the Pattern Registry scans your code for canonical shapes (loops, closures, async, etc.); when a pattern is found, the meter lights up and a hand-written explanation appears"
   >
+    <!-- Pattern-detection meter: confidence bar + detected/unknown split -->
+    {#snippet cpuModuleVisual(sd)}
+      {@const patternId = sd._patternId || ''}
+      {@const hasBrain = !!sd._brainHtml}
+      {@const isLLM = hasBrain && !patternId}
+      {@const status = patternId ? 'matched' : isLLM ? 'ai-narrated' : 'scanning'}
+      {@const W = 520}
+      {@const H = 110}
+      {@const statusColor = patternId ? ACCENT : isLLM ? '#a78bfa' : '#64748b'}
+
+      <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <!-- Header -->
+        <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+          font-family="'Geist Mono', monospace" letter-spacing="1">PATTERN REGISTRY</text>
+        <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+          font-family="'Geist Mono', monospace">registry scan → AI fallback</text>
+
+        <!-- Confidence meter -->
+        <text x="12" y="34" fill="#94a3b8" font-size="6.5" font-weight="600"
+          font-family="'Geist Mono', monospace" letter-spacing="0.8">CONFIDENCE</text>
+
+        <rect x="12" y="38" width="400" height="16" rx="3"
+          fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
+        <rect x="13" y="39" width={patternId ? 398 : isLLM ? 240 : 20} height="14" rx="2"
+          fill={statusColor} opacity={patternId ? 0.55 : isLLM ? 0.35 : 0.25}/>
+
+        <!-- Tick marks on meter -->
+        {#each [0, 25, 50, 75, 100] as pct}
+          <line x1={13 + (pct / 100) * 398} y1="54" x2={13 + (pct / 100) * 398} y2="58"
+            stroke="#334155" stroke-width="0.5"/>
+          <text x={13 + (pct / 100) * 398} y="64" text-anchor="middle"
+            fill="#64748b" font-size="5.5"
+            font-family="'Geist Mono', monospace">{pct}</text>
+        {/each}
+
+        <!-- Status chip on the right -->
+        <rect x="420" y="32" width="92" height="28" rx="4"
+          fill={`${statusColor}1f`} stroke={statusColor} stroke-width="1.2"/>
+        <text x="466" y="43" text-anchor="middle"
+          fill={statusColor} font-size="7" font-weight="800"
+          font-family="'Geist Mono', monospace" letter-spacing="0.6">
+          {status.toUpperCase()}
+        </text>
+        <text x="466" y="54" text-anchor="middle"
+          fill={statusColor} font-size="6.5" font-weight="600"
+          font-family="'Geist Mono', monospace">
+          {patternId ? (patternId.length > 12 ? patternId.slice(0, 11) + '…' : patternId) : isLLM ? 'local-ai' : 'no pattern'}
+        </text>
+
+        <!-- Pipeline legend -->
+        <text x="12" y="80" fill="#94a3b8" font-size="6" font-weight="600"
+          font-family="'Geist Mono', monospace" letter-spacing="0.5">PIPELINE</text>
+
+        {#each [
+          { label: 'AST', active: true },
+          { label: 'walk', active: true },
+          { label: 'match', active: !!patternId },
+          { label: 'explain', active: !!patternId },
+          { label: 'ai fallback', active: isLLM },
+        ] as stage, i}
+          {@const sx = 60 + i * 86}
+          <rect x={sx} y="72" width="78" height="14" rx="2"
+            fill={stage.active ? `${statusColor}22` : '#0b0b14'}
+            stroke={stage.active ? statusColor : '#1a1a2e'} stroke-width="1"/>
+          <text x={sx + 39} y="82" text-anchor="middle"
+            fill={stage.active ? statusColor : '#64748b'}
+            font-size="6.5" font-weight="700"
+            font-family="'Geist Mono', monospace">{stage.label}</text>
+          {#if i < 4}
+            <line x1={sx + 78} y1="79" x2={sx + 86} y2="79"
+              stroke="#334155" stroke-width="0.8"/>
+          {/if}
+        {/each}
+
+        <!-- Footer caption -->
+        <text x={W/2} y={H - 2} text-anchor="middle"
+          fill={statusColor} font-size="7.5" font-weight="600"
+          font-family="'Geist Mono', monospace">
+          {patternId ? `pattern "${patternId}" matched — using hand-written explanation`
+            : isLLM ? 'no registry match — local AI narrating this step'
+            : 'scanning AST · awaiting pattern match'}
+        </text>
+      </svg>
+    {/snippet}
+
     {#snippet cpuRegisters(sd)}
-      <rect x="210" y="14" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-      <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">PATTERN</text>
-      <text x="344" y="29" text-anchor="end" fill={sd._patternId ? ACCENT : sd._brainHtml ? '#a78bfa' : '#333'} font-size="9" font-weight="700" font-family="'Geist Mono', monospace">
+      <rect x="210" y="12" width="140" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+      <text x="216" y="22" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">PATTERN</text>
+      <text x="344" y="32" text-anchor="end" fill={sd._patternId ? ACCENT : sd._brainHtml ? '#a78bfa' : '#444'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">
         {sd._patternId || (sd._brainHtml ? 'llm' : 'general')}
       </text>
 
-      <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-      <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">HEAP</text>
-      <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace">~{sd.bytes ?? 0}B</text>
+      <rect x="210" y="42" width="140" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+      <text x="216" y="52" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">HEAP</text>
+      <text x="344" y="62" text-anchor="end" fill={ACCENT} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">~{sd.bytes ?? 0}B</text>
     {/snippet}
 
     {#snippet cpuGauge(sd)}
-      <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-      <rect x="247" y="69" width={Math.min(102, (sd.memOps || 0) * 6)} height="14" rx="2" fill={ACCENT} opacity="0.2"/>
-      <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.memOps || 0} ops</text>
+      <rect x="210" y="72" width="140" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
+      <rect x="211" y="73" width={Math.min(138, (sd.memOps || 0) * 7)} height="14" rx="2" fill={ACCENT} opacity="0.25"/>
+      <text x="280" y="83" text-anchor="middle" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="0.5">{sd.memOps || 0} OPS</text>
     {/snippet}
 
     {#snippet placeholder()}

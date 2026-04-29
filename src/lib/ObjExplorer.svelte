@@ -55,31 +55,164 @@
   interpreterOptions={{ trackObjects: true }}
   {mapStep}
   showHeap={false}
+  moduleCaption="hash-bucket diagram — keys are hashed into buckets, V8 finds them in O(1) regardless of object size; same shape = same hidden class"
 >
+
+  <!-- Hash-bucket visual: keys flow into buckets, hidden-class chain on the right -->
+  {#snippet cpuModuleVisual(sd)}
+    {@const vars = sd.vars || {}}
+    {@const objEntry = Object.entries(vars).find(([, v]) => v !== null && typeof v === 'object' && !Array.isArray(v))}
+    {@const objName = objEntry ? objEntry[0] : ''}
+    {@const obj = objEntry ? objEntry[1] : {}}
+    {@const keys = Object.keys(obj || {})}
+    {@const layout = bucketLayout(keys)}
+    {@const objOps = sd.objOps || 0}
+    {@const hKey = sd.highlightKey}
+    {@const W = 520}
+    {@const H = 110}
+
+    <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <!-- Header -->
+      <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+        font-family="'Geist Mono', monospace" letter-spacing="1">HASH BUCKETS</text>
+      <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+        font-family="'Geist Mono', monospace">
+        {objName ? `${objName} · ${keys.length} key${keys.length === 1 ? '' : 's'}` : 'no object yet'}
+      </text>
+
+      {#if !objEntry}
+        <text x={W/2} y={H/2} text-anchor="middle" fill="#94a3b8" font-size="9"
+          font-family="'Geist Mono', monospace">no object declared yet</text>
+      {:else}
+        <!-- Key chips on the left -->
+        {#each keys.slice(0, 4) as key, i}
+          {@const isActive = hKey === key || sd.highlight === key}
+          <rect x="14" y={26 + i * 16} width="84" height="14" rx="3"
+            fill={isActive ? `${ACCENT}1f` : '#0b0b14'}
+            stroke={isActive ? ACCENT : '#1a1a2e'}
+            stroke-width={isActive ? 1.5 : 1}/>
+          <text x="20" y={36 + i * 16}
+            fill={isActive ? ACCENT : '#f1f5f9'}
+            font-size="8" font-weight="700"
+            font-family="'Geist Mono', monospace">"{key.length > 8 ? key.slice(0,7) + '…' : key}"</text>
+        {/each}
+        {#if keys.length > 4}
+          <text x="14" y={26 + 4 * 16 + 10} fill="#64748b" font-size="6.5"
+            font-family="'Geist Mono', monospace">+{keys.length - 4} more</text>
+        {/if}
+
+        <!-- Hash arrow + label -->
+        <text x="118" y="22" fill="#94a3b8" font-size="6" letter-spacing="0.6"
+          font-family="'Geist Mono', monospace">hash(key) % N</text>
+
+        <!-- Buckets in the middle -->
+        {@const bucketsX = 180}
+        {@const bucketW = 78}
+        {@const bucketH = 16}
+        {#each [0, 1, 2, 3] as b}
+          {@const by = 22 + b * (bucketH + 2)}
+          {@const bucketKeys = layout.filter(L => L.bucket === b).map(L => L.key)}
+          {@const bucketActive = bucketKeys.includes(hKey) || bucketKeys.includes(sd.highlight)}
+          <rect x={bucketsX} y={by} width={bucketW} height={bucketH} rx="2"
+            fill={bucketActive ? `${ACCENT}1f` : '#0b0b14'}
+            stroke={bucketActive ? ACCENT : '#1a1a2e'}
+            stroke-width={bucketActive ? 1.5 : 1}/>
+          <text x={bucketsX + 4} y={by + 11} fill="#94a3b8" font-size="6"
+            font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">B{b}</text>
+          <text x={bucketsX + bucketW - 4} y={by + 11} text-anchor="end"
+            fill={bucketActive ? ACCENT : '#cbd5e1'} font-size="7" font-weight="600"
+            font-family="'Geist Mono', monospace">
+            {bucketKeys.length === 0 ? '—' : bucketKeys.join(', ').slice(0, 14) + (bucketKeys.join(', ').length > 14 ? '…' : '')}
+          </text>
+
+          <!-- Hash arrows from key chip area to bucket -->
+          {#each layout.filter(L => L.bucket === b) as L}
+            {@const ki = keys.indexOf(L.key)}
+            {#if ki < 4}
+              <line x1="100" y1={33 + ki * 16} x2={bucketsX - 2} y2={by + bucketH/2}
+                stroke={hKey === L.key || sd.highlight === L.key ? ACCENT : '#334155'}
+                stroke-width={hKey === L.key || sd.highlight === L.key ? 1.5 : 0.7}
+                opacity={hKey === L.key || sd.highlight === L.key ? 1 : 0.5}/>
+            {/if}
+          {/each}
+        {/each}
+
+        <!-- Hidden-class chain on the right -->
+        {@const hcX = 290}
+        <text x={hcX} y="22" fill="#94a3b8" font-size="6.5" font-weight="700"
+          font-family="'Geist Mono', monospace" letter-spacing="0.8">HIDDEN CLASS</text>
+
+        {#each Array(Math.min(keys.length, 4)) as _, i}
+          {@const cx = hcX + i * 50}
+          <rect x={cx} y="30" width="40" height="20" rx="3"
+            fill={i === keys.length - 1 ? `${ACCENT}1f` : '#0b0b14'}
+            stroke={i === keys.length - 1 ? ACCENT : '#334155'}
+            stroke-width={i === keys.length - 1 ? 1.5 : 1}/>
+          <text x={cx + 20} y="44" text-anchor="middle"
+            fill={i === keys.length - 1 ? ACCENT : '#94a3b8'}
+            font-size="8" font-weight="700"
+            font-family="'Geist Mono', monospace">C{i}</text>
+          {#if i < Math.min(keys.length, 4) - 1}
+            <line x1={cx + 40} y1="40" x2={cx + 50} y2="40"
+              stroke="#475569" stroke-width="1" marker-end="url(#obj-arrow)"/>
+          {/if}
+          {#if keys[i]}
+            <text x={cx + 20} y="62" text-anchor="middle"
+              fill="#94a3b8" font-size="6"
+              font-family="'Geist Mono', monospace">+{keys[i].length > 5 ? keys[i].slice(0,4) + '…' : keys[i]}</text>
+          {/if}
+        {/each}
+
+        <!-- Op counter on far right -->
+        <text x={W - 12} y="76" text-anchor="end" fill="#94a3b8" font-size="6.5"
+          font-family="'Geist Mono', monospace" letter-spacing="0.5">OPS</text>
+        <text x={W - 12} y="92" text-anchor="end" fill={ACCENT}
+          font-size="13" font-weight="800"
+          font-family="'Geist Mono', monospace">{objOps}</text>
+      {/if}
+
+      <!-- Footer caption -->
+      <text x={W/2} y={H - 4} text-anchor="middle"
+        fill={ACCENT} font-size="7.5" font-weight="600"
+        font-family="'Geist Mono', monospace">
+        {!objEntry
+          ? 'awaiting object declaration'
+          : hKey
+            ? `accessing "${hKey}" → hashed to bucket B${hashKey(hKey)}`
+            : `${keys.length} key${keys.length === 1 ? '' : 's'} hashed across ${Math.min(4, keys.length)} bucket${Math.min(4, keys.length) === 1 ? '' : 's'} · O(1) avg lookup`}
+      </text>
+
+      <defs>
+        <marker id="obj-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#475569"/>
+        </marker>
+      </defs>
+    </svg>
+  {/snippet}
 
   <!-- CPU right-column registers: OBJ-OPS + TARGET + HEAP count -->
   {#snippet cpuRegisters(sd)}
-    <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
+    <rect x="210" y="12" width="68" height="26" rx="4" fill="#08080e"
       stroke={sd.objOps > 0 ? '#c084fc33' : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">OBJ-OPS</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.objOps > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.objOps}</text>
+    <text x="216" y="22" fill="#e0e0e0" font-size="7" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.3">OBJ-OPS</text>
+    <text x="272" y="32" text-anchor="end" fill={sd.objOps > 0 ? ACCENT : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.objOps}</text>
 
-    <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="290" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
-    <text x="344" y="29" text-anchor="end" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
+    <rect x="284" y="12" width="66" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="290" y="22" fill="#e0e0e0" font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
+    <text x="344" y="32" text-anchor="end" fill={ACCENT} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
 
-    <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">HEAP</text>
-    <text x="344" y="55" text-anchor="end" fill="#888" font-size="8" font-weight="700" font-family="'Geist Mono', monospace">
+    <rect x="210" y="42" width="140" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="216" y="52" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">HEAP</text>
+    <text x="344" y="62" text-anchor="end" fill="#ccc" font-size="11" font-weight="700" font-family="'Geist Mono', monospace">
       {Object.entries(sd.vars || {}).filter(([, v]) => typeof v === 'object' && v !== null).length} objects
     </text>
   {/snippet}
 
   <!-- CPU right gauge: object ops -->
   {#snippet cpuGauge(sd)}
-    <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-    <rect x="247" y="69" width={Math.min(102, sd.objOps * 15)} height="14" rx="2" fill={ACCENT} opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.objOps} OBJ OPS</text>
+    <rect x="210" y="72" width="140" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
+    <rect x="211" y="73" width={Math.min(138, sd.objOps * 18)} height="14" rx="2" fill={ACCENT} opacity="0.25"/>
+    <text x="280" y="83" text-anchor="middle" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="0.5">{sd.objOps} OBJ OPS</text>
   {/snippet}
 
   <!-- Object property visualization + scalar heap -->
@@ -182,7 +315,7 @@
                       fill={isHL ? ACCENT + '25' : '#0d0d1a'}
                       stroke={isHL ? ACCENT : '#1a1a2e'}
                       stroke-width={isHL ? 1 : 0.5}/>
-                    <text x={bx + 5} y={ky + 10} fill={isHL ? ACCENT : '#666'} font-size="6" font-family="'Geist Mono', monospace">"{item.key}"</text>
+                    <text x={bx + 5} y={ky + 10} fill={isHL ? ACCENT : '#bbb'} font-size="6" font-family="'Geist Mono', monospace">"{item.key}"</text>
                     {#if isHL}
                       <text x={bx + 60} y={ky + 10} text-anchor="end" fill={ACCENT} font-size="5.5" font-family="'Geist Mono', monospace">← hit</text>
                     {/if}

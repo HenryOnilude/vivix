@@ -344,6 +344,13 @@
           Try it now
         </a>
         <button class="cta-ghost" onclick={() => document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' })}>See all 12 modules</button>
+        <a href="#/free-form" class="cta-freeform" aria-label="Free-form mode: paste any JavaScript">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 3h10v10H3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            <path d="M5.5 6.5h5M5.5 9h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          Free-Form
+        </a>
       </div>
 
       <p class="hero-hint">No account. No install. Free and open source.</p>
@@ -1408,6 +1415,31 @@
     .ep-lane-micro  { grid-column: 1 / 2; grid-row: 3 / 4; }
     .ep-lane-macro  { grid-column: 2 / 3; grid-row: 3 / 4; }
   }
+
+  /* ── Tablet-only fix (769px–960px) ──────────────────────────────────────
+     On iPad / tablet widths the ep-board switches to its stacked 2-col
+     grid (via the @media max-width:960px rule above), but the
+     .ep-tooltip is still absolutely positioned at the centre of the
+     board (top:50% + translateY(72px)) which lands it directly on top
+     of the rotating EVENT LOOP ring. Demote the tooltip to a
+     normal-flow grid item spanning the full board width so it sits
+     below the ring instead of over it. Desktop (>960px) and mobile
+     (≤768px) layouts are intentionally untouched. */
+  @media (min-width: 769px) and (max-width: 960px) {
+    .ep-board     { grid-template-rows: repeat(4, auto); }
+    .ep-tooltip {
+      position: static;
+      top: auto;
+      left: auto;
+      transform: none;
+      grid-column: 1 / -1;
+      grid-row: 4 / 5;
+      max-width: 100%;
+      margin-top: 8px;
+      justify-self: center;
+    }
+    .ep-tooltip-arrow { display: none; }
+  }
   @media (max-width: 768px) {
     /* Collapse the 120px + 32px stacked gap between stages into a ~48px
        inter-stage beat. Mobile viewports don't have the vertical real
@@ -1694,6 +1726,31 @@
     color: rgba(255,255,255,0.88);
     border-color: rgba(255,255,255,0.25);
     background: rgba(255,255,255,0.06);
+  }
+
+  /* Free-Form CTA — teal to match the existing freeform-card identity
+     so users recognise the "paste any JS" entry point in both places. */
+  .cta-freeform {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-code);
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #00FFD1;
+    text-decoration: none;
+    padding: 11px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,255,209,0.35);
+    background: rgba(0,255,209,0.06);
+    transition: all 0.2s ease;
+    letter-spacing: 0.1px;
+  }
+
+  .cta-freeform:hover {
+    background: rgba(0,255,209,0.12);
+    border-color: rgba(0,255,209,0.6);
+    transform: translateY(-1px);
   }
 
   .hero-hint {

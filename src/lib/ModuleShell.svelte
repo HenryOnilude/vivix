@@ -96,6 +96,12 @@
     cpuRegisters = undefined,
     cpuGauge     = undefined,
     cpuStack     = undefined,
+    cpuModuleVisual = undefined,
+    /** Plain-English caption describing what the MODULE cell shows for this
+     *  specific module (e.g. "the variable being written, the last condition's
+     *  boolean, and total comparisons"). Replaces the generic
+     *  "module-specific state" subtitle inside CpuDash. */
+    moduleCaption = '',
   } = $props();
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -488,7 +494,12 @@
            runs off the `steps` snapshot captured when Visualize was last
            clicked, so editing mid-playback never corrupts state — it just
            flips `codeDirty` true until the user re-runs. -->
-      <CodeEditor bind:value={codeText} {accent} placeholder={editorPlaceholder} />
+      <CodeEditor
+        bind:value={codeText}
+        {accent}
+        placeholder={editorPlaceholder}
+        activeLine={hasRun && sd ? sd.lineIndex : null}
+      />
 
       {#if err}
         <div class="err-card">
@@ -575,6 +586,8 @@
             registers={cpuRegisters}
             gauge={cpuGauge}
             stack={cpuStack}
+            moduleVisual={cpuModuleVisual}
+            {moduleCaption}
           />
         {/key}
 
@@ -741,13 +754,13 @@
   }
   .hdr { display:flex; align-items:center; gap:14px; flex-shrink:0; position:relative; }
   .hdr-spacer { flex:1; }
-  .back { font-size:0.78rem; color:rgba(255,255,255,0.45); text-decoration:none; transition:color 0.2s; font-family: var(--font-ui); }
+  .back { font-size:0.8rem; color:rgba(255,255,255,0.78); text-decoration:none; transition:color 0.2s; font-family: var(--font-ui); }
   .back:hover { color:var(--acc); }
   .title-group { display:flex; flex-direction:column; }
   h2  { font-size:1.3rem; font-weight:700; color:rgba(255,255,255,0.95); margin:0; font-family: var(--font-code); }
   .ac  { /* colour set inline */ }
-  .sub { font-weight:400; font-size:0.88rem; color:rgba(255,255,255,0.55); font-family: var(--font-ui); }
-  .desc { font-size:0.72rem; color:rgba(255,255,255,0.52); margin:2px 0 0; font-family: var(--font-ui); }
+  .sub { font-weight:500; font-size:0.9rem; color:rgba(255,255,255,0.88); font-family: var(--font-ui); }
+  .desc { font-size:0.78rem; color:rgba(255,255,255,0.85); margin:2px 0 0; font-family: var(--font-ui); }
 
   /* ── Share button + toast ────────────────────────────────────────────── */
   .share-btn {
@@ -827,12 +840,12 @@
     border-radius:8px 8px 0 0;
     background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 60%, transparent), transparent);
   }
-  .pt  { font-size:0.62rem; color:rgba(255,255,255,0.3); letter-spacing:1px; text-transform:uppercase; font-weight:600; }
+  .pt  { font-size:0.66rem; color:rgba(255,255,255,0.92); letter-spacing:1.2px; text-transform:uppercase; font-weight:700; }
   .pa  { display:flex; gap:6px; }
   .rb  { border:none; border-radius:5px; padding:4px 14px; font-family:inherit; font-size:0.65rem; font-weight:700; cursor:pointer; transition:filter 0.15s, box-shadow 0.15s; }
   .rb:hover { filter:brightness(1.12); box-shadow:0 0 12px color-mix(in srgb, var(--acc) 30%, transparent); }
-  .eb  { background:transparent; color:rgba(255,255,255,0.35); border:1px solid rgba(255,255,255,0.1); border-radius:5px; padding:3px 10px; font-family:inherit; font-size:0.65rem; cursor:pointer; transition:all 0.2s; }
-  .eb:hover { color:rgba(255,255,255,0.75); border-color:rgba(255,255,255,0.22); }
+  .eb  { background:transparent; color:rgba(255,255,255,0.85); border:1px solid rgba(255,255,255,0.28); border-radius:5px; padding:3px 10px; font-family:inherit; font-size:0.68rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+  .eb:hover { color:#ffffff; border-color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.04); }
   /* Dirty-code indicator: appears next to the Visualize button once the
      user has edited the code since the last run. Low-key by design —
      just a muted pulsing dot + tiny label, never obstructs the editor. */
@@ -1003,8 +1016,8 @@
     top:0; left:0; right:0; height:1.5px;
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 50%, transparent), transparent);
   }
-  .heap-title { font-size:0.72rem; color:rgba(255,255,255,0.45); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
-  .panel-subtitle { display:block; color:var(--a11y-text-muted); font-size:0.65rem; font-weight:400; letter-spacing:0; text-transform:none; margin-top:1px; }
+  .heap-title { font-size:0.95rem; color:rgba(255,255,255,0.85); font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
+  .panel-subtitle { display:block; color:var(--a11y-text-muted); font-size:0.8rem; font-weight:400; letter-spacing:0; text-transform:none; margin-top:2px; }
   .heap-count { margin-left:auto; font-size:0.65rem; color:rgba(255,255,255,0.2); font-family: var(--font-code); }
   .heap-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; padding:8px; }
   /* Elevation: 'raised' level for interactive memory cards */
@@ -1080,8 +1093,8 @@
   .cx-card[open] > .cx-hdr .cx-chevron { transform: rotate(180deg); }
   /* When closed, hide the bottom border so the card reads as a single pill. */
   .cx-card:not([open]) > .cx-hdr { border-bottom-color: transparent; }
-  .cx-title      { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
-  .cx-live-badge { font-size:0.42rem; color:#4ade80; border:1px solid #4ade8044; border-radius:3px; padding:1px 5px; font-family: var(--font-code); letter-spacing:0.5px; }
+  .cx-title      { font-size:0.95rem; color:rgba(255,255,255,0.85); font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
+  .cx-live-badge { font-size:0.65rem; color:#4ade80; border:1px solid #4ade8044; border-radius:3px; padding:2px 7px; font-family: var(--font-code); letter-spacing:0.5px; font-weight:600; }
   .cx-chart      { display:flex; align-items:flex-end; gap:4px; height:76px; padding:8px 10px 0; }
   .cx-col        { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; }
   .cx-bar        { width:100%; border-radius:3px 3px 0 0; min-height:2px; }

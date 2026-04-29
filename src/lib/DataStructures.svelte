@@ -43,27 +43,157 @@
   interpreterOptions={{ trackDS: true }}
   {mapStep}
   showHeap={false}
+  moduleCaption="LIFO vs FIFO — stacks add and remove from the same end (push/pop), queues add at one end and remove from the other (push/shift)"
 >
 
+  <!-- LIFO/FIFO arrow diagram showing access pattern -->
+  {#snippet cpuModuleVisual(sd)}
+    {@const vars = sd.vars || {}}
+    {@const arrEntry = Object.entries(vars).find(([, v]) => Array.isArray(v))}
+    {@const arrName = arrEntry ? arrEntry[0] : ''}
+    {@const arr = arrEntry ? arrEntry[1] : []}
+    {@const type = arrName ? dsType(arrName, vars, sd.phase) : 'array'}
+    {@const isStack = type === 'stack'}
+    {@const isQueue = type === 'queue'}
+    {@const dsOps = sd.dsOps || 0}
+    {@const W = 520}
+    {@const H = 110}
+
+    <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <!-- Header -->
+      <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+        font-family="'Geist Mono', monospace" letter-spacing="1">
+        {isStack ? 'STACK · LIFO' : isQueue ? 'QUEUE · FIFO' : 'DATA STRUCTURE'}
+      </text>
+      <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+        font-family="'Geist Mono', monospace">
+        {arrName ? `${arrName} · ${arr.length} item${arr.length === 1 ? '' : 's'}` : 'no structure yet'}
+      </text>
+
+      {#if !arrEntry}
+        <text x={W/2} y={H/2} text-anchor="middle" fill="#94a3b8" font-size="9"
+          font-family="'Geist Mono', monospace">no array-based structure declared yet</text>
+      {:else}
+        {@const cellW = 50}
+        {@const cellH = 24}
+        {@const stripX = 80}
+        {@const stripY = 38}
+        {@const visible = arr.slice(0, 7)}
+
+        <!-- Items in the structure -->
+        {#each visible as val, i}
+          {@const cx = stripX + i * (cellW + 4)}
+          <rect x={cx} y={stripY} width={cellW} height={cellH} rx="3"
+            fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
+          <text x={cx + cellW/2} y={stripY + 16} text-anchor="middle"
+            fill="#f1f5f9" font-size="9" font-weight="700"
+            font-family="'Geist Mono', monospace">
+            {typeof val === 'string' ? `"${val.length > 4 ? val.slice(0,3) + '…' : val}"`
+            : typeof val === 'object' && val !== null ? '{}'
+            : String(val).length > 5 ? String(val).slice(0, 4) + '…' : val}
+          </text>
+          <text x={cx + cellW/2} y={stripY + cellH + 9} text-anchor="middle"
+            fill="#64748b" font-size="6"
+            font-family="'Geist Mono', monospace">[{i}]</text>
+        {/each}
+
+        {#if isStack}
+          <!-- LIFO: arrows BOTH push and pop at the END (right side) -->
+          {@const arrowX = stripX + visible.length * (cellW + 4) + 20}
+          <text x="20" y={stripY + 16} fill="#94a3b8" font-size="6.5" font-weight="600"
+            font-family="'Geist Mono', monospace" letter-spacing="0.5">FRONT</text>
+          <text x="20" y={stripY + 26} fill="#64748b" font-size="6"
+            font-family="'Geist Mono', monospace">(closed)</text>
+
+          <!-- Push arrow IN -->
+          <line x1={arrowX + 50} y1={stripY + 6} x2={arrowX + 4} y2={stripY + 6}
+            stroke="#4ade80" stroke-width="1.5" marker-end="url(#ds-arrow-in)"/>
+          <text x={arrowX + 28} y={stripY - 1} text-anchor="middle"
+            fill="#4ade80" font-size="6.5" font-weight="700"
+            font-family="'Geist Mono', monospace">push</text>
+
+          <!-- Pop arrow OUT -->
+          <line x1={arrowX + 4} y1={stripY + 18} x2={arrowX + 50} y2={stripY + 18}
+            stroke="#f87171" stroke-width="1.5" marker-end="url(#ds-arrow-out)"/>
+          <text x={arrowX + 28} y={stripY + cellH + 4} text-anchor="middle"
+            fill="#f87171" font-size="6.5" font-weight="700"
+            font-family="'Geist Mono', monospace">pop</text>
+
+          <text x={arrowX + 30} y={stripY + cellH + 16} text-anchor="middle"
+            fill={ACCENT} font-size="7" font-weight="800"
+            font-family="'Geist Mono', monospace" letter-spacing="0.5">TOP</text>
+        {:else if isQueue}
+          <!-- FIFO: shift OUT from front (left), push IN at back (right) -->
+          {@const enterX = stripX + visible.length * (cellW + 4) + 20}
+          <line x1={enterX + 44} y1={stripY + cellH/2} x2={enterX + 4} y2={stripY + cellH/2}
+            stroke="#4ade80" stroke-width="1.5" marker-end="url(#ds-arrow-in)"/>
+          <text x={enterX + 24} y={stripY - 2} text-anchor="middle"
+            fill="#4ade80" font-size="6.5" font-weight="700"
+            font-family="'Geist Mono', monospace">push</text>
+          <text x={enterX + 24} y={stripY + cellH + 9} text-anchor="middle"
+            fill="#94a3b8" font-size="6"
+            font-family="'Geist Mono', monospace">enqueue</text>
+
+          <line x1={stripX - 4} y1={stripY + cellH/2} x2={stripX - 44} y2={stripY + cellH/2}
+            stroke="#f87171" stroke-width="1.5" marker-end="url(#ds-arrow-out)"/>
+          <text x={stripX - 24} y={stripY - 2} text-anchor="middle"
+            fill="#f87171" font-size="6.5" font-weight="700"
+            font-family="'Geist Mono', monospace">shift</text>
+          <text x={stripX - 24} y={stripY + cellH + 9} text-anchor="middle"
+            fill="#94a3b8" font-size="6"
+            font-family="'Geist Mono', monospace">dequeue · O(n)</text>
+        {/if}
+
+        <!-- Op counter -->
+        <text x="14" y="92" fill="#94a3b8" font-size="6.5" font-weight="600"
+          font-family="'Geist Mono', monospace" letter-spacing="0.5">DS OPS</text>
+        <text x="14" y="104" fill={ACCENT} font-size="11" font-weight="800"
+          font-family="'Geist Mono', monospace">{dsOps}</text>
+      {/if}
+
+      <!-- Footer caption -->
+      <text x={W/2} y={H - 4} text-anchor="middle"
+        fill={ACCENT} font-size="7.5" font-weight="600"
+        font-family="'Geist Mono', monospace">
+        {!arrEntry
+          ? 'awaiting structure declaration'
+          : isStack
+            ? 'last-in · first-out — push/pop both O(1)'
+            : isQueue
+              ? 'first-in · first-out — push O(1), shift O(n) (must re-index)'
+              : 'array operations'}
+      </text>
+
+      <defs>
+        <marker id="ds-arrow-in" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#4ade80"/>
+        </marker>
+        <marker id="ds-arrow-out" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#f87171"/>
+        </marker>
+      </defs>
+    </svg>
+  {/snippet}
+
   {#snippet cpuRegisters(sd)}
-    <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
+    <rect x="210" y="12" width="68" height="26" rx="4" fill="#08080e"
       stroke={sd.dsOps > 0 ? '#f472b633' : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">DS-OPS</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.dsOps > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.dsOps}</text>
+    <text x="216" y="22" fill="#e0e0e0" font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">DS-OPS</text>
+    <text x="272" y="32" text-anchor="end" fill={sd.dsOps > 0 ? ACCENT : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.dsOps}</text>
 
-    <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="290" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">COMPS</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.comps > 0 ? '#a78bfa' : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.comps}</text>
+    <rect x="284" y="12" width="66" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="290" y="22" fill="#e0e0e0" font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">COMPS</text>
+    <text x="344" y="32" text-anchor="end" fill={sd.comps > 0 ? '#a78bfa' : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.comps}</text>
 
-    <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
-    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="10" font-weight="700" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
+    <rect x="210" y="42" width="140" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="216" y="52" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
+    <text x="344" y="62" text-anchor="end" fill={ACCENT} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
   {/snippet}
 
   {#snippet cpuGauge(sd)}
-    <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-    <rect x="247" y="69" width={Math.min(102, sd.dsOps * 12)} height="14" rx="2" fill={ACCENT} opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.dsOps} DS OPS</text>
+    <rect x="210" y="72" width="140" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
+    <rect x="211" y="73" width={Math.min(138, sd.dsOps * 15)} height="14" rx="2" fill={ACCENT} opacity="0.25"/>
+    <text x="280" y="83" text-anchor="middle" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="0.5">{sd.dsOps} DS OPS</text>
   {/snippet}
 
   {#snippet topPanel(sd)}

@@ -128,31 +128,117 @@
   interpreterOptions={{ trackLoops: true }}
   {mapStep}
   dataFlow
+  moduleCaption="iteration timeline — each tick = one pass through the loop body, condition gate decides if the next iteration runs"
 >
 
-  {#snippet cpuRegisters(sd)}
-    <rect x="210" y="14" width="140" height="22" rx="4" fill="#08080e"
-      stroke={sd.loopIterations > 0 ? '#ffcc6633' : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">ITER</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.loopIterations > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.loopIterations}</text>
+  <!-- Iteration timeline: ticks on a track, current tick highlighted, condition gate at the right -->
+  {#snippet cpuModuleVisual(sd)}
+    {@const iters = sd.loopIterations || 0}
+    {@const cond  = sd.conditionResult}
+    {@const W = 520}
+    {@const H = 110}
+    {@const trackY = 50}
+    {@const trackX = 12}
+    {@const trackW = 360}
+    {@const maxTicks = 16}
+    {@const tickCount = Math.min(Math.max(iters + (cond === true ? 1 : 0), 4), maxTicks)}
+    {@const tickGap = trackW / Math.max(tickCount - 1, 1)}
+    <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <!-- Header -->
+      <text x={trackX} y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+        font-family="'Geist Mono', monospace" letter-spacing="1">ITERATION TIMELINE</text>
+      <text x={trackX + trackW} y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+        font-family="'Geist Mono', monospace">tick = body executed once</text>
 
-    <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">COND</text>
+      <!-- Track line -->
+      <line x1={trackX} y1={trackY} x2={trackX + trackW} y2={trackY}
+        stroke="#1a1a2e" stroke-width="2"/>
+
+      <!-- Past iterations (filled portion of track) -->
+      {#if iters > 0}
+        <line x1={trackX} y1={trackY}
+          x2={trackX + Math.min(iters, tickCount - 1) * tickGap}
+          y2={trackY}
+          stroke={ACCENT} stroke-width="2.5" opacity="0.85"/>
+      {/if}
+
+      <!-- Ticks -->
+      {#each Array(tickCount) as _, i}
+        {@const cx = trackX + i * tickGap}
+        {@const isPast    = i < iters}
+        {@const isCurrent = i === iters && cond !== false}
+        {@const isFuture  = i > iters}
+        <circle cx={cx} cy={trackY} r={isCurrent ? 6 : 4}
+          fill={isPast ? ACCENT : isCurrent ? ACCENT : '#0b0b14'}
+          stroke={isCurrent ? ACCENT : isPast ? ACCENT : '#334155'}
+          stroke-width={isCurrent ? 2 : 1.5}
+          opacity={isFuture ? 0.5 : 1}/>
+        {#if i % 4 === 0 || isCurrent}
+          <text x={cx} y={trackY + 18} text-anchor="middle"
+            fill={isCurrent ? ACCENT : '#94a3b8'}
+            font-size="7" font-weight={isCurrent ? '700' : '500'}
+            font-family="'Geist Mono', monospace">{i}</text>
+        {/if}
+      {/each}
+
+      <!-- Current iter indicator above track -->
+      {#if iters > 0 || cond !== null}
+        <text x={trackX + Math.min(iters, tickCount - 1) * tickGap} y={trackY - 12}
+          text-anchor="middle" fill={ACCENT} font-size="8" font-weight="700"
+          font-family="'Geist Mono', monospace">i = {iters}</text>
+      {/if}
+
+      <!-- Condition gate at the right -->
+      {@const gateX = trackX + trackW + 30}
+      {@const gateY = trackY - 18}
+      <rect x={gateX} y={gateY} width="100" height="36" rx="4"
+        fill={cond === true ? '#4ade8014' : cond === false ? '#f8717114' : '#0b0b14'}
+        stroke={cond === true ? '#4ade80' : cond === false ? '#f87171' : '#334155'}
+        stroke-width="1.5"/>
+      <text x={gateX + 50} y={gateY + 14} text-anchor="middle"
+        fill="#94a3b8" font-size="6.5" font-weight="600"
+        font-family="'Geist Mono', monospace" letter-spacing="0.8">CONDITION</text>
+      <text x={gateX + 50} y={gateY + 28} text-anchor="middle"
+        fill={cond === true ? '#4ade80' : cond === false ? '#f87171' : '#94a3b8'}
+        font-size="11" font-weight="800"
+        font-family="'Geist Mono', monospace">
+        {cond === true ? 'TRUE' : cond === false ? 'FALSE' : '—'}
+      </text>
+
+      <!-- Footer caption: explains what the gate decides -->
+      <text x={W/2} y={H - 6} text-anchor="middle" fill={ACCENT} font-size="7.5"
+        font-weight="600" font-family="'Geist Mono', monospace">
+        {cond === true  ? `condition true → run iteration ${iters}`
+        : cond === false ? `condition false → exit loop after ${iters} iteration${iters === 1 ? '' : 's'}`
+        : iters > 0      ? `${iters} iteration${iters === 1 ? '' : 's'} completed`
+        : 'awaiting first condition check'}
+      </text>
+    </svg>
+  {/snippet}
+
+  {#snippet cpuRegisters(sd)}
+    <rect x="210" y="12" width="140" height="26" rx="4" fill="#08080e"
+      stroke={sd.loopIterations > 0 ? '#ffcc6633' : '#1a1a2e'} stroke-width="1"/>
+    <text x="216" y="22" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">ITER</text>
+    <text x="344" y="32" text-anchor="end" fill={sd.loopIterations > 0 ? ACCENT : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.loopIterations}</text>
+
+    <rect x="210" y="42" width="140" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="216" y="52" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">COND</text>
     {#if sd.conditionResult === true}
-      <circle cx="338" cy="51" r="5" fill="#4ade80"/>
-      <text x="330" y="55" text-anchor="end" fill="#4ade80" font-size="9" font-weight="700" font-family="'Geist Mono', monospace">TRUE</text>
+      <circle cx="334" cy="56" r="5" fill="#4ade80"/>
+      <text x="324" y="61" text-anchor="end" fill="#4ade80" font-size="13" font-weight="800" font-family="'Geist Mono', monospace">TRUE</text>
     {:else if sd.conditionResult === false}
-      <circle cx="338" cy="51" r="5" fill="#f87171"/>
-      <text x="330" y="55" text-anchor="end" fill="#f87171" font-size="9" font-weight="700" font-family="'Geist Mono', monospace">FALSE</text>
+      <circle cx="334" cy="56" r="5" fill="#f87171"/>
+      <text x="324" y="61" text-anchor="end" fill="#f87171" font-size="13" font-weight="800" font-family="'Geist Mono', monospace">FALSE</text>
     {:else}
-      <text x="344" y="55" text-anchor="end" fill="#222" font-size="9" font-family="'Geist Mono', monospace">—</text>
+      <text x="344" y="61" text-anchor="end" fill="#bbb" font-size="12" font-family="'Geist Mono', monospace">—</text>
     {/if}
   {/snippet}
 
   {#snippet cpuGauge(sd)}
-    <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-    <rect x="247" y="69" width={Math.min(102, (sd.comps || 0) * 10)} height="14" rx="2" fill="#a78bfa" opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.comps || 0} CHECKS</text>
+    <rect x="210" y="72" width="140" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
+    <rect x="211" y="73" width={Math.min(138, (sd.comps || 0) * 12)} height="14" rx="2" fill="#a78bfa" opacity="0.25"/>
+    <text x="280" y="83" text-anchor="middle" fill="#a78bfa" font-size="9" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="0.5">{sd.comps || 0} CHECKS</text>
   {/snippet}
 
   {#snippet topPanel(sd)}

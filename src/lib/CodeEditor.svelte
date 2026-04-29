@@ -1,12 +1,25 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
 
-  let { value = $bindable(''), accent = '#38bdf8', readonly = false, placeholder = '', onchange = null } = $props();
+  let {
+    value = $bindable(''),
+    accent = '#38bdf8',
+    readonly = false,
+    placeholder = '',
+    onchange = null,
+    /** 0-indexed line currently executing in the visualiser. null/negative = no highlight. */
+    activeLine = null,
+  } = $props();
 
   let container;
   let view;
   let updating = false;
   let loaded = $state(false);
+  /** CodeMirror StateEffect used to push a new active line into the editor. */
+  let setActiveLineEffect = null;
+  /** Cached EditorView constructor — needed inside reactive effects where
+   *  the dynamic import's locals are out of scope. */
+  let EditorViewRef = null;
 
   function buildTheme(col, EditorView) {
     return EditorView.theme({
@@ -36,6 +49,13 @@
       '.cm-activeLineGutter': {
         backgroundColor: '#0a0a14',
         color: col,
+      },
+      /* ── Execution-line highlight (driven by the activeLine prop) ──
+         A soft accent-coloured band plus a left rail so beginners can
+         track which statement the visualiser is currently interpreting. */
+      '.cm-execLine': {
+        backgroundColor: `${col}1f`,
+        boxShadow: `inset 2px 0 0 ${col}`,
       },
       '.cm-gutters': {
         backgroundColor: '#08080e',
@@ -73,8 +93,8 @@
   onMount(async () => {
     // ── Lazy-load CodeMirror — keeps it out of the initial JS bundle ──────────
     const [
-      { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightActiveLine, drawSelection, placeholder: cmPlaceholder },
-      { EditorState },
+      { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightActiveLine, drawSelection, placeholder: cmPlaceholder, Decoration },
+      { EditorState, StateField, StateEffect },
       { javascript },
       { syntaxHighlighting, HighlightStyle, bracketMatching, indentOnInput },
       { defaultKeymap, indentWithTab, history, historyKeymap },
@@ -89,6 +109,33 @@
       import('@codemirror/autocomplete'),
       import('@codemirror/search'),
     ]);
+
+    // ── Execution-line decoration ─────────────────────────────────────
+    // A StateField holding either Decoration.none or a single line
+    // decoration at the currently-executing source line. Updated via a
+    // StateEffect dispatched from the activeLine prop effect below.
+    EditorViewRef = EditorView;
+    const execLineEffect = StateEffect.define();
+    setActiveLineEffect = execLineEffect;
+    const execLineField = StateField.define({
+      create() { return Decoration.none; },
+      update(deco, tr) {
+        deco = deco.map(tr.changes);
+        for (const e of tr.effects) {
+          if (e.is(execLineEffect)) {
+            const ln = e.value;
+            if (ln == null || ln < 0 || tr.state.doc.lines < 1) return Decoration.none;
+            const clamped = Math.min(Math.max(ln + 1, 1), tr.state.doc.lines);
+            const line = tr.state.doc.line(clamped);
+            return Decoration.set([
+              Decoration.line({ class: 'cm-execLine' }).range(line.from),
+            ]);
+          }
+        }
+        return deco;
+      },
+      provide: f => EditorView.decorations.from(f),
+    });
 
     const syntaxColors = syntaxHighlighting(HighlightStyle.define([
       { tag: ['keyword'], color: '#c084fc' },
@@ -111,6 +158,7 @@
     const state = EditorState.create({
       doc: value,
       extensions: [
+        execLineField,
         lineNumbers(),
         highlightActiveLineGutter(),
         highlightActiveLine(),
@@ -171,6 +219,32 @@
       });
       updating = false;
     }
+  });
+
+  // Track activeLine — push the new line into the StateField and scroll
+  // the editor so the highlighted line stays visible during playback.
+  $effect(() => {
+    const ln = activeLine;
+    const isLoaded = loaded;
+    if (!isLoaded || !view || !setActiveLineEffect || !EditorViewRef) return;
+    view.dispatch({ effects: setActiveLineEffect.of(ln) });
+    if (ln == null || ln < 0) return;
+    const clamped = Math.min(Math.max(ln + 1, 1), view.state.doc.lines);
+    const linePos = view.state.doc.line(clamped).from;
+    // Only scroll if the line is actually out of view — avoids yanking the
+    // editor around while the user is scrolling manually.
+    view.requestMeasure({
+      read: () => {
+        const coords = view.coordsAtPos(linePos);
+        if (!coords) return null;
+        const rect = view.scrollDOM.getBoundingClientRect();
+        const outOfView = coords.top < rect.top + 20 || coords.bottom > rect.bottom - 20;
+        if (outOfView) {
+          view.dispatch({ effects: EditorViewRef.scrollIntoView(linePos, { y: 'center' }) });
+        }
+        return null;
+      },
+    });
   });
 </script>
 

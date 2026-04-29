@@ -150,35 +150,189 @@
   interpreterOptions={{ trackCalls: true, trackClosures: true }}
   {mapStep}
   showHeap={false}
+  moduleCaption="scope-chain ladder — each nested scope keeps a pointer to its parent, so inner functions can still read outer variables long after those functions have returned"
 >
+
+  <!-- Scope-chain ladder: nested boxes with captured variables highlighted -->
+  {#snippet cpuModuleVisual(sd)}
+    {@const chain = sd.scopeChain || []}
+    {@const depth = sd.scopeDepth || chain.length || 1}
+    {@const captured = sd.capturedCount || 0}
+    {@const W = 520}
+    {@const H = 110}
+    {@const visible = chain.slice(-4)}
+    {@const hiddenCount = chain.length - visible.length}
+
+    <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <!-- Header -->
+      <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+        font-family="'Geist Mono', monospace" letter-spacing="1">SCOPE CHAIN</text>
+      <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+        font-family="'Geist Mono', monospace">inner ← outer · lookup walks outward</text>
+
+      {#if hiddenCount > 0}
+        <text x={W/2} y="26" text-anchor="middle" fill="#64748b" font-size="6.5"
+          font-style="italic" font-family="'Geist Mono', monospace">
+          +{hiddenCount} outer scope{hiddenCount === 1 ? '' : 's'}
+        </text>
+      {/if}
+
+      {#if visible.length === 0}
+        <text x={W/2} y={H/2} text-anchor="middle" fill="#94a3b8" font-size="9"
+          font-family="'Geist Mono', monospace">no scope chain yet</text>
+      {:else}
+        {@const boxW = 118}
+        {@const boxH = 54}
+        {@const boxY = 30}
+        {@const gap = 12}
+        {@const totalW = visible.length * boxW + (visible.length - 1) * gap}
+        {@const startX = (W - totalW) / 2}
+
+        {#each visible as frame, i}
+          {@const isInnermost = i === visible.length - 1}
+          {@const isClosure = frame.isClosure}
+          {@const fx = startX + i * (boxW + gap)}
+          {@const varEntries = Object.entries(frame.vars || {}).slice(0, 3)}
+
+          <!-- Scope box -->
+          <rect x={fx} y={boxY} width={boxW} height={boxH} rx="4"
+            fill={isInnermost ? `${ACCENT}1f` : isClosure ? '#1e293b' : '#0b0b14'}
+            stroke={isInnermost ? ACCENT : isClosure ? ACCENT : '#334155'}
+            stroke-width={isInnermost ? 1.8 : isClosure ? 1.3 : 1}
+            stroke-dasharray={isClosure && !isInnermost ? '3 2' : ''}/>
+
+          <!-- Frame name -->
+          <text x={fx + 6} y={boxY + 11}
+            fill={isInnermost ? ACCENT : isClosure ? ACCENT : '#cbd5e1'}
+            font-size="8" font-weight="800"
+            font-family="'Geist Mono', monospace" letter-spacing="0.3">
+            {frame.name || 'anon'}{frame.name !== 'Global' ? '()' : ''}
+          </text>
+
+          <!-- Tag -->
+          <text x={fx + boxW - 6} y={boxY + 11} text-anchor="end"
+            fill={isClosure ? '#fbbf24' : '#64748b'} font-size="5.5" font-weight="700"
+            font-family="'Geist Mono', monospace" letter-spacing="0.5">
+            {isInnermost ? 'ACTIVE' : isClosure ? 'CAPTURED' : 'SCOPE'}
+          </text>
+
+          <!-- Variables -->
+          {#each varEntries as [k, v], vi}
+            <text x={fx + 8} y={boxY + 23 + vi * 10}
+              fill={isClosure && !isInnermost ? '#fbbf24' : '#e2e8f0'}
+              font-size="7" font-weight="600"
+              font-family="'Geist Mono', monospace">
+              {k}: {typeof v === 'string' ? `"${String(v).slice(0,5)}"` : typeof v === 'object' ? '{…}' : String(v).slice(0, 6)}
+            </text>
+          {/each}
+          {#if Object.keys(frame.vars || {}).length === 0}
+            <text x={fx + 8} y={boxY + 28}
+              fill="#64748b" font-size="6.5" font-style="italic"
+              font-family="'Geist Mono', monospace">(empty)</text>
+          {/if}
+          {#if Object.keys(frame.vars || {}).length > 3}
+            <text x={fx + 8} y={boxY + 52}
+              fill="#64748b" font-size="5.5"
+              font-family="'Geist Mono', monospace">+{Object.keys(frame.vars).length - 3} more</text>
+          {/if}
+
+          <!-- Arrow to next (outer) scope -->
+          {#if i < visible.length - 1}
+            <line x1={fx + boxW} y1={boxY + boxH/2} x2={fx + boxW + gap} y2={boxY + boxH/2}
+              stroke="#475569" stroke-width="1.2" marker-end="url(#cl-arrow)"/>
+          {/if}
+        {/each}
+
+        <!-- Legend dot -->
+        <circle cx="20" cy={H - 10} r="3" fill={ACCENT}/>
+        <text x="28" y={H - 7} fill="#fbbf24" font-size="6.5" font-weight="600"
+          font-family="'Geist Mono', monospace">captured = kept alive by inner fn</text>
+      {/if}
+
+      <!-- Depth stat -->
+      <text x={W - 12} y={H - 18} text-anchor="end" fill="#94a3b8" font-size="6.5"
+        font-family="'Geist Mono', monospace" letter-spacing="0.5">DEPTH {depth} · CAPTURED {captured}</text>
+
+      <!-- Footer caption -->
+      <text x={W/2} y={H - 1} text-anchor="middle"
+        fill={ACCENT} font-size="7.5" font-weight="600"
+        font-family="'Geist Mono', monospace">
+        {captured > 0
+          ? `${captured} variable${captured === 1 ? '' : 's'} captured — outer scope survives because inner function still references it`
+          : depth > 1
+            ? `nested ${depth} scopes deep — variable lookup walks outward until a match is found`
+            : 'global scope — no closures yet'}
+      </text>
+
+      <defs>
+        <marker id="cl-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#475569"/>
+        </marker>
+      </defs>
+    </svg>
+  {/snippet}
 
   <!-- CPU registers: SCOPES / CAPTURED / FRAME -->
   {#snippet cpuRegisters(sd)}
-    <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
+    <rect x="210" y="12" width="68" height="26" rx="4" fill="#08080e"
       stroke={sd.scopeDepth > 1 ? `${ACCENT}44` : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">SCOPES</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.scopeDepth > 1 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.scopeDepth}</text>
+    <text x="216" y="22" fill="#e0e0e0" font-size="7" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">SCOPES</text>
+    <text x="272" y="32" text-anchor="end" fill={sd.scopeDepth > 1 ? ACCENT : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.scopeDepth}</text>
 
-    <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="290" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">CAPTURED</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.capturedCount > 0 ? '#a78bfa' : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.capturedCount}</text>
+    <rect x="284" y="12" width="66" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="290" y="22" fill="#e0e0e0" font-size="6.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.3">CAPTURED</text>
+    <text x="344" y="32" text-anchor="end" fill={sd.capturedCount > 0 ? '#a78bfa' : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.capturedCount}</text>
 
-    <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">FRAME</text>
-    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace">{sd.currentFrame.slice(0, 18)}</text>
+    <rect x="210" y="42" width="140" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="216" y="52" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">FRAME</text>
+    <text x="344" y="62" text-anchor="end" fill={ACCENT} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.currentFrame.slice(0, 18)}</text>
   {/snippet}
 
   <!-- CPU gauge: captured var fill bar -->
   {#snippet cpuGauge(sd)}
-    <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-    <rect x="247" y="69" width={Math.min(102, sd.capturedCount * 30)} height="14" rx="2" fill={ACCENT} opacity="0.25"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">CAPTURED {sd.capturedCount}</text>
+    <rect x="210" y="72" width="140" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
+    <rect x="211" y="73" width={Math.min(138, sd.capturedCount * 35)} height="14" rx="2" fill={ACCENT} opacity="0.25"/>
+    <text x="280" y="83" text-anchor="middle" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="0.5">{sd.capturedCount} CAPTURED</text>
   {/snippet}
 
   <!-- Nested scope diagram -->
   {#snippet topPanel(sd)}
     {@const chain = sd.scopeChain || []}
     {@const phase = sd.phase || ''}
+    {@const closureFrames = chain.filter(f => f.isClosure)}
+    {@const capturedNames = Object.keys(sd.closureVars || {})}
+    {@const phaseLabel = phase === 'closure-create' ? 'CLOSURE CREATED'
+      : phase === 'closure-call' ? 'CLOSURE CALLED'
+      : phase === 'fn-call' ? 'FUNCTION CALL'
+      : phase === 'fn-declare' ? 'FUNCTION DECLARED'
+      : phase === 'assign' || phase === 'declare' ? 'VARIABLE WRITE'
+      : phase === 'done' ? 'PROGRAM DONE'
+      : phase === 'start' ? 'PROGRAM START'
+      : (phase || 'STEP').toUpperCase()}
+    {@const phaseColor = phase === 'closure-create' || phase === 'closure-call' ? ACCENT
+      : phase === 'fn-call' || phase === 'fn-declare' ? '#a78bfa'
+      : '#888'}
+    {@const narrative = phase === 'closure-create'
+        ? `An inner function was just created that uses ${capturedNames.length ? capturedNames.map(n => `\`${n}\``).join(', ') : 'outer variables'}. JavaScript keeps the outer scope alive in memory so the inner function can still read those variables later — that is the closure.`
+      : phase === 'closure-call'
+        ? `The closure ran. It looked up ${capturedNames.length ? capturedNames.map(n => `\`${n}\``).join(', ') : 'its captured variables'} from its remembered outer scope (not from Global), then returned a value.`
+      : phase === 'fn-declare'
+        ? 'A function was declared. It does not run yet — JavaScript only stores the code so it can be called later.'
+      : phase === 'fn-call'
+        ? 'A function is being called. A new scope is pushed onto the call stack for its local variables.'
+      : phase === 'start'
+        ? 'Program starting. Only the Global scope exists. As functions are declared and called, new scopes will appear here.'
+      : phase === 'done'
+        ? 'Program finished. Any closure scopes shown above stayed in memory the whole time, because something still references them.'
+      : 'Stepping through the program — watch how the scope chain grows and shrinks.'}
+
+    <div class="step-narrative">
+      <div class="sn-row">
+        <span class="sn-chip" style="color:{phaseColor};border-color:{phaseColor}55;background:{phaseColor}10">{phaseLabel}</span>
+        <span class="sn-meta">scope depth {chain.length} · {closureFrames.length} closure{closureFrames.length === 1 ? '' : 's'} · {sd.capturedCount || 0} captured var{sd.capturedCount === 1 ? '' : 's'}</span>
+      </div>
+      <p class="sn-text">{narrative}</p>
+    </div>
 
     <div class="scope-card">
       <div class="scope-card-hdr">
@@ -300,7 +454,7 @@
               <circle cx="5" cy="5" r="4" fill="none" stroke={ACCENT} stroke-width="1" opacity="0.6"/>
               <text x="5" y="8" text-anchor="middle" fill={ACCENT} font-size="7" font-family="'Geist Mono', monospace">!</text>
             </svg>
-            <span>Closure scopes (🔒) stay in memory even after their outer function returns — because an inner function holds a reference to their variables.</span>
+            <span><strong style="color:#00d4aa">Why this matters:</strong> the dashed boxes above are <strong>closure scopes</strong>. They stay alive in memory even after their outer function returned, because an inner function still references their variables. That is how the captured values (marked <em>captured</em>) survive between calls — and why each call you see in <strong>RESULT VARS</strong> can read or update them.</span>
           </div>
         {/if}
       </div>
@@ -315,7 +469,8 @@
             <rect x="1" y="1" width="10" height="10" rx="2" fill="none" stroke={ACCENT} stroke-width="1" opacity="0.4"/>
             <line x1="4" y1="6" x2="8" y2="6" stroke={ACCENT} stroke-width="1.5" opacity="0.6"/>
           </svg>
-          <span class="scalar-title">RESULT VARS</span>
+          <span class="scalar-title">RESULT VARS — values returned from closure calls</span>
+          <span class="scalar-hint">each call reads & updates the captured scope above</span>
         </div>
         <div class="scalar-grid">
           {#each scalars as [vname, vval]}
@@ -371,8 +526,8 @@
   /* ── Scope chain card ──────────────────────────────────────────────────── */
   .scope-card       { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
   .scope-card-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .scope-card-title { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
-  .scope-card-depth { margin-left:auto; font-size:0.5rem; color:#00d4aa; font-family: var(--font-code); }
+  .scope-card-title { font-size:0.7rem; color:#aaa; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
+  .scope-card-depth { margin-left:auto; font-size:0.62rem; color:#00d4aa; font-family: var(--font-code); }
 
   /* ── Scope tree ─────────────────────────────────────────────────────────── */
   .scope-tree  { padding:8px; display:flex; flex-direction:column; gap:4px; }
@@ -418,20 +573,20 @@
     padding:5px 10px;
     background:#0d0d16;
     border-bottom:1px solid #1a1a2e;
-    font-size:0.65rem;
-    color:#555;
+    font-size:0.78rem;
+    color:#888;
     font-family: var(--font-code);
   }
   .scope-icon    { flex-shrink:0; }
-  .scope-name    { color:#888; font-weight:700; }
+  .scope-name    { color:#bbb; font-weight:700; }
   .scope-box.closure .scope-name { color:#00d4aa; }
   .scope-box.active .scope-name  { color:#e0e0e0; }
 
-  .scope-active-badge  { margin-left:auto; font-size:0.42rem; color:#00d4aa; letter-spacing:0.5px; }
-  .closure-badge       { margin-left:auto; font-size:0.42rem; color:#00d4aa; letter-spacing:0.3px; }
+  .scope-active-badge  { margin-left:auto; font-size:0.58rem; color:#00d4aa; letter-spacing:0.5px; padding:1px 6px; border:1px solid #00d4aa44; border-radius:3px; background:#00d4aa10; }
+  .closure-badge       { margin-left:auto; font-size:0.58rem; color:#00d4aa; letter-spacing:0.3px; padding:1px 6px; border:1px solid #00d4aa44; border-radius:3px; background:#00d4aa10; }
 
   .scope-vars  { display:flex; flex-direction:column; gap:3px; padding:6px 8px; }
-  .scope-empty { padding:5px 10px; font-size:0.55rem; color:#222; font-family: var(--font-code); font-style:italic; }
+  .scope-empty { padding:5px 10px; font-size:0.65rem; color:#444; font-family: var(--font-code); font-style:italic; }
 
   .scope-var {
     display:flex;
@@ -448,10 +603,10 @@
 
   .var-dot       { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
   .capture-icon  { flex-shrink:0; }
-  .var-name      { font-size:0.72rem; color:#88aaff; font-family: var(--font-code); font-weight:600; min-width:55px; }
-  .var-type      { font-size:0.42rem; padding:1px 4px; border-radius:2px; border:1px solid; font-family: var(--font-code); letter-spacing:0.3px; }
-  .var-value     { font-size:0.72rem; font-weight:700; font-family: var(--font-code); margin-left:auto; min-width:40px; text-align:right; }
-  .captured-tag  { font-size:0.4rem; color:#00d4aa; background:#00d4aa15; padding:1px 4px; border-radius:2px; border:1px solid #00d4aa33; white-space:nowrap; }
+  .var-name      { font-size:0.82rem; color:#88aaff; font-family: var(--font-code); font-weight:600; min-width:55px; }
+  .var-type      { font-size:0.55rem; padding:1px 5px; border-radius:2px; border:1px solid; font-family: var(--font-code); letter-spacing:0.3px; }
+  .var-value     { font-size:0.82rem; font-weight:700; font-family: var(--font-code); margin-left:auto; min-width:40px; text-align:right; }
+  .captured-tag  { font-size:0.55rem; color:#00d4aa; background:#00d4aa15; padding:1px 5px; border-radius:2px; border:1px solid #00d4aa33; white-space:nowrap; font-weight:600; }
 
   /* Capture bridge: shows captured vars flowing down from outer scope into closure */
   .capture-bridge {
@@ -483,8 +638,8 @@
     flex: 1;
   }
   .bridge-label {
-    font-size: 0.42rem;
-    color: #00d4aa55;
+    font-size: 0.58rem;
+    color: #00d4aa;
     font-family: var(--font-code);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -492,7 +647,7 @@
   }
   .bridge-vars  { display: flex; gap: 4px; flex-wrap: wrap; }
   .bridge-var {
-    font-size: 0.55rem;
+    font-size: 0.7rem;
     color: #00d4aa;
     background: #00d4aa15;
     border: 1px solid #00d4aa33;
@@ -503,8 +658,8 @@
     font-style: normal;
   }
   .bridge-note {
-    font-size: 0.38rem;
-    color: #00d4aa33;
+    font-size: 0.55rem;
+    color: #00d4aa88;
     font-family: var(--font-code);
     white-space: nowrap;
     margin-left: auto;
@@ -522,24 +677,49 @@
     margin-top:2px;
   }
   .closure-explain span {
-    font-size:0.48rem;
-    color:#00d4aa66;
-    font-family: var(--font-code);
-    line-height:1.5;
+    font-size:0.7rem;
+    color:#cfeee5;
+    font-family: var(--font-sans, inherit);
+    line-height:1.55;
   }
 
   /* ── Scalar result vars card ───────────────────────────────────────────── */
   .scalar-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .scalar-hdr   { display:flex; align-items:center; gap:6px; padding:4px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .scalar-title { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
-  .scalar-grid  { display:flex; flex-wrap:wrap; gap:4px; padding:6px 8px; }
-  .scalar-item  { display:flex; align-items:center; gap:4px; background:#08080e; border:1px solid #1a1a2e; border-radius:5px; padding:3px 8px; }
-  .scalar-name  { font-size:0.65rem; color:#88aaff; font-family: var(--font-code); font-weight:600; }
-  .scalar-sep   { font-size:0.55rem; color:#333; }
-  .scalar-val   { font-size:0.65rem; font-weight:700; font-family: var(--font-code); }
+  .scalar-hdr   { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
+  .scalar-title { font-size:0.95rem; color:#e0e0e0; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
+  .scalar-hint  { margin-left:auto; font-size:0.78rem; color:#888; font-family: var(--font-sans, inherit); }
+  .scalar-grid  { display:flex; flex-wrap:wrap; gap:8px; padding:12px 14px; }
+  .scalar-item  { display:flex; align-items:center; gap:8px; background:#08080e; border:1px solid #1a1a2e; border-radius:6px; padding:8px 14px; }
+  .scalar-name  { font-size:1rem; color:#88aaff; font-family: var(--font-code); font-weight:600; }
+  .scalar-sep   { font-size:0.95rem; color:#555; }
+  .scalar-val   { font-size:1rem; font-weight:700; font-family: var(--font-code); }
 
   /* ── Complexity live stats ─────────────────────────────────────────────── */
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.7rem; color:#888; font-family: var(--font-code); }
+
+  /* Step narrative panel */
+  .step-narrative {
+    background: linear-gradient(180deg, #0d0d16, #08080e);
+    border:1px solid #1a1a2e;
+    border-left:3px solid #00d4aa;
+    border-radius:8px;
+    padding:10px 14px;
+    margin-bottom:8px;
+    flex-shrink:0;
+  }
+  .sn-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+  .sn-chip {
+    font-family: var(--font-code);
+    font-size:0.6rem;
+    font-weight:800;
+    letter-spacing:1px;
+    padding:2px 8px;
+    border:1px solid;
+    border-radius:4px;
+    text-transform:uppercase;
+  }
+  .sn-meta { font-size:0.65rem; color:#666; font-family: var(--font-code); }
+  .sn-text { margin:0; font-size:0.82rem; line-height:1.55; color:#d0d4dc; font-family: var(--font-sans, inherit); }
 
   /* ── Placeholder ───────────────────────────────────────────────────────── */
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }

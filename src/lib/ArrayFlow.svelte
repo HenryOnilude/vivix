@@ -71,29 +71,117 @@
   interpreterOptions={{ trackArrays: true }}
   {mapStep}
   showHeap={false}
+  moduleCaption="contiguous memory strip — each cell is one array slot, the active index pulses; ops at the end are O(1), ops at the start force every element to shift"
 >
+
+  <!-- Contiguous memory strip: array cells with index labels, active op highlighted -->
+  {#snippet cpuModuleVisual(sd)}
+    {@const vars = sd.vars || {}}
+    {@const arrName = sd.highlight || Object.keys(vars).find(k => Array.isArray(vars[k])) || ''}
+    {@const arr = Array.isArray(vars[arrName]) ? vars[arrName] : []}
+    {@const arrOps = sd.arrOps || 0}
+    {@const W = 520}
+    {@const H = 110}
+    {@const stripX = 12}
+    {@const stripW = 460}
+    {@const maxCells = 10}
+    {@const visible = arr.slice(0, maxCells)}
+    {@const cellW = visible.length > 0 ? Math.min(stripW / visible.length, 56) : 0}
+    {@const stripCenterX = stripX + (visible.length * cellW) / 2}
+
+    <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <!-- Header -->
+      <text x={stripX} y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+        font-family="'Geist Mono', monospace" letter-spacing="1">CONTIGUOUS MEMORY</text>
+      <text x={stripX + stripW} y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+        font-family="'Geist Mono', monospace">
+        {arrName ? `${arrName}[] · ${arr.length} element${arr.length === 1 ? '' : 's'}` : 'no array yet'}
+      </text>
+
+      {#if visible.length === 0}
+        <text x={W/2} y={H/2} text-anchor="middle" fill="#94a3b8" font-size="9"
+          font-family="'Geist Mono', monospace">no array declared yet</text>
+      {:else}
+        <!-- Memory cells -->
+        {#each visible as val, i}
+          {@const cx = stripX + i * cellW}
+          {@const isActive = arrOps > 0 && i === 0 && (arrName === sd.highlight)}
+          <rect x={cx} y="32" width={cellW - 4} height="32" rx="3"
+            fill={isActive ? `${ACCENT}1f` : '#0b0b14'}
+            stroke={isActive ? ACCENT : '#1a1a2e'}
+            stroke-width={isActive ? 1.8 : 1}/>
+
+          <!-- Index label above cell -->
+          <text x={cx + (cellW - 4)/2} y="28" text-anchor="middle"
+            fill={isActive ? ACCENT : '#94a3b8'} font-size="6.5" font-weight="600"
+            font-family="'Geist Mono', monospace" letter-spacing="0.5">[{i}]</text>
+
+          <!-- Value inside cell -->
+          <text x={cx + (cellW - 4)/2} y="52" text-anchor="middle"
+            fill={isActive ? ACCENT : '#f1f5f9'}
+            font-size={typeof val === 'number' ? '11' : '9'}
+            font-weight="700" font-family="'Geist Mono', monospace">
+            {typeof val === 'string' ? `"${val.length > 4 ? val.slice(0,3) + '…' : val}"` : String(val).length > 6 ? String(val).slice(0,5) + '…' : val}
+          </text>
+        {/each}
+
+        {#if arr.length > maxCells}
+          <text x={stripX + maxCells * cellW + 10} y="52"
+            fill="#64748b" font-size="9" font-weight="600"
+            font-family="'Geist Mono', monospace">+{arr.length - maxCells}</text>
+        {/if}
+
+        <!-- Memory addresses (decorative, shows contiguity) -->
+        <text x={stripX} y="78" fill="#64748b" font-size="6"
+          font-family="'Geist Mono', monospace" letter-spacing="0.3">0x00</text>
+        <text x={stripX + visible.length * cellW - cellW + 4} y="78" text-anchor="end"
+          fill="#64748b" font-size="6"
+          font-family="'Geist Mono', monospace" letter-spacing="0.3">0x{(visible.length * 8).toString(16).padStart(2, '0')}</text>
+        <line x1={stripX} y1="72" x2={stripX + visible.length * cellW - 4} y2="72"
+          stroke="#334155" stroke-width="0.5" stroke-dasharray="2 2"/>
+
+        <!-- Op counter on the right of the strip -->
+        <text x={W - 12} y="44" text-anchor="end" fill="#94a3b8" font-size="6.5"
+          font-family="'Geist Mono', monospace" letter-spacing="0.5">OPS</text>
+        <text x={W - 12} y="58" text-anchor="end" fill={ACCENT}
+          font-size="13" font-weight="800"
+          font-family="'Geist Mono', monospace">{arrOps}</text>
+      {/if}
+
+      <!-- Footer caption -->
+      <text x={W/2} y={H - 6} text-anchor="middle"
+        fill={ACCENT} font-size="7.5" font-weight="600"
+        font-family="'Geist Mono', monospace">
+        {visible.length === 0
+          ? 'awaiting array declaration'
+          : arrOps === 0
+            ? 'array allocated — slots laid out side by side in memory'
+            : `${arrOps} operation${arrOps === 1 ? '' : 's'} performed on ${arrName || 'array'}`}
+      </text>
+    </svg>
+  {/snippet}
 
   <!-- CPU right-column registers: ARR-OPS + COMPS + TARGET -->
   {#snippet cpuRegisters(sd)}
-    <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
+    <rect x="210" y="12" width="68" height="26" rx="4" fill="#08080e"
       stroke={sd.arrOps > 0 ? '#88aaff33' : '#1a1a2e'} stroke-width="1"/>
-    <text x="216" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">ARR-OPS</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.arrOps > 0 ? ACCENT : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.arrOps}</text>
+    <text x="216" y="22" fill="#e0e0e0" font-size="7" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.3">ARR-OPS</text>
+    <text x="272" y="32" text-anchor="end" fill={sd.arrOps > 0 ? ACCENT : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.arrOps}</text>
 
-    <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="290" y="22" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">COMPS</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.comps > 0 ? '#a78bfa' : '#222'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.comps || 0}</text>
+    <rect x="284" y="12" width="66" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="290" y="22" fill="#e0e0e0" font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">COMPS</text>
+    <text x="344" y="32" text-anchor="end" fill={sd.comps > 0 ? '#a78bfa' : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.comps || 0}</text>
 
-    <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
-    <text x="216" y="48" fill="#444" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
-    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="10" font-weight="700" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
+    <rect x="210" y="42" width="140" height="26" rx="4" fill="#08080e" stroke="#1a1a2e" stroke-width="1"/>
+    <text x="216" y="52" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">TARGET</text>
+    <text x="344" y="62" text-anchor="end" fill={ACCENT} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.highlight || '—'}</text>
   {/snippet}
 
   <!-- CPU right gauge: array ops -->
   {#snippet cpuGauge(sd)}
-    <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-    <rect x="247" y="69" width={Math.min(102, sd.arrOps * 15)} height="14" rx="2" fill={ACCENT} opacity="0.2"/>
-    <text x="252" y="79" fill="#666" font-size="6.5" font-family="'Geist Mono', monospace">{sd.arrOps} ARRAY OPS</text>
+    <rect x="210" y="72" width="140" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
+    <rect x="211" y="73" width={Math.min(138, sd.arrOps * 18)} height="14" rx="2" fill={ACCENT} opacity="0.25"/>
+    <text x="280" y="83" text-anchor="middle" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="0.5">{sd.arrOps} ARRAY OPS</text>
   {/snippet}
 
   <!-- Array visualization -->

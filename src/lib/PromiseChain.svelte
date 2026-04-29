@@ -222,37 +222,37 @@
 
   /* ── Chain visualization ─────────────────────────────────────────── */
   .chain-panel  { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
-  .chain-hdr    { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
+  .chain-hdr    { font-size: 0.66rem; color: rgba(255,255,255,0.95); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .chain-nodes  { display: flex; align-items: center; gap: 4px; padding: 10px 12px; flex-wrap: wrap; }
-  .chain-empty  { font-size: 0.6rem; color: #333; font-family: var(--font-code); }
+  .chain-empty  { font-size: 0.72rem; color: rgba(255,255,255,0.75); font-family: var(--font-code); }
 
-  .chain-node   { display: flex; flex-direction: column; align-items: center; gap: 2px; background: color-mix(in srgb, var(--node-color) 8%, transparent); border: 1px solid color-mix(in srgb, var(--node-color) 35%, transparent); border-radius: 6px; padding: 6px 10px; min-width: 72px; transition: all 0.3s; }
-  .node-label   { font-size: 0.65rem; font-weight: 800; font-family: var(--font-code); color: var(--node-color); }
-  .node-state   { font-size: 0.48rem; font-family: var(--font-code); color: var(--node-color); opacity: 0.85; }
-  .node-value   { font-size: 0.58rem; font-family: var(--font-code); color: rgba(255,255,255,0.7); max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .node-method  { font-size: 0.44rem; font-family: var(--font-code); color: rgba(255,255,255,0.3); }
+  .chain-node   { display: flex; flex-direction: column; align-items: center; gap: 3px; background: color-mix(in srgb, var(--node-color) 14%, transparent); border: 1.5px solid color-mix(in srgb, var(--node-color) 60%, transparent); border-radius: 6px; padding: 7px 11px; min-width: 76px; transition: all 0.3s; }
+  .node-label   { font-size: 0.78rem; font-weight: 800; font-family: var(--font-code); color: var(--node-color); letter-spacing: 0.5px; }
+  .node-state   { font-size: 0.62rem; font-weight: 700; font-family: var(--font-code); color: var(--node-color); opacity: 1; }
+  .node-value   { font-size: 0.7rem; font-weight: 700; font-family: var(--font-code); color: #f1f5f9; max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .node-method  { font-size: 0.58rem; font-weight: 600; font-family: var(--font-code); color: rgba(255,255,255,0.7); }
 
-  .chain-arrow  { font-size: 0.75rem; color: rgba(245,158,11,0.4); }
+  .chain-arrow  { font-size: 0.95rem; font-weight: 800; color: #f59e0b; }
 
   /* ── Runtime row ─────────────────────────────────────────────────── */
   .runtime-row    { display: flex; gap: 6px; flex-shrink: 0; }
   .runtime-panel  { flex: 1; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; }
-  .runtime-hdr    { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
+  .runtime-hdr    { font-size: 0.66rem; color: rgba(255,255,255,0.95); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
 
   .mt-box   { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; min-height: 48px; }
-  .mt-item  { display: flex; align-items: center; gap: 5px; font-size: 0.55rem; font-family: var(--font-code); color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.03); border-radius: 4px; padding: 3px 7px; }
-  .mt-item.mt-next { color: #f59e0b; background: rgba(245,158,11,0.08); }
-  .mt-arrow { color: #f59e0b; font-size: 0.55rem; }
-  .mt-empty { font-size: 0.55rem; color: #333; font-family: var(--font-code); }
+  .mt-item  { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 600; font-family: var(--font-code); color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.06); border-radius: 4px; padding: 4px 8px; }
+  .mt-item.mt-next { color: #fbbf24; font-weight: 800; background: rgba(245,158,11,0.18); border: 1px solid rgba(245,158,11,0.45); }
+  .mt-arrow { color: #fbbf24; font-weight: 800; font-size: 0.72rem; }
+  .mt-empty { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.6); font-family: var(--font-code); font-style: italic; }
 
-  .cv-box   { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; min-height: 48px; }
-  .cv-value { font-size: 1rem; font-weight: 800; font-family: var(--font-code); }
-  .cv-state { font-size: 0.5rem; font-family: var(--font-code); }
-  .cv-empty { font-size: 0.6rem; color: #333; font-family: var(--font-code); }
+  .cv-box   { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 10px; min-height: 48px; }
+  .cv-value { font-size: 1.25rem; font-weight: 800; font-family: var(--font-code); }
+  .cv-state { font-size: 0.66rem; font-weight: 700; font-family: var(--font-code); }
+  .cv-empty { font-size: 0.78rem; color: rgba(255,255,255,0.55); font-family: var(--font-code); }
 
   .vis-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
   .ph-svg   { width: 360px; height: auto; }
-  .ph-text  { font-size: 0.78rem; color: rgba(255,255,255,0.45); text-align: center; }
+  .ph-text  { font-size: 0.82rem; color: rgba(255,255,255,0.7); text-align: center; }
 
-  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #444; font-family: var(--font-code); }
+  .cx-s { display: flex; align-items: center; gap: 4px; font-size: 0.66rem; font-weight: 600; color: rgba(255,255,255,0.85); font-family: var(--font-code); }
 </style>

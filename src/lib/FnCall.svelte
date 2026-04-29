@@ -62,29 +62,135 @@
   interpreterOptions={{ trackCalls: true }}
   {mapStep}
   showHeap={false}
+  moduleCaption="call-stack tower — frames push when functions are called, pop when they return; the top frame is the one currently executing"
 >
+
+  <!-- Call-stack tower: vertical stack with active frame on top, ground = Global -->
+  {#snippet cpuModuleVisual(sd)}
+    {@const stack = sd.stack || ['Global']}
+    {@const maxDepth = sd.maxDepth || 1}
+    {@const calls = sd.calls || 0}
+    {@const ret = sd.lastFnReturn}
+    {@const W = 520}
+    {@const H = 110}
+    {@const towerX = 80}
+    {@const towerW = 200}
+    {@const frameH = 18}
+    {@const groundY = H - 14}
+    {@const visibleFrames = stack.slice(-5)}
+    {@const hiddenCount = stack.length - visibleFrames.length}
+
+    <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <!-- Header -->
+      <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+        font-family="'Geist Mono', monospace" letter-spacing="1">CALL STACK</text>
+      <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+        font-family="'Geist Mono', monospace">grows up · top = currently running</text>
+
+      <!-- Hidden-frames indicator -->
+      {#if hiddenCount > 0}
+        <text x={towerX + towerW / 2} y="26" text-anchor="middle"
+          fill="#64748b" font-size="6.5" font-style="italic"
+          font-family="'Geist Mono', monospace">+{hiddenCount} more frame{hiddenCount === 1 ? '' : 's'} below</text>
+      {/if}
+
+      <!-- Frames stacked from bottom up -->
+      {#each visibleFrames as frame, i}
+        {@const isTop = i === visibleFrames.length - 1}
+        {@const yPos = groundY - (i + 1) * (frameH + 2)}
+        <rect x={towerX} y={yPos} width={towerW} height={frameH} rx="3"
+          fill={isTop ? `${ACCENT}1f` : '#0b0b14'}
+          stroke={isTop ? ACCENT : '#1a1a2e'}
+          stroke-width={isTop ? 1.8 : 1}/>
+        <text x={towerX + 10} y={yPos + 12}
+          fill={isTop ? ACCENT : '#cbd5e1'}
+          font-size="9" font-weight={isTop ? '800' : '600'}
+          font-family="'Geist Mono', monospace">
+          {frame}{frame !== 'Global' ? '()' : ''}
+        </text>
+        {#if isTop}
+          <text x={towerX + towerW - 10} y={yPos + 12} text-anchor="end"
+            fill={ACCENT} font-size="6.5" font-weight="700"
+            font-family="'Geist Mono', monospace" letter-spacing="0.5">← TOP / RUNNING</text>
+        {:else if frame === 'Global'}
+          <text x={towerX + towerW - 10} y={yPos + 12} text-anchor="end"
+            fill="#94a3b8" font-size="6.5" font-weight="600"
+            font-family="'Geist Mono', monospace" letter-spacing="0.5">global scope</text>
+        {:else}
+          <text x={towerX + towerW - 10} y={yPos + 12} text-anchor="end"
+            fill="#64748b" font-size="6.5" font-weight="500"
+            font-family="'Geist Mono', monospace" letter-spacing="0.3">paused</text>
+        {/if}
+      {/each}
+
+      <!-- Ground line -->
+      <line x1={towerX - 6} y1={groundY} x2={towerX + towerW + 6} y2={groundY}
+        stroke="#334155" stroke-width="1.5"/>
+      <text x={towerX + towerW / 2} y={groundY + 10} text-anchor="middle"
+        fill="#64748b" font-size="6" letter-spacing="0.8"
+        font-family="'Geist Mono', monospace">STACK BASE</text>
+
+      <!-- Right-side stats -->
+      {@const sx = towerX + towerW + 30}
+      <rect x={sx} y="22" width="120" height="22" rx="3"
+        fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
+      <text x={sx + 8} y="32" fill="#94a3b8" font-size="6.5" font-weight="600"
+        font-family="'Geist Mono', monospace" letter-spacing="0.8">DEPTH NOW</text>
+      <text x={sx + 112} y="38" text-anchor="end"
+        fill={stack.length > 1 ? ACCENT : '#cbd5e1'}
+        font-size="11" font-weight="800"
+        font-family="'Geist Mono', monospace">{stack.length}</text>
+
+      <rect x={sx} y="48" width="120" height="22" rx="3"
+        fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
+      <text x={sx + 8} y="58" fill="#94a3b8" font-size="6.5" font-weight="600"
+        font-family="'Geist Mono', monospace" letter-spacing="0.8">PEAK DEPTH</text>
+      <text x={sx + 112} y="64" text-anchor="end"
+        fill={ACCENT} font-size="11" font-weight="800"
+        font-family="'Geist Mono', monospace">{maxDepth}</text>
+
+      <rect x={sx} y="74" width="120" height="22" rx="3"
+        fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
+      <text x={sx + 8} y="84" fill="#94a3b8" font-size="6.5" font-weight="600"
+        font-family="'Geist Mono', monospace" letter-spacing="0.8">TOTAL CALLS</text>
+      <text x={sx + 112} y="90" text-anchor="end"
+        fill="#a78bfa" font-size="11" font-weight="800"
+        font-family="'Geist Mono', monospace">{calls}</text>
+
+      <!-- Footer caption -->
+      <text x={W/2} y={H - 1} text-anchor="middle"
+        fill={ret && ret.toVar ? '#4ade80' : ACCENT}
+        font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace">
+        {ret && ret.toVar
+          ? `${ret.fromFn}() returned ${typeof ret.val === 'string' ? '"' + ret.val + '"' : ret.val} → frame popped`
+          : stack.length > 1
+            ? `${stack[stack.length - 1]}() pushed onto the stack`
+            : 'global execution'}
+      </text>
+    </svg>
+  {/snippet}
 
   <!-- CPU right-column registers: DEPTH + CALLS + FRAME -->
   {#snippet cpuRegisters(sd)}
-    <rect x="210" y="14" width="68" height="22" rx="4" fill="#08080e"
+    <rect x="210" y="12" width="68" height="26" rx="4" fill="#08080e"
       stroke={sd.stack.length > 1 ? 'rgba(255,136,102,0.4)' : 'rgba(255,255,255,0.08)'} stroke-width="1"/>
-    <text x="216" y="22" fill="rgba(255,255,255,0.35)" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">DEPTH</text>
-    <text x="272" y="29" text-anchor="end" fill={sd.stack.length > 1 ? ACCENT : 'rgba(255,255,255,0.30)'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.stack.length}</text>
+    <text x="216" y="22" fill="#e0e0e0" font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">DEPTH</text>
+    <text x="272" y="32" text-anchor="end" fill={sd.stack.length > 1 ? ACCENT : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.stack.length}</text>
 
-    <rect x="284" y="14" width="66" height="22" rx="4" fill="#08080e" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-    <text x="290" y="22" fill="rgba(255,255,255,0.35)" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">CALLS</text>
-    <text x="344" y="29" text-anchor="end" fill={sd.calls > 0 ? '#a78bfa' : 'rgba(255,255,255,0.30)'} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.calls}</text>
+    <rect x="284" y="12" width="66" height="26" rx="4" fill="#08080e" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <text x="290" y="22" fill="#e0e0e0" font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">CALLS</text>
+    <text x="344" y="32" text-anchor="end" fill={sd.calls > 0 ? '#a78bfa' : '#bbb'} font-size="13" font-weight="800" font-family="'Geist Mono', monospace">{sd.calls}</text>
 
-    <rect x="210" y="40" width="140" height="22" rx="4" fill="#08080e" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-    <text x="216" y="48" fill="rgba(255,255,255,0.35)" font-size="6" font-family="'Geist Mono', monospace" letter-spacing="0.5">FRAME</text>
-    <text x="344" y="55" text-anchor="end" fill={ACCENT} font-size="10" font-weight="700" font-family="'Geist Mono', monospace">{sd.stack[sd.stack.length - 1]}</text>
+    <rect x="210" y="42" width="140" height="26" rx="4" fill="#08080e" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <text x="216" y="52" fill="#e0e0e0" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">FRAME</text>
+    <text x="344" y="62" text-anchor="end" fill={ACCENT} font-size="12" font-weight="800" font-family="'Geist Mono', monospace">{sd.stack[sd.stack.length - 1]}</text>
   {/snippet}
 
   <!-- CPU right gauge: max stack depth -->
   {#snippet cpuGauge(sd)}
-    <rect x="246" y="68" width="104" height="16" rx="3" fill="#08080e" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
-    <rect x="247" y="69" width={Math.min(102, (sd.maxDepth || 1) * 25)} height="14" rx="2" fill={ACCENT} opacity="0.3"/>
-    <text x="252" y="79" fill="rgba(255,255,255,0.45)" font-size="6.5" font-family="'Geist Mono', monospace">MAX {sd.maxDepth || 1}</text>
+    <rect x="210" y="72" width="140" height="16" rx="3" fill="#08080e" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
+    <rect x="211" y="73" width={Math.min(138, (sd.maxDepth || 1) * 30)} height="14" rx="2" fill={ACCENT} opacity="0.3"/>
+    <text x="280" y="83" text-anchor="middle" fill={ACCENT} font-size="9" font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="0.5">MAX DEPTH {sd.maxDepth || 1}</text>
   {/snippet}
 
   <!-- CPU stack visual override — shows actual frames -->

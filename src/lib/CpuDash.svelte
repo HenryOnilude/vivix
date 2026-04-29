@@ -13,10 +13,15 @@
    *   registers(sd) — SVG elements for the right-column registers (x ≥ 210)
    *   gauge(sd)     — SVG elements for the bottom-right gauge bar
    *   stack(sd)     — optional override for the bottom-left call-stack visual
+   *
+   * Optional props:
+   *   moduleCaption — short plain-English description of what the MODULE
+   *                   cell registers/gauge represent for this specific module.
+   *                   Replaces the generic "module-specific state" subtitle.
    */
 
-  /** @type {{ sd: object, step: number, total: number, accent: string, phColor: (ph:string)=>string, explainMode?: string, onToggleMode?: ()=>void, registers?: import('svelte').Snippet, gauge?: import('svelte').Snippet, stack?: import('svelte').Snippet }} */
-  let { sd, step, total, accent, phColor, explainMode = 'simple', onToggleMode, registers, gauge, stack: stackSnippet } = $props();
+  /** @type {{ sd: object, step: number, total: number, accent: string, phColor: (ph:string)=>string, explainMode?: string, onToggleMode?: ()=>void, registers?: import('svelte').Snippet, gauge?: import('svelte').Snippet, stack?: import('svelte').Snippet, moduleCaption?: string, moduleVisual?: import('svelte').Snippet }} */
+  let { sd, step, total, accent, phColor, explainMode = 'simple', onToggleMode, registers, gauge, stack: stackSnippet, moduleCaption = '', moduleVisual } = $props();
 
   /** Map execution phase to the operation symbol shown inside the CPU chip */
   function phSymbol(ph) {
@@ -224,14 +229,19 @@
     </div>
 
     <!-- MODULE-SPECIFIC STATE (registers + gauge snippets) — Deep Dive only -->
-    {#if registers || gauge}
-      <div class="cell cell-module dl-deep">
+    {#if registers || gauge || moduleVisual}
+      <div class="cell cell-module dl-deep" class:has-visual={!!moduleVisual}>
         <span class="cell-lbl">MODULE</span>
-        <span class="cell-sub">module-specific state</span>
-        <svg viewBox="200 8 160 82" class="slot-svg" aria-hidden="true">
-          {#if registers}{@render registers(sd)}{/if}
-          {#if gauge}{@render gauge(sd)}{/if}
-        </svg>
+        <span class="cell-sub">{moduleCaption || 'module-specific state'}</span>
+        {#if moduleVisual}
+          <div class="module-visual">{@render moduleVisual(sd)}</div>
+        {/if}
+        {#if registers || gauge}
+          <svg viewBox="200 8 160 82" class="slot-svg" aria-hidden="true">
+            {#if registers}{@render registers(sd)}{/if}
+            {#if gauge}{@render gauge(sd)}{/if}
+          </svg>
+        {/if}
       </div>
     {/if}
 
@@ -504,17 +514,17 @@
 
   .cell-lbl {
     font-family: var(--font-code);
-    font-size: 0.56rem;
+    font-size: 0.62rem;
     letter-spacing: 1.5px;
     font-weight: 700;
-    color: rgba(255,255,255,0.42);
+    color: #ffffff;
     text-transform: uppercase;
   }
   .cell-sub {
     font-family: var(--font-ui);
-    font-size: 0.56rem;
-    color: rgba(255,255,255,0.28);
-    line-height: 1.2;
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.88);
+    line-height: 1.25;
     margin-top: -1px;
   }
   .cell-val {
@@ -573,9 +583,29 @@
   .stack-meta  { font-size:0.6rem; color:rgba(255,255,255,0.32); }
   .stack-empty { border-left-color: rgba(255,255,255,0.12); color:rgba(255,255,255,0.25); justify-content:center; font-style:italic; }
 
-  /* MODULE STATE — full width row housing snippet SVG */
-  .cell-module { grid-column: 1 / 5; grid-row: 3 / 4; padding-bottom: 6px; }
-  .slot-svg    { width:100%; height:auto; display:block; margin-top:4px; max-height:78px; }
+  /* MODULE STATE — full width row housing snippet SVG.
+     Uses a 2-column grid so label/caption sit on the left and the SVG
+     occupies the right at a fixed size, eliminating the wide empty bars
+     caused by `xMidYMid meet` letterboxing of a 160×82 viewBox inside a
+     1000-wide cell. */
+  .cell-module {
+    grid-column: 1 / 5; grid-row: 3 / 4;
+    padding-bottom: 9px;
+    display: grid;
+    grid-template-columns: 1fr minmax(220px, 360px);
+    grid-template-rows: auto auto 1fr;
+    align-items: start;
+    column-gap: 16px;
+    row-gap: 2px;
+  }
+  .cell-module > .cell-lbl { grid-column: 1; grid-row: 1; }
+  .cell-module > .cell-sub { grid-column: 1; grid-row: 2; }
+  .cell-module > .module-visual { grid-column: 1; grid-row: 3; align-self: stretch; margin-top: 6px; }
+  .cell-module > .slot-svg { grid-column: 2; grid-row: 1 / 4; align-self: center; }
+  .slot-svg    { width:100%; height:auto; display:block; margin-top:4px; max-height:96px; }
+  .cell-module > .slot-svg { margin-top: 0; max-height: 110px; }
+  .module-visual { width: 100%; }
+  .module-visual svg { width: 100%; height: auto; display: block; max-height: 96px; }
 
   /* HINT strip */
   .cell-hint {
@@ -583,7 +613,7 @@
     min-height: 26px; padding: 5px 12px;
     font-family: var(--font-ui);
     font-size: 0.66rem;
-    color: rgba(255,255,255,0.45);
+    color: rgba(255,255,255,0.82);
     background: var(--elevation-overlay);
   }
   .cell-hint::before { display: none; }
@@ -668,7 +698,11 @@
     .cell-op        { grid-column: 2 / 3; grid-row: 2 / 3; }
     .cell-writes    { grid-column: 3 / 4; grid-row: 2 / 3; }
     .cell-stack     { grid-column: 1 / 4; grid-row: 3 / 4; }
-    .cell-module    { grid-column: 1 / 4; grid-row: 4 / 5; }
+    .cell-module    { grid-column: 1 / 4; grid-row: 4 / 5; grid-template-columns: 1fr; }
+    .cell-module > .cell-lbl,
+    .cell-module > .cell-sub,
+    .cell-module > .slot-svg { grid-column: 1; }
+    .cell-module > .slot-svg { grid-row: auto; margin-top: 4px; }
     .cell-hint      { grid-column: 1 / 4; grid-row: 5 / 6; }
     .chip-svg       { width: 52px; height: 52px; }
     .cell-val       { font-size: 0.82rem; }
