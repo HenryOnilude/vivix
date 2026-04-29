@@ -102,6 +102,8 @@
     {@const comps = sd.comps || 0}
     {@const W = 520}
     {@const H = 110}
+    {@const dx = 250}
+    {@const dy = 44}
 
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
@@ -124,7 +126,6 @@
         marker-end="url(#ifg-arrow-{raw ? 'a' : 'i'})"/>
 
       <!-- Decision diamond -->
-      {@const dx = 250} {@const dy = 44}
       <polygon points="{dx},{dy-18} {dx+30},{dy} {dx},{dy+18} {dx-30},{dy}"
         fill={cond === true ? '#4ade8014' : cond === false ? '#f8717114' : '#0b0b14'}
         stroke={cond === true ? '#4ade80' : cond === false ? '#f87171' : raw ? ACCENT : '#334155'}

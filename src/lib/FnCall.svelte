@@ -79,6 +79,7 @@
     {@const groundY = H - 14}
     {@const visibleFrames = stack.slice(-5)}
     {@const hiddenCount = stack.length - visibleFrames.length}
+    {@const sx = towerX + towerW + 30}
 
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
@@ -131,7 +132,6 @@
         font-family="'Geist Mono', monospace">STACK BASE</text>
 
       <!-- Right-side stats -->
-      {@const sx = towerX + towerW + 30}
       <rect x={sx} y="22" width="120" height="22" rx="3"
         fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
       <text x={sx + 8} y="32" fill="#94a3b8" font-size="6.5" font-weight="600"

@@ -143,6 +143,8 @@
     {@const maxTicks = 16}
     {@const tickCount = Math.min(Math.max(iters + (cond === true ? 1 : 0), 4), maxTicks)}
     {@const tickGap = trackW / Math.max(tickCount - 1, 1)}
+    {@const gateX = trackX + trackW + 30}
+    {@const gateY = trackY - 18}
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
       <text x={trackX} y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
@@ -189,8 +191,6 @@
       {/if}
 
       <!-- Condition gate at the right -->
-      {@const gateX = trackX + trackW + 30}
-      {@const gateY = trackY - 18}
       <rect x={gateX} y={gateY} width="100" height="36" rx="4"
         fill={cond === true ? '#4ade8014' : cond === false ? '#f8717114' : '#0b0b14'}
         stroke={cond === true ? '#4ade80' : cond === false ? '#f87171' : '#334155'}
