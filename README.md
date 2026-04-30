@@ -3,7 +3,6 @@
 
 Instruction-level JavaScript execution visualizer mapping the call stack, heap memory, and event loop in real time.
 
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://vivix.dev)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/tests-490%20passing-blue)](https://github.com/HenryOnilude/vivix)
 [![Built with Svelte 5](https://img.shields.io/badge/built%20with-Svelte%205-orange)](https://svelte.dev)
@@ -39,6 +38,9 @@ Vivix is the only tool that visualizes instruction-level execution alongside sim
 | No account required | Yes | Yes | Yes | Yes |
 
 ## 12 Modules + Free-Form Mode
+
+<img width="901" height="797" alt="Screenshot 2026-04-30 at 13 27 59" src="https://github.com/user-attachments/assets/97b3fbd7-0e34-4ca7-bdf1-0b4af9523e43" />
+
 
 **Free-Form Mode** — Paste any JavaScript and watch the engine narrate every step. Pattern detection identifies recursion, closures, async/await, scope chains, hoisting, and prototype patterns automatically.
 
