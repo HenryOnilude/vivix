@@ -610,13 +610,21 @@
   /* When the module only ships a `cpuModuleVisual` snippet (no registers
      or gauge), there is no right-hand slot SVG — collapse the second
      grid column so the diagram fills the full bento row instead of
-     being wedged into ~64% of it. Also relax the SVG height cap so the
-     diagram is large enough to read on Deep Dive without zooming. */
+     being wedged into ~64% of it. Drop the height cap entirely so the
+     SVG renders at width:100% and lets its natural viewBox aspect ratio
+     determine height. The previous 280px cap combined with
+     `preserveAspectRatio="xMidYMid meet"` caused horizontal
+     letterboxing on wide Deep-Dive layouts (empty bars on the left and
+     right of the content). */
   .cell-module.has-visual:not(.has-slot) {
     grid-template-columns: 1fr;
   }
   .cell-module.has-visual:not(.has-slot) > .module-visual svg {
-    max-height: 280px;
+    max-height: none;
+    /* Soft upper bound on truly massive screens so the diagram doesn't
+       dominate the viewport; at its 520:110 viewBox ratio this lets
+       widths up to ~1890px render without letterboxing. */
+    max-block-size: 400px;
   }
 
   /* HINT strip */
