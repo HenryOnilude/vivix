@@ -230,7 +230,7 @@
 
     <!-- MODULE-SPECIFIC STATE (registers + gauge snippets) — Deep Dive only -->
     {#if registers || gauge || moduleVisual}
-      <div class="cell cell-module dl-deep" class:has-visual={!!moduleVisual}>
+      <div class="cell cell-module dl-deep" class:has-visual={!!moduleVisual} class:has-slot={!!(registers || gauge)}>
         <span class="cell-lbl">MODULE</span>
         <span class="cell-sub">{moduleCaption || 'module-specific state'}</span>
         {#if moduleVisual}
@@ -600,12 +600,24 @@
   }
   .cell-module > .cell-lbl { grid-column: 1; grid-row: 1; }
   .cell-module > .cell-sub { grid-column: 1; grid-row: 2; }
-  .cell-module > .module-visual { grid-column: 1; grid-row: 3; align-self: stretch; margin-top: 6px; }
+  .cell-module > .module-visual { grid-column: 1; grid-row: 3; align-self: stretch; margin-top: 8px; }
   .cell-module > .slot-svg { grid-column: 2; grid-row: 1 / 4; align-self: center; }
   .slot-svg    { width:100%; height:auto; display:block; margin-top:4px; max-height:96px; }
   .cell-module > .slot-svg { margin-top: 0; max-height: 110px; }
   .module-visual { width: 100%; }
-  .module-visual svg { width: 100%; height: auto; display: block; max-height: 96px; }
+  .module-visual svg { width: 100%; height: auto; display: block; max-height: 220px; }
+
+  /* When the module only ships a `cpuModuleVisual` snippet (no registers
+     or gauge), there is no right-hand slot SVG — collapse the second
+     grid column so the diagram fills the full bento row instead of
+     being wedged into ~64% of it. Also relax the SVG height cap so the
+     diagram is large enough to read on Deep Dive without zooming. */
+  .cell-module.has-visual:not(.has-slot) {
+    grid-template-columns: 1fr;
+  }
+  .cell-module.has-visual:not(.has-slot) > .module-visual svg {
+    max-height: 280px;
+  }
 
   /* HINT strip */
   .cell-hint {
