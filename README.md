@@ -1,6 +1,8 @@
 # Vivix
 ### See Inside JavaScript As It Thinks
 
+https://github.com/user-attachments/assets/e62a0f8f-b508-4d1d-be6a-222cc9136fdd
+
 Instruction-level JavaScript execution visualizer mapping the call stack, heap memory, and event loop in real time.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
