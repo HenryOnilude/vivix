@@ -221,6 +221,12 @@
     };
   });
 
+  // Module order follows the conceptual dependency chain a learner
+  // actually walks: primitives → control flow → functions → closures
+  // → async. Async is promoted into the first mobile scroll (previously
+  // 8th / ~2.6k px deep on 411 px viewports). Collection-oriented
+  // modules (array, objects, data-structures) follow the engine-core
+  // sequence, then the real-world capstone (api-calls).
   const modules = [
     {
       id: 'variables',
@@ -251,6 +257,34 @@
       color: '#fb923c',
     },
     {
+      id: 'closures',
+      title: 'closureScope',
+      subtitle: 'Closures & Scope',
+      desc: 'See which variables a closure captures.',
+      color: '#00FFD1',
+    },
+    {
+      id: 'async',
+      title: 'asyncFlow',
+      subtitle: 'Async / Await',
+      desc: 'Watch promises resolve on a timeline.',
+      color: '#a78bfa',
+    },
+    {
+      id: 'promise-chain',
+      title: 'promiseChain',
+      subtitle: 'Promise Methods',
+      desc: 'Watch .then() and .catch() chain through the microtask queue.',
+      color: '#f59e0b',
+    },
+    {
+      id: 'event-listeners',
+      title: 'eventListeners',
+      subtitle: 'DOM Events',
+      desc: 'See how addEventListener registers callbacks and events dispatch.',
+      color: '#ec4899',
+    },
+    {
       id: 'array',
       title: 'arrayFlow',
       subtitle: 'Array Methods',
@@ -270,34 +304,6 @@
       subtitle: 'Data Structures',
       desc: 'Stacks, queues, maps — organized data.',
       color: '#f472b6',
-    },
-    {
-      id: 'async',
-      title: 'asyncFlow',
-      subtitle: 'Async / Await',
-      desc: 'Watch promises resolve on a timeline.',
-      color: '#a78bfa',
-    },
-    {
-      id: 'closures',
-      title: 'closureScope',
-      subtitle: 'Closures & Scope',
-      desc: 'See which variables a closure captures.',
-      color: '#00FFD1',
-    },
-    {
-      id: 'promise-chain',
-      title: 'promiseChain',
-      subtitle: 'Promise Methods',
-      desc: 'Watch .then() and .catch() chain through the microtask queue.',
-      color: '#f59e0b',
-    },
-    {
-      id: 'event-listeners',
-      title: 'eventListeners',
-      subtitle: 'DOM Events',
-      desc: 'See how addEventListener registers callbacks and events dispatch.',
-      color: '#ec4899',
     },
     {
       id: 'api-calls',
@@ -339,7 +345,11 @@
 <span class="tok-fn">console</span><span class="tok-op">.</span><span class="tok-fn">log</span><span class="tok-op">(</span><span class="tok-str">'4'</span><span class="tok-op">);</span></pre>
 
       <div class="hero-ctas">
-        <a href="#/variables" class="cta-primary">
+        <!-- Primary CTA matches the async/microtask snippet rendered just
+             above (Promise.resolve().then, setTimeout). Pointing this at
+             the async module closes the message-mismatch between the
+             hero artefact and the first module a visitor lands on. -->
+        <a href="#/async" class="cta-primary">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2l10 6-10 6V2z" fill="currentColor"/></svg>
           Try it now
         </a>
