@@ -594,19 +594,27 @@
         <!-- Module-specific content above the heap (e.g. branch flowchart, loop tracker) -->
         {#if topPanel}{@render topPanel(sd)}{/if}
 
-        <!-- Default heap memory card (Machine level and above) -->
-        {#if showHeap && varArr.length > 0}
-          <div class="heap-card dl-explore">
-            <div class="heap-hdr" role="heading" aria-level="3">
-              <svg width="14" height="14" viewBox="0 0 14 14">
-                <rect x="1" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.5"/>
-                <rect x="8" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.3"/>
-                <rect x="1" y="8" width="5" height="5" rx="1" fill={accent} opacity="0.3"/>
-                <rect x="8" y="8" width="5" height="5" rx="1" fill={accent} opacity="0.15"/>
-              </svg>
-              <span class="heap-title">HEAP MEMORY<span class="panel-subtitle">where your variables live</span></span>
-              <span class="heap-count">{varArr.length} var{varArr.length !== 1 ? 's' : ''}</span>
-            </div>
+        <!-- Default heap memory card (Machine level and above)
+             Always-rendered to prevent layout shift between steps on
+             mobile (CLS fix). When `showHeap` is false the card is
+             collapsed via the `.is-hidden` modifier so it occupies no
+             height; when there are simply no variables yet, the card
+             renders with an empty placeholder so the height is reserved
+             for the first step that produces a variable. -->
+        <div class="heap-card dl-explore" class:is-empty={varArr.length === 0} class:is-hidden={!showHeap}>
+          <div class="heap-hdr" role="heading" aria-level="3">
+            <svg width="14" height="14" viewBox="0 0 14 14">
+              <rect x="1" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.5"/>
+              <rect x="8" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.3"/>
+              <rect x="1" y="8" width="5" height="5" rx="1" fill={accent} opacity="0.3"/>
+              <rect x="8" y="8" width="5" height="5" rx="1" fill={accent} opacity="0.15"/>
+            </svg>
+            <span class="heap-title">HEAP MEMORY<span class="panel-subtitle">where your variables live</span></span>
+            <span class="heap-count">{varArr.length} var{varArr.length !== 1 ? 's' : ''}</span>
+          </div>
+          {#if varArr.length === 0}
+            <div class="heap-empty" aria-live="polite">no variables yet — step forward to allocate memory</div>
+          {:else}
             <div class="heap-grid">
               {#each varArr as [name, val], idx}
                 {@const status = varDiff[name] || 'same'}
@@ -630,27 +638,32 @@
                 </div>
               {/each}
             </div>
-          </div>
-        {/if}
+          {/if}
+        </div>
 
         <!-- Module-specific content below the heap (e.g. byte map) -->
         {#if bottomPanel}{@render bottomPanel(sd)}{/if}
 
-        <!-- STDOUT -->
-        {#if sd.output && sd.output.length > 0}
-          <div class="out-card">
-            <div class="out-hdr" role="heading" aria-level="3">
-              <svg width="12" height="12" viewBox="0 0 12 12">
-                <rect x="0" y="0" width="12" height="12" rx="2" fill="#111"/>
-                <text x="3" y="9" fill={accent} font-size="8" font-family="'Geist Mono', monospace">$</text>
-              </svg>
-              <span>STDOUT<span class="panel-subtitle">console output</span></span>
-            </div>
+        <!-- STDOUT
+             Always-rendered to prevent CLS on mobile. Until the program
+             prints, the card displays a placeholder line so its height
+             is reserved across every step. -->
+        <div class="out-card" class:is-empty={!(sd.output && sd.output.length > 0)}>
+          <div class="out-hdr" role="heading" aria-level="3">
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <rect x="0" y="0" width="12" height="12" rx="2" fill="#111"/>
+              <text x="3" y="9" fill={accent} font-size="8" font-family="'Geist Mono', monospace">$</text>
+            </svg>
+            <span>STDOUT<span class="panel-subtitle">console output</span></span>
+          </div>
+          {#if sd.output && sd.output.length > 0}
             {#each sd.output as line}
               <div class="out-ln">› {line}</div>
             {/each}
-          </div>
-        {/if}
+          {:else}
+            <div class="out-ln out-empty" aria-live="polite">› <span class="out-empty-hint">awaiting console.log…</span></div>
+          {/if}
+        </div>
 
         <!-- COMPLEXITY ANALYSIS — Explore level and above; collapsible, default closed -->
         <details class="cx-card dl-explore" bind:open={cxOpen}>
@@ -997,12 +1010,32 @@
   }
 
   /* ── Heap memory card ──────────────────────────────────────────────────── */
-  /* Elevation: 'surface' level — container panel without a hard border */
+  /* Elevation: 'surface' level — container panel without a hard border.
+     `min-height` reserves vertical space across every step so the heap
+     card never grows or shrinks the timeline below it (mobile CLS fix).
+     `contain: layout paint` isolates the card from triggering global
+     reflows when its inner heap-grid mutates between steps. */
   .heap-card  {
     background: color-mix(in srgb, var(--acc) 3%, var(--elevation-surface));
     border: none;
     border-radius:10px; overflow:hidden; flex-shrink:0;
     box-shadow: var(--elevation-shadow-raised);
+    min-height: 96px;
+    contain: layout paint;
+  }
+  /* Empty state — when the program has not yet allocated any variables. */
+  .heap-empty {
+    display:flex; align-items:center; justify-content:center;
+    min-height: 56px; padding: 12px 16px;
+    font-size: 0.7rem; color: rgba(255,255,255,0.32);
+    font-family: var(--font-code); letter-spacing: 0.4px;
+    font-style: italic;
+  }
+  /* `is-hidden` collapses the card when a module opts out of the heap. */
+  .heap-card.is-hidden {
+    min-height: 0; height: 0;
+    padding: 0; border: none; box-shadow: none;
+    overflow: hidden; visibility: hidden;
   }
   /* Elevation difference (+ accent wash) separates the header — no 1px line */
   .heap-hdr   {
@@ -1044,13 +1077,21 @@
   .heap-arrow { font-size:0.5rem; color:#f59e0b; }
   .heap-new   { font-size:0.55rem; font-family: var(--font-code); font-weight:600; }
 
-  /* ── STDOUT ────────────────────────────────────────────────────────────── */
+  /* ── STDOUT ──────────────────────────────────────────────────────────────
+     `min-height` reserves space across every step so the card never
+     grows when the first console.log fires — preventing CLS on mobile.
+     `contain: layout paint` isolates repaints of the output lines. */
   .out-card {
     background: color-mix(in srgb, var(--acc) 3%, #050508);
     border: 1px solid color-mix(in srgb, var(--acc) 15%, rgba(255,255,255,0.05));
     border-radius:10px; overflow:hidden; flex-shrink:0;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.3);
+    min-height: 96px;
+    contain: layout paint;
   }
+  /* Empty-state placeholder line — keeps card height stable pre-output. */
+  .out-empty      { color: rgba(255,255,255,0.22); font-style: italic; }
+  .out-empty-hint { color: inherit; }
   .out-hdr  {
     display:flex; align-items:center; gap:6px; padding:5px 10px;
     background: color-mix(in srgb, var(--acc) 5%, #0a0a12);
@@ -1066,12 +1107,17 @@
   }
   .out-ln   { padding:4px 12px; font-size:0.78rem; color:#e0e0e0; font-family: var(--font-code); }
 
-  /* ── Complexity card ───────────────────────────────────────────────────── */
+  /* ── Complexity card ─────────────────────────────────────────────────────
+     Collapsible <details>. When closed its height is just the summary
+     bar; `contain: layout paint` prevents the bar/chart toggle from
+     reflowing siblings above. Header height is identical open vs
+     closed, so no `min-height` is needed beyond what the summary sets. */
   .cx-card       {
     background: color-mix(in srgb, var(--acc) 3%, var(--a11y-surface1));
     border: 1px solid color-mix(in srgb, var(--acc) 15%, rgba(255,255,255,0.05));
     border-radius:10px; overflow:hidden; flex-shrink:0;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 16px rgba(0,0,0,0.3);
+    contain: layout paint;
   }
   .cx-hdr        {
     display:flex; align-items:center; justify-content:space-between; padding:6px 10px;
