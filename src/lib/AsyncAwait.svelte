@@ -147,7 +147,13 @@
             </div>
           {/each}
         {:else}
-          <div class="var-empty">No variables yet</div>
+          <!-- Silent skeleton: two faint rows signalling where heap
+               variables will land. Replaces the "No variables yet"
+               copy which read as a loading state on step 1. -->
+          <div class="var-skeleton" aria-hidden="true">
+            <div class="var-skeleton-row"></div>
+            <div class="var-skeleton-row"></div>
+          </div>
         {/if}
       </div>
     </div>
@@ -308,7 +314,23 @@
   .var-name    { font-size:0.8rem; color:#88aaff; font-weight:600; font-family: var(--font-code); }
   .var-type    { font-size:0.55rem; padding:1px 5px; border-radius:3px; background:#ffffff08; }
   .var-value   { font-size:0.8rem; font-weight:600; font-family: var(--font-code); }
-  .var-empty   { font-size:0.72rem; color:#2a2a3e; padding:10px 4px; }
+  /* Silent skeleton replaces the old "No variables yet" copy — two
+     faint animated bars preview where frame variables will appear. */
+  .var-skeleton     { display:flex; flex-direction:column; gap:6px; padding:10px 4px; }
+  .var-skeleton-row {
+    height: 10px; border-radius: 3px;
+    background: linear-gradient(90deg,
+      rgba(136,170,255,0.06) 0%,
+      rgba(136,170,255,0.16) 50%,
+      rgba(136,170,255,0.06) 100%);
+    background-size: 200% 100%;
+    animation: vx-var-skeleton-async 2.4s ease-in-out infinite;
+  }
+  .var-skeleton-row:nth-child(2) { width: 72%; animation-delay: 0.25s; }
+  @keyframes vx-var-skeleton-async {
+    0%, 100% { background-position: 100% 0; opacity: 0.7; }
+    50%      { background-position: 0% 0;   opacity: 1; }
+  }
 
   /* Timeline */
   .timeline-panel  { background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:8px; overflow:hidden; flex-shrink:0; }

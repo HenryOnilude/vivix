@@ -264,7 +264,13 @@
               </div>
             {/each}
           {:else}
-            <div class="var-empty">No variables yet</div>
+            <!-- Silent skeleton: two faint placeholder rows. Replaces
+                 the previous "No variables yet" copy which read as a
+                 loading state on step 1. -->
+            <div class="var-skeleton" aria-hidden="true">
+              <div class="var-skeleton-row"></div>
+              <div class="var-skeleton-row"></div>
+            </div>
           {/if}
         </div>
       </div>
@@ -370,7 +376,24 @@
   .var-row.var-flash { background: rgba(139,92,246,0.08); }
   .var-name  { font-size: 0.6rem; font-weight: 700; font-family: var(--font-code); color: #8b5cf6; min-width: 40px; }
   .var-value { font-size: 0.6rem; font-family: var(--font-code); color: rgba(255,255,255,0.88); text-align: right; }
-  .var-empty { font-size: 0.6rem; color: rgba(255,255,255,0.6); font-family: var(--font-code); }
+  /* Silent skeleton: two ghosted rows mirroring the .var-row rhythm.
+     No copy text — the faint bars preview where heap variables will
+     appear without the loading-state feel of "No variables yet". */
+  .var-skeleton     { display: flex; flex-direction: column; gap: 4px; padding: 4px 6px; }
+  .var-skeleton-row {
+    height: 10px; border-radius: 3px;
+    background: linear-gradient(90deg,
+      rgba(139,92,246,0.06) 0%,
+      rgba(139,92,246,0.14) 50%,
+      rgba(139,92,246,0.06) 100%);
+    background-size: 200% 100%;
+    animation: vx-var-skeleton 2.4s ease-in-out infinite;
+  }
+  .var-skeleton-row:nth-child(2) { width: 72%; animation-delay: 0.25s; }
+  @keyframes vx-var-skeleton {
+    0%, 100% { background-position: 100% 0; opacity: 0.7; }
+    50%      { background-position: 0% 0;   opacity: 1; }
+  }
 
   .vis-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
   .ph-svg   { width: 380px; height: auto; }

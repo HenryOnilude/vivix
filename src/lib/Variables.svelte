@@ -101,8 +101,18 @@
         stroke="#334155" stroke-width="1" stroke-dasharray="2 2"/>
 
       {#if entries.length === 0}
-        <text x={W/2} y={H/2 + 4} text-anchor="middle" fill="#94a3b8" font-size="9"
-          font-family="'Geist Mono', monospace">no variables declared yet</text>
+        <!-- Silent skeleton: three faint slot pairs anticipating the
+             populated stack ↔ heap layout below. No copy text — the
+             dashed outlines signal "variables will appear here" without
+             the loading-state feel of a "no variables declared yet"
+             string on a large dark panel. -->
+        {#each [0,1,2] as i}
+          {@const slotY = 22 + i * 22}
+          <rect x={stackX + 8} y={slotY} width={stackW - 16} height="18" rx="3"
+            fill="#08080e" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.55"/>
+          <rect x={heapX + 8} y={slotY} width={heapW - 16} height="18" rx="3"
+            fill="#08080e" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.4"/>
+        {/each}
       {:else}
         {#each entries as [name, val], i}
           {@const c = classify(val)}

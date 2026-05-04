@@ -71,8 +71,17 @@
       </text>
 
       {#if !arrEntry}
-        <text x={W/2} y={H/2} text-anchor="middle" fill="#94a3b8" font-size="9"
-          font-family="'Geist Mono', monospace">no array-based structure declared yet</text>
+        <!-- Silent skeleton: four faint cells anticipating the LIFO/FIFO
+             strip. No copy text — the dashed outlines preview where
+             items will land without a loading-state feel. -->
+        {#each [0,1,2,3] as i}
+          {@const cellW = 50}
+          {@const cellH = 24}
+          {@const stripX = 80}
+          {@const stripY = 38}
+          <rect x={stripX + i * (cellW + 4)} y={stripY} width={cellW} height={cellH} rx="3"
+            fill="#0b0b14" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
+        {/each}
       {:else}
         {@const cellW = 50}
         {@const cellH = 24}

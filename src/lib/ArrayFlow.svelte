@@ -99,8 +99,15 @@
       </text>
 
       {#if visible.length === 0}
-        <text x={W/2} y={H/2} text-anchor="middle" fill="#94a3b8" font-size="9"
-          font-family="'Geist Mono', monospace">no array declared yet</text>
+        <!-- Silent skeleton: five faint contiguous cells anticipating
+             the populated memory strip. No "no array declared yet"
+             copy — the dashed outlines telegraph where elements will
+             land without the loading-state feel. -->
+        {#each [0,1,2,3,4] as i}
+          {@const cx = stripX + i * cellW}
+          <rect x={cx} y="32" width={cellW - 4} height="32" rx="3"
+            fill="#0b0b14" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
+        {/each}
       {:else}
         <!-- Memory cells -->
         {#each visible as val, i}

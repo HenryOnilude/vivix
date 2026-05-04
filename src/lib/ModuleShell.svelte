@@ -697,7 +697,16 @@
             <span class="heap-count">{varArr.length} var{varArr.length !== 1 ? 's' : ''}</span>
           </div>
           {#if varArr.length === 0}
-            <div class="heap-empty" aria-live="polite">no variables yet — step forward to allocate memory</div>
+            <!-- Silent skeleton: three ghosted box shapes anticipating the
+                 shape of real heap-box entries. No text, no aria-live —
+                 this is a purely visual affordance that signals "memory
+                 slots will appear here" without the loading-screen feel
+                 of a chatty empty state. -->
+            <div class="heap-skeleton" aria-hidden="true">
+              <div class="heap-skeleton-box"></div>
+              <div class="heap-skeleton-box"></div>
+              <div class="heap-skeleton-box"></div>
+            </div>
           {:else}
             <div class="heap-grid">
               {#each varArr as [name, val], idx}
@@ -745,7 +754,13 @@
               <div class="out-ln">› {line}</div>
             {/each}
           {:else}
-            <div class="out-ln out-empty" aria-live="polite">› <span class="out-empty-hint">awaiting console.log…</span></div>
+            <!-- Silent skeleton: a single ghosted line shape. Replaces
+                 the previous 'awaiting console.log…' string which read
+                 as a loading state rather than a reserved slot. -->
+            <div class="out-skeleton" aria-hidden="true">
+              <span class="out-skeleton-caret">›</span>
+              <span class="out-skeleton-bar"></span>
+            </div>
           {/if}
         </div>
 
@@ -1137,13 +1152,32 @@
     min-height: 96px;
     contain: layout paint;
   }
-  /* Empty state — when the program has not yet allocated any variables. */
-  .heap-empty {
-    display:flex; align-items:center; justify-content:center;
-    min-height: 56px; padding: 12px 16px;
-    font-size: 0.7rem; color: rgba(255,255,255,0.32);
-    font-family: var(--font-code); letter-spacing: 0.4px;
-    font-style: italic;
+  /* Silent skeleton placeholder for the pre-execution heap. Three
+     faint box shapes in the same grid rhythm as real heap-box
+     entries, pulsing subtly so the panel feels primed rather than
+     empty. No text — the reserved height is communicated visually,
+     not with a copy string. */
+  .heap-skeleton {
+    display:grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px; padding: 10px 12px; min-height: 56px;
+  }
+  .heap-skeleton-box {
+    height: 36px; border-radius: 6px;
+    background: color-mix(in srgb, var(--acc) 6%, rgba(255,255,255,0.025));
+    border: 1px dashed color-mix(in srgb, var(--acc) 18%, rgba(255,255,255,0.05));
+    animation: vx-skeleton-pulse 2.4s ease-in-out infinite;
+  }
+  .heap-skeleton-box:nth-child(2) { animation-delay: 0.2s; }
+  .heap-skeleton-box:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes vx-skeleton-pulse {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 0.85; }
+  }
+  /* Collapse the skeleton grid on very narrow viewports so three
+     stacked placeholders don't dominate the reserved card height. */
+  @media (max-width: 480px) {
+    .heap-skeleton { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .heap-skeleton-box:nth-child(3) { display: none; }
   }
   /* `is-hidden` collapses the card when a module opts out of the heap. */
   .heap-card.is-hidden {
@@ -1203,9 +1237,29 @@
     min-height: 96px;
     contain: layout paint;
   }
-  /* Empty-state placeholder line — keeps card height stable pre-output. */
-  .out-empty      { color: rgba(255,255,255,0.22); font-style: italic; }
-  .out-empty-hint { color: inherit; }
+  /* Silent skeleton for the pre-output STDOUT. A caret plus a
+     ghosted bar hint at "a log line will land here" without the
+     former 'awaiting console.log…' copy. */
+  .out-skeleton {
+    display:flex; align-items:center; gap: 8px;
+    padding: 6px 12px; min-height: 28px;
+  }
+  .out-skeleton-caret { color: rgba(255,255,255,0.22); font-family: var(--font-code); font-size: 0.78rem; }
+  .out-skeleton-bar {
+    flex: 1; height: 8px; border-radius: 3px; max-width: 180px;
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.04) 0%,
+      color-mix(in srgb, var(--acc) 12%, rgba(255,255,255,0.06)) 50%,
+      rgba(255,255,255,0.04) 100%
+    );
+    background-size: 200% 100%;
+    animation: vx-skeleton-shimmer 2.4s ease-in-out infinite;
+  }
+  @keyframes vx-skeleton-shimmer {
+    0%, 100% { background-position: 100% 0; }
+    50%      { background-position: 0% 0; }
+  }
   .out-hdr  {
     display:flex; align-items:center; gap:6px; padding:5px 10px;
     background: color-mix(in srgb, var(--acc) 5%, #0a0a12);

@@ -81,8 +81,14 @@
       </text>
 
       {#if !objEntry}
-        <text x={W/2} y={H/2} text-anchor="middle" fill="#94a3b8" font-size="9"
-          font-family="'Geist Mono', monospace">no object declared yet</text>
+        <!-- Silent skeleton: three faint key-chip slots on the left to
+             preview the populated hash-bucket layout. No "no object
+             declared yet" text — the dashed chips signal where keys
+             will land. -->
+        {#each [0,1,2] as i}
+          <rect x="14" y={26 + i * 16} width="84" height="14" rx="3"
+            fill="#0b0b14" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
+        {/each}
       {:else}
         <!-- Key chips on the left -->
         {#each keys.slice(0, 4) as key, i}
