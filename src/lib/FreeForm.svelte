@@ -13,10 +13,52 @@
   // Configure marked for minimal, safe rendering — we feed only the LLM output.
   marked.setOptions({ breaks: true, gfm: true });
 
-  // Free-form mode is a blank canvas — no pre-filled code, no example
-  // suggestions. The editor loads empty on every visit; the developer
-  // brings their own JavaScript.
-  const examples = [];
+  // Starter snippets for Free-Form mode. A completely blank canvas led
+  // to a 5% completion rate (PostHog: 20 opens, 1 run) — classic blank
+  // canvas syndrome. Each starter is a canonical pattern the Pattern
+  // Registry already recognises, so first-time visitors land on a hand
+  // written explanation rather than falling through to the LLM
+  // narrator. Users who want a true blank canvas can still clear the
+  // editor and paste their own code.
+  const examples = [
+    {
+      label: 'Closure counter',
+      code: `function makeCounter() {
+  let count = 0;
+  return function() {
+    count++;
+    return count;
+  }
+}
+const counter = makeCounter();
+counter();
+counter();`,
+    },
+    {
+      label: 'Async fetch',
+      code: `async function getData() {
+  const response = await fetch('https://api.example.com/data');
+  const data = await response.json();
+  return data;
+}
+getData();`,
+    },
+    {
+      label: 'Recursive Fibonacci',
+      code: `function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+fibonacci(6);`,
+    },
+    {
+      label: 'Array reduce',
+      code: `const numbers = [1, 2, 3, 4, 5];
+const sum = numbers.reduce(function(acc, num) {
+  return acc + num;
+}, 0);`,
+    },
+  ];
 
   // ── Pattern lookup cache (line → match) ──────────────────────────────────
   let _patternCache = null;
@@ -341,9 +383,8 @@
     {onSteps}
     dataFlow
     interpreterOptions={{}}
-    hideExamples
-    runHint=""
-    editorPlaceholder="Paste your JavaScript here"
+    runHint="Pick a starter or paste your own"
+    editorPlaceholder="Paste any JavaScript and step through it"
     moduleCaption="pattern-detection meter — the Pattern Registry scans your code for canonical shapes (loops, closures, async, etc.); when a pattern is found, the meter lights up and a hand-written explanation appears"
   >
     <!-- Pattern-detection meter: confidence bar + detected/unknown split -->
