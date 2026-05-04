@@ -393,6 +393,59 @@
     if (step < 0) _completedFor = -1;
   });
 
+  // ── "Try this next" suggestion map ───────────────────────────────────────
+  // Conceptual dependency chain: each completed module points the user at
+  // the next logical concept. Keyed by `routeKey` (the URL hash segment).
+  // PostHog data showed <1% multi-module traversal without a prompt — this
+  // closes the progression gap without adding any routing logic.
+  //
+  // `color` reuses the accent palette from Home.svelte so the banner
+  // reads as a preview of the destination module's visual identity.
+  const NEXT_MODULE = {
+    'variables':       { id: 'if-gate',         label: 'Conditionals',     desc: 'See how true and false control the flow.',                       color: '#4ade80' },
+    'if-gate':         { id: 'for-loop',        label: 'Iteration',        desc: 'Watch counters climb as the loop runs.',                         color: '#fbbf24' },
+    'for-loop':        { id: 'function',        label: 'Functions',        desc: 'Values go in, transformations come out.',                        color: '#fb923c' },
+    'function':        { id: 'closures',        label: 'Closures & Scope', desc: 'See which variables a closure captures.',                        color: '#00FFD1' },
+    'closures':        { id: 'async',           label: 'Async / Await',    desc: 'Watch promises resolve on a timeline.',                          color: '#a78bfa' },
+    'async':           { id: 'promise-chain',   label: 'Promise Methods',  desc: 'Watch .then() and .catch() chain through the microtask queue.',  color: '#f59e0b' },
+    'promise-chain':   { id: 'event-listeners', label: 'DOM Events',       desc: 'See how addEventListener registers callbacks.',                  color: '#ec4899' },
+    'event-listeners': { id: 'array',           label: 'Array Methods',    desc: 'Elements flow through map, filter, reduce.',                     color: '#818cf8' },
+    'array':           { id: 'objects',         label: 'Objects & Hash Maps', desc: 'See key-value pairs stored in hash maps.',                    color: '#c084fc' },
+    'objects':         { id: 'data-structures', label: 'Data Structures',  desc: 'Stacks, queues, maps — organized data.',                         color: '#f472b6' },
+    'data-structures': { id: 'api-calls',       label: 'HTTP & fetch()',   desc: 'Trace fetch() requests through suspend, response, and parse.',   color: '#8b5cf6' },
+    'api-calls':       { id: 'free-form',       label: 'Free-Form Mode',   desc: 'Paste any JavaScript and step through it.',                      color: '#00FFD1' },
+    'free-form':       { id: 'variables',       label: 'Variables & Memory', desc: 'Start from the top — watch the CPU store values.',             color: '#38bdf8' },
+  };
+
+  /** Next-module suggestion for the current route, or null if unknown. */
+  let nextModule = $derived(NEXT_MODULE[routeKey] ?? null);
+
+  /** True on the final step of a completed run. Drives the Try-this-next
+   *  banner (shown only on the last step, hidden otherwise so it never
+   *  covers the mid-run visualisation). */
+  let isComplete = $derived(total > 0 && step === total - 1);
+
+  /** Session-scoped dismissal flag so the banner respects a user's
+   *  "not interested" click until they reload or open a new module. */
+  let _nextDismissed = $state(false);
+  $effect(() => {
+    // Reset dismissal whenever the user switches modules or starts a new run.
+    void routeKey; void total;
+    _nextDismissed = false;
+  });
+
+  function openNextModule() {
+    if (!nextModule) return;
+    try {
+      posthog.capture('next_module_clicked', {
+        from: routeKey || 'unknown',
+        to: nextModule.id,
+      });
+    } catch (_) {}
+    // Let the browser follow the hash — no router imports needed.
+    window.location.hash = `#/${nextModule.id}`;
+  }
+
   // ── Share button handler ──────────────────────────────────────────────────
   async function shareUrl() {
     const url = buildShareUrl({
@@ -729,6 +782,28 @@
             {/if}
           </div>
         </details>
+
+        <!-- ── Try this next ────────────────────────────────────────────────
+             Appears only on the final step of a completed run. Addresses
+             the <1% multi-module traversal metric surfaced in PostHog:
+             without this prompt, users who finished a module had no
+             in-UI path to the next concept. Dismissal is session-only
+             so the banner re-offers after a new run or module switch. -->
+        {#if isComplete && nextModule && !_nextDismissed}
+          <aside class="next-card" style="--next: {nextModule.color}" aria-label="Suggested next module">
+            <div class="next-meta">
+              <span class="next-eyebrow">Try this next</span>
+              <span class="next-title">{nextModule.label}</span>
+              <span class="next-desc">{nextModule.desc}</span>
+            </div>
+            <div class="next-actions">
+              <button type="button" class="next-dismiss" onclick={() => _nextDismissed = true} aria-label="Dismiss suggestion">Not now</button>
+              <button type="button" class="next-go" onclick={openNextModule}>
+                Try it <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </aside>
+        {/if}
 
       {:else if !hasRun}
         {#if placeholder}
@@ -1106,6 +1181,50 @@
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 50%, transparent), transparent);
   }
   .out-ln   { padding:4px 12px; font-size:0.78rem; color:#e0e0e0; font-family: var(--font-code); }
+
+  /* ── Try-this-next banner ────────────────────────────────────────────────
+     Subtle card with the destination module's accent colour. Rendered
+     only on the final step of a completed run; hidden mid-run so it
+     never competes with the visualisation. Matches card elevation used
+     by .heap-card / .out-card so it slots naturally into the panel. */
+  .next-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 14px;
+    background: color-mix(in srgb, var(--next, var(--acc)) 8%, var(--elevation-surface));
+    border: 1px solid color-mix(in srgb, var(--next, var(--acc)) 40%, rgba(255,255,255,0.06));
+    border-radius: 10px; flex-shrink: 0;
+    box-shadow: var(--elevation-shadow-raised);
+    contain: layout paint;
+    animation: next-card-in 240ms ease-out both;
+  }
+  @keyframes next-card-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .next-meta    { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+  .next-eyebrow {
+    font-size: 0.58rem; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--next, var(--acc)); font-family: var(--font-code); font-weight: 700;
+  }
+  .next-title   { font-size: 0.9rem; color: var(--a11y-text); font-weight: 700; font-family: var(--font-ui); }
+  .next-desc    { font-size: 0.72rem; color: rgba(255,255,255,0.58); line-height: 1.4; font-family: var(--font-ui); }
+  .next-actions { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .next-dismiss {
+    background: transparent; border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5); padding: 6px 10px; border-radius: 6px;
+    font-size: 0.68rem; font-family: var(--font-ui); cursor: pointer; transition: all 0.18s;
+  }
+  .next-dismiss:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.2); }
+  .next-go {
+    background: color-mix(in srgb, var(--next, var(--acc)) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--next, var(--acc)) 55%, transparent);
+    color: var(--next, var(--acc));
+    padding: 6px 12px; border-radius: 6px;
+    font-size: 0.72rem; font-weight: 700; font-family: var(--font-ui);
+    cursor: pointer; transition: all 0.18s;
+  }
+  .next-go:hover  { background: color-mix(in srgb, var(--next, var(--acc)) 35%, transparent); transform: translateX(1px); }
+  .next-go:active { transform: translateX(0) scale(0.97); }
 
   /* ── Complexity card ─────────────────────────────────────────────────────
      Collapsible <details>. When closed its height is just the summary
