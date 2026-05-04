@@ -446,6 +446,37 @@
     window.location.hash = `#/${nextModule.id}`;
   }
 
+  /** Fork the current editor contents into free-form mode. Bridges the
+   *  structured-module → blank-canvas gap identified by PostHog (20 opens,
+   *  1 completion on /free-form). Reuses buildShareUrl so the free-form
+   *  route loads the forked code via its existing `code` URL param,
+   *  bypassing the starter-picker without any coupling between modules. */
+  function forkToFreeForm() {
+    // When the user hasn't edited the example, send the example code
+    // so the fork is faithful to what they were just looking at. When
+    // they have edited it, send their edited version.
+    const forkCode = codeText || examples[selEx]?.code || '';
+    if (!forkCode) return;
+    try {
+      posthog.capture('example_forked', {
+        from: routeKey || 'unknown',
+        example_index: selEx,
+        custom_code: isCustomCode,
+        chars: forkCode.length,
+      });
+    } catch (_) {}
+    const url = buildShareUrl({
+      route: 'free-form',
+      ex: 0,
+      step: null,
+      code: forkCode,
+      // Force the `code` param to win over `ex` by declaring a mismatched
+      // exampleCode — free-form's starters are unrelated to this snippet.
+      exampleCode: '',
+    });
+    window.location.href = url;
+  }
+
   // ── Share button handler ──────────────────────────────────────────────────
   async function shareUrl() {
     const url = buildShareUrl({
@@ -787,8 +818,11 @@
              Appears only on the final step of a completed run. Addresses
              the <1% multi-module traversal metric surfaced in PostHog:
              without this prompt, users who finished a module had no
-             in-UI path to the next concept. Dismissal is session-only
-             so the banner re-offers after a new run or module switch. -->
+             in-UI path to the next concept. The secondary "Fork this
+             example" action hands the current code off to free-form so
+             the user can keep tinkering without landing on a blank
+             canvas. Dismissal is session-only so the banner re-offers
+             after a new run or module switch. -->
         {#if isComplete && nextModule && !_nextDismissed}
           <aside class="next-card" style="--next: {nextModule.color}" aria-label="Suggested next module">
             <div class="next-meta">
@@ -798,6 +832,11 @@
             </div>
             <div class="next-actions">
               <button type="button" class="next-dismiss" onclick={() => _nextDismissed = true} aria-label="Dismiss suggestion">Not now</button>
+              {#if routeKey !== 'free-form'}
+                <button type="button" class="next-fork" onclick={forkToFreeForm} aria-label="Open this example in Free-Form mode">
+                  Fork this example <span aria-hidden="true">→</span>
+                </button>
+              {/if}
               <button type="button" class="next-go" onclick={openNextModule}>
                 Try it <span aria-hidden="true">→</span>
               </button>
@@ -1215,6 +1254,19 @@
     font-size: 0.68rem; font-family: var(--font-ui); cursor: pointer; transition: all 0.18s;
   }
   .next-dismiss:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.2); }
+  /* Secondary action: "Fork this example" opens free-form with the
+     current code. Styled neutral so the primary next-go still carries
+     the destination module's accent as the dominant CTA. */
+  .next-fork {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.78);
+    padding: 6px 12px; border-radius: 6px;
+    font-size: 0.72rem; font-weight: 600; font-family: var(--font-ui);
+    cursor: pointer; transition: all 0.18s;
+  }
+  .next-fork:hover  { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.24); }
+  .next-fork:active { transform: scale(0.97); }
   .next-go {
     background: color-mix(in srgb, var(--next, var(--acc)) 22%, transparent);
     border: 1px solid color-mix(in srgb, var(--next, var(--acc)) 55%, transparent);
