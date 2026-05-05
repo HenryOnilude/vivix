@@ -227,7 +227,13 @@
           {/each}
         </div>
       {:else}
-        <div class="req-empty">No requests yet</div>
+        <!-- Silent skeleton: two ghosted request-card placeholders.
+             Replaces "No requests yet" copy which read as a loading
+             state on step 1. -->
+        <div class="req-skeleton" aria-hidden="true">
+          <div class="req-skeleton-card"></div>
+          <div class="req-skeleton-card"></div>
+        </div>
       {/if}
     </div>
 
@@ -344,7 +350,24 @@
   .requests-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .requests-hdr   { font-size: 0.62rem; color: rgba(255,255,255,0.92); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .requests-list  { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; }
-  .req-empty      { font-size: 0.62rem; color: rgba(255,255,255,0.7); font-family: var(--font-code); padding: 8px 10px; }
+  /* Silent skeleton replaces the old "No requests yet" copy. Two
+     ghosted cards mirror the .req-card rhythm. */
+  .req-skeleton      { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; }
+  .req-skeleton-card {
+    height: 30px; border-radius: 6px;
+    background: linear-gradient(90deg,
+      rgba(139,92,246,0.06) 0%,
+      rgba(139,92,246,0.16) 50%,
+      rgba(139,92,246,0.06) 100%);
+    background-size: 200% 100%;
+    border: 1px dashed rgba(139,92,246,0.20);
+    animation: vx-req-skeleton 2.4s ease-in-out infinite;
+  }
+  .req-skeleton-card:nth-child(2) { animation-delay: 0.25s; }
+  @keyframes vx-req-skeleton {
+    0%, 100% { background-position: 100% 0; opacity: 0.7; }
+    50%      { background-position: 0% 0;   opacity: 1; }
+  }
 
   .req-card        { background: color-mix(in srgb, var(--rcolor) 6%, transparent); border: 1px solid color-mix(in srgb, var(--rcolor) 25%, transparent); border-radius: 6px; padding: 6px 10px; display: flex; flex-direction: column; gap: 3px; transition: all 0.3s; }
   .req-method-url  { display: flex; align-items: center; gap: 8px; }

@@ -220,7 +220,13 @@
               </div>
             {/each}
           {:else}
-            <div class="el-empty">No elements yet</div>
+            <!-- Silent skeleton: two ghosted element-card placeholders.
+                 Replaces "No elements yet" copy which read as a loading
+                 state on step 1. -->
+            <div class="el-skeleton" aria-hidden="true">
+              <div class="el-skeleton-card"></div>
+              <div class="el-skeleton-card"></div>
+            </div>
           {/if}
         </div>
       </div>
@@ -337,7 +343,25 @@
   .runtime-hdr  { font-size: 12px; color: rgba(255,255,255,0.65); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .el-panel     { flex: 1.5; }
   .el-box       { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; min-height: 60px; }
-  .el-empty     { font-size: 12px; color: #555; font-family: var(--font-code); }
+  /* Silent skeleton replaces the old "No elements yet" copy. Two
+     ghosted cards mirror the .el-card rhythm so step 1 looks primed
+     rather than empty. */
+  .el-skeleton      { display: flex; flex-direction: column; gap: 6px; }
+  .el-skeleton-card {
+    height: 36px; border-radius: 6px;
+    background: linear-gradient(90deg,
+      rgba(236,72,153,0.05) 0%,
+      rgba(236,72,153,0.14) 50%,
+      rgba(236,72,153,0.05) 100%);
+    background-size: 200% 100%;
+    border: 1px dashed rgba(236,72,153,0.18);
+    animation: vx-el-skeleton 2.4s ease-in-out infinite;
+  }
+  .el-skeleton-card:nth-child(2) { animation-delay: 0.25s; }
+  @keyframes vx-el-skeleton {
+    0%, 100% { background-position: 100% 0; opacity: 0.7; }
+    50%      { background-position: 0% 0;   opacity: 1; }
+  }
 
   .el-card      { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 8px 10px; }
   .el-tag       { font-size: 14px; font-weight: 700; font-family: var(--font-code); color: #ec4899; }

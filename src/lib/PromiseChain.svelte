@@ -124,7 +124,13 @@
             {/if}
           {/each}
         {:else}
-          <div class="chain-empty">No Promises yet</div>
+          <!-- Silent skeleton: two ghosted node placeholders mirroring the
+               .chain-node rhythm. Replaces "No Promises yet" copy which
+               read as a loading state on step 1. -->
+          <div class="chain-skeleton" aria-hidden="true">
+            <div class="chain-skeleton-node"></div>
+            <div class="chain-skeleton-node"></div>
+          </div>
         {/if}
       </div>
     </div>
@@ -224,7 +230,25 @@
   .chain-panel  { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .chain-hdr    { font-size: 0.66rem; color: rgba(255,255,255,0.95); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .chain-nodes  { display: flex; align-items: center; gap: 4px; padding: 10px 12px; flex-wrap: wrap; }
-  .chain-empty  { font-size: 0.72rem; color: rgba(255,255,255,0.75); font-family: var(--font-code); }
+  /* Silent skeleton replaces the old "No Promises yet" copy. Two
+     ghosted nodes hint at the chain layout without a loading-state
+     feel on step 1. */
+  .chain-skeleton      { display: flex; align-items: center; gap: 4px; padding: 10px 12px; }
+  .chain-skeleton-node {
+    width: 76px; height: 36px; border-radius: 6px;
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0.04) 0%,
+      rgba(255,255,255,0.10) 50%,
+      rgba(255,255,255,0.04) 100%);
+    background-size: 200% 100%;
+    border: 1.5px dashed rgba(255,255,255,0.10);
+    animation: vx-chain-skeleton 2.4s ease-in-out infinite;
+  }
+  .chain-skeleton-node:nth-child(2) { animation-delay: 0.25s; }
+  @keyframes vx-chain-skeleton {
+    0%, 100% { background-position: 100% 0; opacity: 0.7; }
+    50%      { background-position: 0% 0;   opacity: 1; }
+  }
 
   .chain-node   { display: flex; flex-direction: column; align-items: center; gap: 3px; background: color-mix(in srgb, var(--node-color) 14%, transparent); border: 1.5px solid color-mix(in srgb, var(--node-color) 60%, transparent); border-radius: 6px; padding: 7px 11px; min-width: 76px; transition: all 0.3s; }
   .node-label   { font-size: 0.78rem; font-weight: 800; font-family: var(--font-code); color: var(--node-color); letter-spacing: 0.5px; }
