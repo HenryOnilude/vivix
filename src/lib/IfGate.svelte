@@ -4,7 +4,7 @@
   import { animatePathSequenced, animateBall, animateDiamondFlash, animateBlockReveal, animateSubExpr } from './animations.js';
   import { splitCondition, substituteVars, extractBodies } from './condition-utils.js';
 
-  const ACCENT = '#ff8866';
+  const ACCENT = '#2ac3de';
 
   const examples = [
     { label: 'Age check',    code: 'let age = 22;\nlet canDrink = false;\n\nif (age >= 21) {\n  canDrink = true;\n}',                                                                                    cx: { time: 'O(1)', space: 'O(1)', timeWhy: 'O(1) means "constant time" — no matter how large your data grows, this code always does the same amount of work. Here we have exactly 1 comparison (age >= 21). Whether age is 5 or 5 billion, the CPU performs a single check. There are no loops, no recursion, and no data-dependent branching. This is the fastest possible time complexity — like checking one light switch.',                                                                                                          spaceWhy: 'O(1) means "constant space" — the memory used does not grow with input. We allocate exactly 2 variables (age, canDrink) taking ~12 bytes total. No arrays, no objects, no dynamic allocation. Even if you ran this a million times, each run uses the same fixed amount of memory.' } },
@@ -454,7 +454,7 @@
   .eval-chip   { display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10); border-radius:4px; padding:3px 8px; }
   .eval-chip-raw   { font-size:0.62rem; color:rgba(255,255,255,0.75); font-family: var(--font-code); font-weight:600; }
   .eval-chip-arrow { font-size:0.5rem; color:rgba(255,255,255,0.35); }
-  .eval-chip-val   { font-size:0.62rem; color:#ff8866; font-family: var(--font-code); font-weight:700; }
+  .eval-chip-val   { font-size:0.62rem; color:#2ac3de; font-family: var(--font-code); font-weight:700; }
   .eval-op     { font-size:0.62rem; color:#a78bfa; font-family: var(--font-code); font-weight:800; padding:2px 4px; }
 
   /* ── Condition expression row ───────────────────────────── */

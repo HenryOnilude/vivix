@@ -3,7 +3,7 @@
   import { fv, tc, tb, totalBytes, byteSize, COMPLEXITY_BARS } from './utils.js';
   import { animateBar } from './animations.js';
 
-  const ACCENT = '#38bdf8';
+  const ACCENT = '#9ece6a';
 
   const examples = [
     { label: 'Numbers',      code: 'let age = 25;\nlet price = 9.99;\nlet year = 2024;',                                                                                   cx: { time: 'O(1)', space: 'O(1)', timeWhy: 'O(1) means "constant time" — each let statement is a single operation. The CPU reads the value, allocates a memory slot, and writes to it. 3 declarations = 3 operations, but that\'s still constant — it doesn\'t grow with any input. Whether you declare 1 variable or 10, there are no loops or recursion.',                                                                                                               spaceWhy: 'O(1) — 3 numbers, each stored as a 64-bit IEEE 754 double (8 bytes). Total: 24 bytes of fixed memory. No arrays, no objects, no dynamic allocation. The memory footprint is known before the program even runs.' } },
@@ -169,7 +169,7 @@
       <!-- Arrow markers -->
       <defs>
         <marker id="var-arrow-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
-          <path d="M 0 0 L 8 4 L 0 8 z" fill="#38bdf8"/>
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#9ece6a"/>
         </marker>
         <marker id="var-arrow-i" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
           <path d="M 0 0 L 8 4 L 0 8 z" fill="#334155"/>
@@ -293,7 +293,7 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 220" class="ph-svg">
-        <rect x="60"  y="60" width="110" height="52" rx="5" fill="rgba(56,189,248,0.06)" stroke="rgba(56,189,248,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
+        <rect x="60"  y="60" width="110" height="52" rx="5" fill="rgba(158,206,106,0.06)" stroke="rgba(158,206,106,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
         <text x="115" y="92" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">x = 42</text>
         <rect x="230" y="60" width="110" height="52" rx="5" fill="rgba(74,222,128,0.06)" stroke="rgba(74,222,128,0.55)" stroke-width="2.5" stroke-dasharray="6 3"/>
         <text x="285" y="92" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-size="16" font-family="'Geist Mono', monospace" font-weight="600">y = "hi"</text>
@@ -311,7 +311,7 @@
   .bytemap-card  { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
   .bytemap-hdr   { display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
   .bytemap-title { font-size:0.95rem; color:#e0e0e0; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
-  .bytemap-total { margin-left:auto; font-size:0.78rem; color:#38bdf8; font-family: var(--font-code); font-weight:600; }
+  .bytemap-total { margin-left:auto; font-size:0.78rem; color:#9ece6a; font-family: var(--font-code); font-weight:600; }
   .bytemap-caption {
     margin:0; padding:8px 12px 0;
     font-family: var(--font-ui);
@@ -323,7 +323,7 @@
   .bytemap-body  { padding:6px 8px; display:flex; flex-direction:column; gap:5px; }
 
   .byterow       { display:flex; align-items:center; gap:8px; padding:4px 6px; border-radius:5px; transition:all 0.3s; }
-  .byterow-active { background:#38bdf808; box-shadow:inset 3px 0 0 #38bdf8; }
+  .byterow-active { background:#9ece6a08; box-shadow:inset 3px 0 0 #9ece6a; }
 
   .byterow-meta  { display:flex; flex-direction:column; gap:1px; min-width:60px; }
   .byterow-name  { font-size:0.7rem; font-weight:700; font-family: var(--font-code); }
