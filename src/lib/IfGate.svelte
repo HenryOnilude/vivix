@@ -444,7 +444,7 @@
 </ModuleShell>
 
 <style>
-  .branch-card { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .branch-card { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:6px; overflow:hidden; flex-shrink:0; }
   .branch-svg  { width:100%; height:auto; display:block; }
 
   /* ── Sub-expression evaluation row ─────────────────────── */

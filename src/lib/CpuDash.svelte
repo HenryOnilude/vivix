@@ -508,7 +508,7 @@
     flex-shrink:0;
     background: var(--elevation-surface);
     border: none;
-    border-radius:12px;
+    border-radius:6px;
     overflow:hidden;
     box-shadow: var(--elevation-shadow-raised);
   }

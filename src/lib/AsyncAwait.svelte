@@ -351,7 +351,7 @@
   /* Brain panel — now a collapsible <details> that sits LAST in the
      column and shows a 1-line TL;DR until the user opens it. On
      mobile `order: 99` ensures it never slips above the visuals. */
-  .brain-panel   { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .brain-panel   { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:6px; overflow:hidden; flex-shrink:0; }
   .brain-details { order: 99; }
   .brain-summary { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--a11y-surface2); border-bottom:1px solid transparent; cursor:pointer; list-style:none; user-select:none; }
   .brain-summary::-webkit-details-marker { display:none; }
@@ -382,8 +382,8 @@
   /* Call Stack + Event Loop — base styles (used by timeline sub-rows
      still referencing .runtime-panel etc.) */
   .runtime-row   { display:flex; gap:6px; }
-  .runtime-panel { flex:1; min-width:0; background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:8px; overflow:hidden; flex-shrink:0; }
-  .frames-panel  { background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .runtime-panel { flex:1; min-width:0; background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:6px; overflow:hidden; flex-shrink:0; }
+  .frames-panel  { background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:6px; overflow:hidden; flex-shrink:0; }
   .runtime-hdr   { padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .stack-box     { padding:6px 8px; display:flex; flex-direction:column; gap:3px; min-height:40px; }
   .stack-frame   { display:flex; justify-content:space-between; align-items:center; padding:3px 6px; border-radius:3px; border:1px solid #1a1a2e; font-size:0.65rem; transition:all 0.3s; }
@@ -484,7 +484,7 @@
   }
 
   /* Timeline */
-  .timeline-panel  { background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .timeline-panel  { background:var(--a11y-bg, #0a0a12); border:1px solid var(--a11y-border, #1a1a2e); border-radius:6px; overflow:hidden; flex-shrink:0; }
   .timeline-hdr    { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .timeline-title  { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .timeline-body   { padding:8px; display:flex; flex-direction:column; gap:6px; }

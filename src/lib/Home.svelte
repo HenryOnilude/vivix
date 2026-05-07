@@ -945,7 +945,7 @@
     width: 100%;
     background: rgba(9, 9, 11, 0.72);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    border-radius:6px;
     backdrop-filter: blur(10px) saturate(130%);
     -webkit-backdrop-filter: blur(10px) saturate(130%);
     font-family: var(--font-code);
@@ -1127,13 +1127,13 @@
   .sr-zone-body { flex: 1; display: flex; flex-direction: column; gap: 8px; }
   .sr-zone-body-wire {
     border: 1px dashed rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
+    border-radius:6px;
   }
   .sr-stack-frame {
     padding: 8px 10px;
     background: rgba(0, 255, 209, 0.08);
     border: 1px solid rgba(0, 255, 209, 0.28);
-    border-radius: 8px;
+    border-radius:6px;
     font-family: var(--font-code);
     font-size: 0.78rem;
     color: #00FFD1;
@@ -1204,7 +1204,7 @@
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.52);
   }
-  .ep-lane-body  { flex: 1; border-radius: 8px; border: 1px dashed rgba(255, 255, 255, 0.08); }
+  .ep-lane-body  { flex: 1; border-radius:6px; border: 1px dashed rgba(255, 255, 255, 0.08); }
 
   .ep-loop-wrap {
     grid-column: 2 / 4;
@@ -1255,7 +1255,7 @@
     transform: translate(-50%, 72px);
     max-width: 380px;
     padding: 12px 16px;
-    border-radius: 12px;
+    border-radius:6px;
     background: rgba(9, 9, 11, 0.92);
     border: 1px solid rgba(0, 255, 209, 0.4);
     box-shadow: 0 10px 40px rgba(0, 255, 209, 0.18);
@@ -1706,7 +1706,7 @@
     font-size: 0.92rem;
     font-weight: 700;
     padding: 11px 24px;
-    border-radius: 8px;
+    border-radius:6px;
     text-decoration: none;
     letter-spacing: -0.1px;
     transition: filter 0.2s ease, transform 0.2s ease;
@@ -1727,7 +1727,7 @@
     color: rgba(255,255,255,0.58);
     text-decoration: none;
     padding: 11px 20px;
-    border-radius: 8px;
+    border-radius:6px;
     border: 1px solid rgba(255,255,255,0.12);
     transition: all 0.2s ease;
     background: rgba(255,255,255,0.03);
@@ -1752,7 +1752,7 @@
     color: #00FFD1;
     text-decoration: none;
     padding: 11px 18px;
-    border-radius: 8px;
+    border-radius:6px;
     border: 1px solid rgba(0,255,209,0.35);
     background: rgba(0,255,209,0.06);
     transition: all 0.2s ease;
@@ -1812,7 +1812,7 @@
     align-items: flex-start;
     gap: 12px;
     padding: 16px;
-    border-radius: 10px;
+    border-radius:6px;
     background: rgba(255,255,255,0.02);
     border: 1px solid rgba(255,255,255,0.06);
     transition: border-color 0.2s, background 0.2s;

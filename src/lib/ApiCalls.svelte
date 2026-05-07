@@ -350,7 +350,7 @@
   .brain-box.brain-error { background: rgba(248,113,113,0.05); }
   .brain-text  { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: var(--font-code); }
 
-  .api-badge { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius: 8px; }
+  .api-badge { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius:6px; }
   .api-badge.sending  { background: rgba(187,154,247,0.2);  color: #bb9af7; }
   .api-badge.received { background: rgba(245,158,11,0.15); color: #f59e0b; }
   .api-badge.parsing  { background: rgba(251,191,36,0.15); color: #fbbf24; }
@@ -360,7 +360,7 @@
   .api-badge.thrown   { background: rgba(248,113,113,0.15); color: #f87171; }
 
   /* ── Requests ─────────────────────────────────────────────────────── */
-  .requests-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .requests-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; overflow: hidden; flex-shrink: 0; }
   .requests-hdr   { font-size: 0.62rem; color: rgba(255,255,255,0.92); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .requests-list  { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; }
   /* Silent skeleton replaces the old "No requests yet" copy. Two
@@ -394,7 +394,7 @@
 
   /* ── Runtime row ─────────────────────────────────────────────────── */
   .runtime-row   { display: flex; gap: 6px; flex-shrink: 0; }
-  .runtime-panel { flex: 1; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; }
+  .runtime-panel { flex: 1; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; overflow: hidden; }
   .runtime-hdr   { font-size: 0.62rem; color: rgba(255,255,255,0.92); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
 
   .stack-box   { display: flex; flex-direction: column-reverse; gap: 3px; padding: 8px 10px; min-height: 56px; }

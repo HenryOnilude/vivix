@@ -389,7 +389,7 @@
 
 <style>
   /* Object cards */
-  .obj-card       { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .obj-card       { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .obj-card-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .obj-card-title { font-size:0.65rem; color:#c084fc; font-family: var(--font-code); font-weight:700; }
   .obj-access-badge { font-size:0.45rem; color:#4ade80; background:#4ade8010; padding:1px 5px; border-radius:3px; border:1px solid #4ade8025; }
@@ -404,14 +404,14 @@
   .obj-empty      { font-size:0.6rem; color:#2a2a3e; padding:6px; font-family: var(--font-code); }
 
   /* Hash map card */
-  .hash-card      { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .hash-card      { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .hash-hdr       { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .hash-title     { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .hash-subtitle  { margin-left:auto; font-size:0.45rem; color:#333; font-family: var(--font-code); }
   .hash-svg       { width:100%; height:auto; display:block; padding:4px 0 6px; }
 
   /* Scalars */
-  .scalars-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .scalars-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .scalars-hdr   { display:flex; align-items:center; gap:6px; padding:6px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .scalars-label { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .scalars-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; padding:8px; }

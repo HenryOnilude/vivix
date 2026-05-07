@@ -1174,7 +1174,7 @@
     background:var(--a11y-surface2);
     border:1px solid color-mix(in srgb, var(--acc) 18%, rgba(255,255,255,0.05));
     border-bottom: 1px solid rgba(255,255,255,0.04);
-    border-radius:8px 8px 0 0;
+    border-radius:6px 8px 0 0;
     /* Top accent stripe */
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
     position: relative;
@@ -1184,7 +1184,7 @@
     position:absolute;
     top:0; left:0; right:0;
     height:1.5px;
-    border-radius:8px 8px 0 0;
+    border-radius:6px 8px 0 0;
     background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 60%, transparent), transparent);
   }
   .pt  { font-size:0.66rem; color:rgba(255,255,255,0.92); letter-spacing:1.2px; text-transform:uppercase; font-weight:700; }
@@ -1234,7 +1234,7 @@
   .abtn   { /* colour set inline */ }
   .sc     { font-size:0.62rem; color:rgba(255,255,255,0.38); margin-left:6px; font-family: var(--font-ui); }
   /* ── Error card ──────────────────────────────────────────────────────── */
-  .err-card     { background:#ef444410; border:1px solid #ef444433; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .err-card     { background:#ef444410; border:1px solid #ef444433; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .err-head     { display:flex; align-items:flex-start; gap:8px; padding:8px 12px; background:#ef44440a; border-bottom:1px solid #ef444418; }
   .err-icon     { flex-shrink:0; width:20px; height:20px; display:flex; align-items:center; justify-content:center; background:#ef4444; color:var(--a11y-bg, #0a0a0f); font-size:0.7rem; font-weight:800; border-radius:50%; margin-top:1px; }
   .err-friendly { font-size:0.78rem; color:#fca5a5; line-height:1.5; font-weight:600; }
@@ -1352,7 +1352,7 @@
   .heap-card  {
     background: color-mix(in srgb, var(--acc) 3%, var(--elevation-surface));
     border: none;
-    border-radius:10px; overflow:hidden; flex-shrink:0;
+    border-radius:6px; overflow:hidden; flex-shrink:0;
     box-shadow: var(--elevation-shadow-raised);
     min-height: 96px;
     contain: layout paint;
@@ -1410,7 +1410,7 @@
   .heap-box   {
     background: color-mix(in srgb, var(--acc) 4%, var(--elevation-raised));
     border: none;
-    border-radius:8px; overflow:hidden;
+    border-radius:6px; overflow:hidden;
     box-shadow: var(--elevation-shadow-raised);
     transition: background .25s, box-shadow .25s, transform .25s;
   }
@@ -1437,7 +1437,7 @@
   .out-card {
     background: color-mix(in srgb, var(--acc) 3%, #050508);
     border: 1px solid color-mix(in srgb, var(--acc) 15%, rgba(255,255,255,0.05));
-    border-radius:10px; overflow:hidden; flex-shrink:0;
+    border-radius:6px; overflow:hidden; flex-shrink:0;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.3);
     min-height: 96px;
     contain: layout paint;
@@ -1490,7 +1490,7 @@
     padding: 12px 14px;
     background: color-mix(in srgb, var(--next, var(--acc)) 8%, var(--elevation-surface));
     border: 1px solid color-mix(in srgb, var(--next, var(--acc)) 40%, rgba(255,255,255,0.06));
-    border-radius: 10px; flex-shrink: 0;
+    border-radius:6px; flex-shrink: 0;
     box-shadow: var(--elevation-shadow-raised);
     contain: layout paint;
     animation: next-card-in 240ms ease-out both;
@@ -1545,7 +1545,7 @@
   .cx-card       {
     background: color-mix(in srgb, var(--acc) 3%, var(--a11y-surface1));
     border: 1px solid color-mix(in srgb, var(--acc) 15%, rgba(255,255,255,0.05));
-    border-radius:10px; overflow:hidden; flex-shrink:0;
+    border-radius:6px; overflow:hidden; flex-shrink:0;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 16px rgba(0,0,0,0.3);
     contain: layout paint;
   }
@@ -1628,7 +1628,7 @@
       display:flex; gap:0; flex-shrink:0;
       background:rgba(255,255,255,0.03);
       border:1px solid rgba(255,255,255,0.08);
-      border-radius:8px; overflow:hidden;
+      border-radius:6px; overflow:hidden;
     }
     .mob-tab {
       flex:1; display:flex; align-items:center; justify-content:center; gap:5px;

@@ -333,7 +333,7 @@
 
 <style>
   /* Return value banner */
-  .return-banner      { background:#7aa2f710; border:1px solid #7aa2f730; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .return-banner      { background:#7aa2f710; border:1px solid #7aa2f730; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .return-banner-row  { display:flex; align-items:center; gap:10px; padding:8px 12px; }
   .ret-from           { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
   .ret-fn-name        { font-size:0.75rem; color:#7aa2f7; font-weight:700; font-family: var(--font-code); }
@@ -352,7 +352,7 @@
   .stack-card     {
     background: color-mix(in srgb, #7aa2f7 3%, var(--a11y-bg, #0a0a12));
     border: 1px solid color-mix(in srgb, #7aa2f7 18%, rgba(255,255,255,0.05));
-    border-radius:10px; overflow:hidden; flex-shrink:0;
+    border-radius:6px; overflow:hidden; flex-shrink:0;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 16px rgba(0,0,0,0.3);
   }
   .stack-hdr      {

@@ -529,7 +529,7 @@
 
 <style>
   /* ── Scope chain card ──────────────────────────────────────────────────── */
-  .scope-card       { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .scope-card       { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .scope-card-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .scope-card-title { font-size:0.7rem; color:#aaa; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
   .scope-card-depth { margin-left:auto; font-size:0.62rem; color:#00d4aa; font-family: var(--font-code); }
@@ -689,7 +689,7 @@
   }
 
   /* ── Scalar result vars card ───────────────────────────────────────────── */
-  .scalar-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .scalar-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .scalar-hdr   { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .scalar-title { font-size:0.95rem; color:#e0e0e0; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
   .scalar-hint  { margin-left:auto; font-size:0.78rem; color:#888; font-family: var(--font-sans, inherit); }
@@ -707,7 +707,7 @@
     background: linear-gradient(180deg, #0d0d16, #08080e);
     border:1px solid #1a1a2e;
     border-left:3px solid #00d4aa;
-    border-radius:8px;
+    border-radius:6px;
     padding:10px 14px;
     margin-bottom:8px;
     flex-shrink:0;

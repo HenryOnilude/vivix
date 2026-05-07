@@ -249,7 +249,7 @@
      (chain + microtask) comes first in the DOM; engine sits last. On
      mobile we also push it to flex `order: 99` as a belt-and-braces
      guarantee that text never precedes visuals in the flow. */
-  .brain-panel         { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .brain-panel         { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; overflow: hidden; flex-shrink: 0; }
   .brain-details       { order: 99; } /* mobile safety — always last */
   .brain-toggle::after                      { content: 'see more'; }
   .brain-details[open] .brain-toggle::after { content: 'see less'; }
@@ -265,7 +265,7 @@
   .brain-box.brain-fire   { background: rgba(224,175,104,0.06); }
   .brain-text          { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: var(--font-code); }
 
-  .pc-badge   { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius: 8px; }
+  .pc-badge   { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius:6px; }
   .pc-badge.resolved { background: rgba(74,222,128,0.15); color: #4ade80; }
   .pc-badge.rejected { background: rgba(248,113,113,0.15); color: #f87171; }
   .pc-badge.queued   { background: rgba(224,175,104,0.15); color: #e0af68; }
@@ -281,7 +281,7 @@
   .pc-hero-chain { min-width: 0; }
 
   /* ── Chain visualization ─────────────────────────────────────────── */
-  .chain-panel  { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .chain-panel  { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; overflow: hidden; flex-shrink: 0; }
   .chain-hdr    { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size: 0.66rem; color: rgba(255,255,255,0.95); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .chain-cv-badge { display:inline-flex; align-items:center; gap:4px; font-size: 0.62rem; font-weight: 700; font-family: var(--font-code); text-transform: none; letter-spacing: 0; }
   .chain-cv-val   { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -327,7 +327,7 @@
      type scale is ~30% larger and each queued microtask reads as a
      first-class row rather than a tiny chip — reflects that the
      microtask queue IS the core promise-chain story. */
-  .mt-panel-hero { min-width: 0; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+  .mt-panel-hero { min-width: 0; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; overflow: hidden; display: flex; flex-direction: column; }
   .mt-hero-hdr   { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); font-size: 0.82rem; font-weight: 800; font-family: var(--font-code); letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.96); }
   .mt-hero-count { font-size: 0.62rem; font-weight: 700; color: rgba(224,175,104,0.9); letter-spacing: 0.5px; text-transform: none; background: rgba(224,175,104,0.10); border: 1px solid rgba(224,175,104,0.28); border-radius: 999px; padding: 2px 8px; }
   .mt-hero-body  { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; min-height: 96px; flex: 1; }

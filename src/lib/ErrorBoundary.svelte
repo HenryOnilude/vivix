@@ -75,7 +75,7 @@
     padding: 32px;
     background: #12121e;
     border: 1px solid #2a2a3e;
-    border-radius: 12px;
+    border-radius:6px;
     text-align: center;
   }
 

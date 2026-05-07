@@ -308,7 +308,7 @@
 
 <style>
   /* Byte map */
-  .bytemap-card  { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .bytemap-card  { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:6px; overflow:hidden; flex-shrink:0; }
   .bytemap-hdr   { display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
   .bytemap-title { font-size:0.95rem; color:#e0e0e0; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
   .bytemap-total { margin-left:auto; font-size:0.78rem; color:#9ece6a; font-family: var(--font-code); font-weight:600; }

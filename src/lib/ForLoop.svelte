@@ -457,7 +457,7 @@
 </ModuleShell>
 
 <style>
-  .loop-vis     { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+  .loop-vis     { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:6px; overflow:hidden; flex-shrink:0; }
   .loop-vis-hdr { display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
   .loop-title   { font-size:0.55rem; color:rgba(255,255,255,0.45); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .loop-count   { margin-left:auto; font-size:0.5rem; color:#ffcc66; font-family: var(--font-code); }

@@ -190,7 +190,7 @@
     min-width: 220px;
     background: color-mix(in srgb, var(--acc) 6%, #111118);
     border: 1px solid color-mix(in srgb, var(--acc) 30%, rgba(255,255,255,0.08));
-    border-radius: 12px;
+    border-radius:6px;
     padding: 18px 20px 14px;
     box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
     animation: tour-in 0.25s ease;
@@ -231,7 +231,7 @@
     color: var(--acc);
     background: color-mix(in srgb, var(--acc) 15%, transparent);
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius:6px;
     font-family: var(--font-code);
     letter-spacing: 0.5px;
   }

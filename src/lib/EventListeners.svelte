@@ -338,7 +338,7 @@
 </ModuleShell>
 
 <style>
-  .brain-panel   { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .brain-panel   { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; overflow: hidden; flex-shrink: 0; }
   .brain-details { order: 99; } /* mobile safety — visuals first, always */
   .brain-summary { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid transparent; cursor: pointer; list-style: none; user-select: none; }
   .brain-summary::-webkit-details-marker { display:none; }
@@ -354,7 +354,7 @@
   .brain-box.brain-handler  { background: rgba(247,118,142,0.07); }
   .brain-text  { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: var(--font-code); }
 
-  .ev-badge  { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius: 8px; }
+  .ev-badge  { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius:6px; }
   .ev-badge.register { background: rgba(247,118,142,0.15); color: #f7768e; }
   .ev-badge.dispatch { background: rgba(251,191,36,0.15);  color: #fbbf24; }
   .ev-badge.running  { background: rgba(247,118,142,0.2);   color: #f472b6; }
@@ -362,7 +362,7 @@
   .ev-badge.create   { background: rgba(74,222,128,0.12);  color: #4ade80; }
 
   /* ── Step narrative (Learn/Explore) ─────────────────────── */
-  .step-narrative { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+  .step-narrative { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
   .sn-hdr   { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .sn-label { font-size: 12px; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
   .sn-title { font-size: 14px; color: #f7768e; font-weight: 700; font-family: var(--font-ui); }
@@ -424,7 +424,7 @@
 
   /* ── Elements + listeners ──────────────────────────────── */
   .elements-row { display: flex; gap: 6px; flex-shrink: 0; }
-  .runtime-panel { flex: 1; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; }
+  .runtime-panel { flex: 1; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; overflow: hidden; }
   .runtime-hdr  { font-size: 12px; color: rgba(255,255,255,0.65); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .el-panel     { flex: 1.5; }
   .el-box       { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; min-height: 60px; }
@@ -467,7 +467,7 @@
   .stack-empty  { font-size: 12px; color: #555; font-family: var(--font-code); font-style: italic; }
 
   /* ── Event queue ──────────────────────────────────── */
-  .eq-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .eq-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; overflow: hidden; flex-shrink: 0; }
   .eq-box   { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
   .eq-item  { font-size: 12.5px; font-family: var(--font-code); color: #fbbf24; background: rgba(251,191,36,0.10); border-radius: 4px; padding: 4px 10px; font-weight: 600; }
 
