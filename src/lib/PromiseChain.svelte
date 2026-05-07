@@ -96,10 +96,22 @@
          and their state; the current resolved value folds into the
          chain header as a small badge (no dedicated Current Value
          panel any more — the active node's own value chip covers it).
+
+         Per-spec step→focal mapping for PromiseChain:
+           steps 1-3 (promise-create, then-register):  chain focal only
+           steps 4+   (then-queue, then-run, microtask-run): both focal
+         Detected via phase + microTasks length so the dimming triggers
+         exactly when the spec calls for it.
     -->
+    {@const _microActive =
+        (sd.microTasks?.length || 0) > 0
+        || sd.phase === 'then-queue'   || sd.phase === 'then-run'
+        || sd.phase === 'catch-run'    || sd.phase === 'finally-run'
+        || sd.phase === 'microtask-run' || sd.phase === 'then-skip'}
     <div class="pc-hero-row">
-      <!-- Chain panel (left) -->
-      <div class="chain-panel pc-hero-chain">
+      <!-- Chain panel (left) — always focal-active in PromiseChain since
+           the chain is the spine of the visualisation. -->
+      <div class="chain-panel pc-hero-chain focal-active">
         <div class="chain-hdr">
           <span>Promise Chain</span>
           {#if sd.currentValue !== undefined && sd.currentValue !== null}
@@ -134,8 +146,9 @@
         </div>
       </div>
 
-      <!-- Microtask queue (right, hero) -->
-      <div class="mt-panel-hero">
+      <!-- Microtask queue (right, hero) — dim until queue activity begins
+           per spec (steps 1-3 chain only, steps 4+ both focal). -->
+      <div class="mt-panel-hero" class:dim={!_microActive} class:focal-active={_microActive}>
         <div class="mt-hero-hdr" title="Microtask queue — promise reactions and queueMicrotask callbacks. Drained completely between every macrotask.">
           <span>Microtask Queue</span>
           <span class="mt-hero-count">{(sd.microTasks || []).length} queued</span>

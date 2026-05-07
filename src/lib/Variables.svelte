@@ -56,7 +56,7 @@
   {examples}
   accent={ACCENT}
   routeKey="variables"
-  activePanel={(step) => step <= 0 ? 'top' : 'heap'}
+  activePanel={(step) => step <= 0 ? 'engine' : 'heap'}
   titlePrefix="var"
   titleAccent="Store"
   subtitle="— Variables & Memory"

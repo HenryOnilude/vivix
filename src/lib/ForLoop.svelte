@@ -121,7 +121,7 @@
   {examples}
   accent={ACCENT}
   routeKey="for-loop"
-  activePanel={() => 'top'}
+  activePanel={(step) => step <= 0 ? 'engine' : 'top'}
   titlePrefix="for"
   titleAccent="Loop"
   subtitle="— Iteration"

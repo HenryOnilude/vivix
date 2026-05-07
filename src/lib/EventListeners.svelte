@@ -139,7 +139,14 @@
   {examples}
   accent={ACCENT}
   routeKey="event-listeners"
-  activePanel={(step, sd) => sd?.output?.length > 0 ? 'stdout' : 'top'}
+  activePanel={(step, sd) => {
+    // Spec mapping: 1-2 DOM, 3-5 DOM+stack, 6-8 stdout (1-indexed).
+    // 0-indexed: step >= 5 → stdout focal; otherwise the module
+    // visual ('top') which contains both DOM elements and call stack.
+    if (step >= 5) return 'stdout';
+    if (sd?.output?.length > 0 && step >= 2) return 'stdout';
+    return 'top';
+  }}
   titlePrefix="event"
   titleAccent="Listeners"
   subtitle="— DOM Events"

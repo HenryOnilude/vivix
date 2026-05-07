@@ -86,7 +86,7 @@
   {examples}
   accent={ACCENT}
   routeKey="if-gate"
-  activePanel={() => 'top'}
+  activePanel={(step) => step <= 0 ? 'engine' : 'top'}
   titlePrefix="if"
   titleAccent="Gate"
   subtitle="— Conditionals"

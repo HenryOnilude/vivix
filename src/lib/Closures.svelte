@@ -147,7 +147,7 @@
   {examples}
   accent={ACCENT}
   routeKey="closures"
-  activePanel={() => 'top'}
+  activePanel={(step) => step <= 0 ? 'engine' : 'top'}
   titlePrefix="closure"
   titleAccent="Scope"
   subtitle="— Closures & Scope"
