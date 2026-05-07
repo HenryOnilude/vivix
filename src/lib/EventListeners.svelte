@@ -3,7 +3,7 @@
   import ModuleShell from './ModuleShell.svelte';
   import { executeEventListenerCode } from './event-listener-executor.js';
 
-  const ACCENT = '#ec4899';
+  const ACCENT = '#f7768e';
 
   const examples = [
     {
@@ -315,19 +315,19 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 200" class="ph-svg">
         <!-- Element box -->
-        <rect x="30" y="60" width="120" height="80" rx="6" fill="rgba(236,72,153,0.06)" stroke="rgba(236,72,153,0.4)" stroke-width="2" stroke-dasharray="5 3"/>
+        <rect x="30" y="60" width="120" height="80" rx="6" fill="rgba(247,118,142,0.06)" stroke="rgba(247,118,142,0.4)" stroke-width="2" stroke-dasharray="5 3"/>
         <text x="90" y="82"  text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-family="'Geist Mono', monospace">&lt;button&gt;</text>
-        <text x="90" y="100" text-anchor="middle" fill="rgba(236,72,153,0.8)" font-size="8"  font-family="'Geist Mono', monospace">'click' listener</text>
+        <text x="90" y="100" text-anchor="middle" fill="rgba(247,118,142,0.8)" font-size="8"  font-family="'Geist Mono', monospace">'click' listener</text>
         <text x="90" y="116" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="7"  font-family="'Geist Mono', monospace">→ handleClick()</text>
         <!-- Arrow to event queue -->
-        <line x1="150" y1="100" x2="190" y2="100" stroke="rgba(236,72,153,0.4)" stroke-width="1.5"/>
-        <polygon points="190,96 198,100 190,104" fill="rgba(236,72,153,0.4)"/>
+        <line x1="150" y1="100" x2="190" y2="100" stroke="rgba(247,118,142,0.4)" stroke-width="1.5"/>
+        <polygon points="190,96 198,100 190,104" fill="rgba(247,118,142,0.4)"/>
         <!-- Event queue -->
-        <rect x="198" y="75" width="90" height="50" rx="5" fill="rgba(236,72,153,0.04)" stroke="rgba(236,72,153,0.25)" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect x="198" y="75" width="90" height="50" rx="5" fill="rgba(247,118,142,0.04)" stroke="rgba(247,118,142,0.25)" stroke-width="1" stroke-dasharray="4 3"/>
         <text x="243" y="93"  text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="8" font-family="'Geist Mono', monospace">Event Queue</text>
-        <text x="243" y="110" text-anchor="middle" fill="rgba(236,72,153,0.5)" font-size="7" font-family="'Geist Mono', monospace">⚡ click</text>
+        <text x="243" y="110" text-anchor="middle" fill="rgba(247,118,142,0.5)" font-size="7" font-family="'Geist Mono', monospace">⚡ click</text>
         <!-- Arrow to handler -->
-        <line x1="288" y1="100" x2="320" y2="100" stroke="rgba(236,72,153,0.25)" stroke-width="1"/>
+        <line x1="288" y1="100" x2="320" y2="100" stroke="rgba(247,118,142,0.25)" stroke-width="1"/>
         <text x="345" y="95" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="7" font-family="'Geist Mono', monospace">handler</text>
         <text x="345" y="108" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="6" font-family="'Geist Mono', monospace">runs</text>
       </svg>
@@ -343,21 +343,21 @@
   .brain-summary { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid transparent; cursor: pointer; list-style: none; user-select: none; }
   .brain-summary::-webkit-details-marker { display:none; }
   .brain-details[open] .brain-summary { border-bottom-color: var(--a11y-border); }
-  .brain-toggle                        { font-size: 0.55rem; color: #ec4899; font-family: var(--font-code); letter-spacing: 0.6px; text-transform: uppercase; flex-shrink: 0; }
+  .brain-toggle                        { font-size: 0.55rem; color: #f7768e; font-family: var(--font-code); letter-spacing: 0.6px; text-transform: uppercase; flex-shrink: 0; }
   .brain-toggle::after                      { content: 'see more'; }
   .brain-details[open] .brain-toggle::after { content: 'see less'; }
   .brain-tldr    { flex: 1; min-width: 0; font-size: 0.66rem; color: var(--a11y-text-sec, #c8c8d4); font-family: var(--font-code); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .brain-hdr     { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .brain-title   { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
   .brain-box     { padding: 8px 10px; transition: background 0.3s; }
-  .brain-box.brain-dispatch { background: rgba(236,72,153,0.05); }
-  .brain-box.brain-handler  { background: rgba(236,72,153,0.07); }
+  .brain-box.brain-dispatch { background: rgba(247,118,142,0.05); }
+  .brain-box.brain-handler  { background: rgba(247,118,142,0.07); }
   .brain-text  { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: var(--font-code); }
 
   .ev-badge  { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius: 8px; }
-  .ev-badge.register { background: rgba(236,72,153,0.15); color: #ec4899; }
+  .ev-badge.register { background: rgba(247,118,142,0.15); color: #f7768e; }
   .ev-badge.dispatch { background: rgba(251,191,36,0.15);  color: #fbbf24; }
-  .ev-badge.running  { background: rgba(236,72,153,0.2);   color: #f472b6; }
+  .ev-badge.running  { background: rgba(247,118,142,0.2);   color: #f472b6; }
   .ev-badge.remove   { background: rgba(148,163,184,0.12); color: #94a3b8; }
   .ev-badge.create   { background: rgba(74,222,128,0.12);  color: #4ade80; }
 
@@ -365,7 +365,7 @@
   .step-narrative { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
   .sn-hdr   { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .sn-label { font-size: 12px; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
-  .sn-title { font-size: 14px; color: #ec4899; font-weight: 700; font-family: var(--font-ui); }
+  .sn-title { font-size: 14px; color: #f7768e; font-weight: 700; font-family: var(--font-ui); }
   .sn-text  { font-size: 13px; color: rgba(255,255,255,0.78); font-family: var(--font-ui); line-height: 1.55; margin: 0; }
 
   /* ── Lifecycle timeline ─────────────────────────────────────────────
@@ -400,14 +400,14 @@
   /* Active stage: pink dot with a pulsing halo so the current
      position is impossible to miss at a glance. */
   .lc-active .lc-dot {
-    background: #ec4899; border-color: #ec4899; color: #fff;
-    box-shadow: 0 0 0 4px rgba(236,72,153,0.18), 0 0 10px rgba(236,72,153,0.45);
+    background: #f7768e; border-color: #f7768e; color: #fff;
+    box-shadow: 0 0 0 4px rgba(247,118,142,0.18), 0 0 10px rgba(247,118,142,0.45);
     animation: vx-lc-pulse 1.4s ease-in-out infinite;
   }
   .lc-active .lc-caption { color: #fff; font-weight: 700; }
   @keyframes vx-lc-pulse {
-    0%, 100% { box-shadow: 0 0 0 4px rgba(236,72,153,0.18), 0 0 10px rgba(236,72,153,0.45); }
-    50%      { box-shadow: 0 0 0 7px rgba(236,72,153,0.10), 0 0 14px rgba(236,72,153,0.65); }
+    0%, 100% { box-shadow: 0 0 0 4px rgba(247,118,142,0.18), 0 0 10px rgba(247,118,142,0.45); }
+    50%      { box-shadow: 0 0 0 7px rgba(247,118,142,0.10), 0 0 14px rgba(247,118,142,0.65); }
   }
 
   /* ── Step-narrative body collapse ──────────────────────────────
@@ -417,7 +417,7 @@
   .sn-summary  { display: flex; gap: 8px; align-items: baseline; cursor: pointer; list-style: none; user-select: none; }
   .sn-summary::-webkit-details-marker { display: none; }
   .sn-summary-text { flex: 1; min-width: 0; font-size: 13px; color: rgba(255,255,255,0.78); font-family: var(--font-ui); line-height: 1.5; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
-  .sn-toggle   { font-size: 11px; color: #ec4899; font-family: var(--font-code); letter-spacing: 0.6px; text-transform: uppercase; flex-shrink: 0; }
+  .sn-toggle   { font-size: 11px; color: #f7768e; font-family: var(--font-code); letter-spacing: 0.6px; text-transform: uppercase; flex-shrink: 0; }
   .sn-toggle::after                   { content: 'see more'; }
   .sn-details[open] .sn-toggle::after { content: 'see less'; }
   .sn-details[open] .sn-summary-text  { display: none; }
@@ -435,11 +435,11 @@
   .el-skeleton-card {
     height: 36px; border-radius: 6px;
     background: linear-gradient(90deg,
-      rgba(236,72,153,0.05) 0%,
-      rgba(236,72,153,0.14) 50%,
-      rgba(236,72,153,0.05) 100%);
+      rgba(247,118,142,0.05) 0%,
+      rgba(247,118,142,0.14) 50%,
+      rgba(247,118,142,0.05) 100%);
     background-size: 200% 100%;
-    border: 1px dashed rgba(236,72,153,0.18);
+    border: 1px dashed rgba(247,118,142,0.18);
     animation: vx-el-skeleton 2.4s ease-in-out infinite;
   }
   .el-skeleton-card:nth-child(2) { animation-delay: 0.25s; }
@@ -449,7 +449,7 @@
   }
 
   .el-card      { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 8px 10px; }
-  .el-tag       { font-size: 14px; font-weight: 700; font-family: var(--font-code); color: #ec4899; }
+  .el-tag       { font-size: 14px; font-weight: 700; font-family: var(--font-code); color: #f7768e; }
   .el-name      { font-size: 11px; color: #888; font-family: var(--font-code); margin-bottom: 6px; }
   .el-listeners { display: flex; flex-direction: column; gap: 4px; }
   .el-listener  { display: flex; align-items: center; gap: 6px; font-size: 12px; font-family: var(--font-code); background: color-mix(in srgb, var(--lcolor) 8%, transparent); border-radius: 4px; padding: 4px 8px; }
@@ -461,9 +461,9 @@
 
   .stack-box    { display: flex; flex-direction: column-reverse; gap: 4px; padding: 8px 10px; min-height: 60px; }
   .stack-frame  { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 5px 10px; }
-  .stack-frame.stack-top { border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.06); }
+  .stack-frame.stack-top { border-color: rgba(247,118,142,0.3); background: rgba(247,118,142,0.06); }
   .stack-name   { font-size: 13px; font-family: var(--font-code); color: rgba(255,255,255,0.78); }
-  .stack-arrow  { font-size: 11px; color: #ec4899; font-weight: 600; }
+  .stack-arrow  { font-size: 11px; color: #f7768e; font-weight: 600; }
   .stack-empty  { font-size: 12px; color: #555; font-family: var(--font-code); font-style: italic; }
 
   /* ── Event queue ──────────────────────────────────── */

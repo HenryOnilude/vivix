@@ -3,7 +3,7 @@
   import ModuleShell from './ModuleShell.svelte';
   import { executePromiseChainCode } from './promise-chain-executor.js';
 
-  const ACCENT = '#f59e0b';
+  const ACCENT = '#e0af68';
 
   const examples = [
     {
@@ -225,16 +225,16 @@
   {#snippet placeholder()}
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 200" class="ph-svg">
-        <rect x="20"  y="80" width="80" height="44" rx="6" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.5)" stroke-width="2" stroke-dasharray="5 3"/>
+        <rect x="20"  y="80" width="80" height="44" rx="6" fill="rgba(224,175,104,0.08)" stroke="rgba(224,175,104,0.5)" stroke-width="2" stroke-dasharray="5 3"/>
         <text x="60"  y="98"  text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9"  font-family="'Geist Mono', monospace">P1</text>
         <text x="60"  y="112" text-anchor="middle" fill="#4ade80"              font-size="8"  font-family="'Geist Mono', monospace">✓ resolved</text>
         <text x="60"  y="124" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="8"  font-family="'Geist Mono', monospace">value: 1</text>
-        <line x1="100" y1="102" x2="130" y2="102" stroke="rgba(245,158,11,0.4)" stroke-width="1.5" marker-end="url(#arr)"/>
-        <rect x="130" y="80" width="80" height="44" rx="6" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.35)" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <line x1="100" y1="102" x2="130" y2="102" stroke="rgba(224,175,104,0.4)" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="130" y="80" width="80" height="44" rx="6" fill="rgba(224,175,104,0.06)" stroke="rgba(224,175,104,0.35)" stroke-width="1.5" stroke-dasharray="5 3"/>
         <text x="170" y="98"  text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9"  font-family="'Geist Mono', monospace">P2</text>
         <text x="170" y="112" text-anchor="middle" fill="rgba(74,222,128,0.5)" font-size="8"  font-family="'Geist Mono', monospace">⏳ pending</text>
-        <line x1="210" y1="102" x2="240" y2="102" stroke="rgba(245,158,11,0.2)" stroke-width="1.5"/>
-        <rect x="240" y="80" width="80" height="44" rx="6" fill="rgba(245,158,11,0.04)" stroke="rgba(245,158,11,0.2)" stroke-width="1" stroke-dasharray="5 3"/>
+        <line x1="210" y1="102" x2="240" y2="102" stroke="rgba(224,175,104,0.2)" stroke-width="1.5"/>
+        <rect x="240" y="80" width="80" height="44" rx="6" fill="rgba(224,175,104,0.04)" stroke="rgba(224,175,104,0.2)" stroke-width="1" stroke-dasharray="5 3"/>
         <text x="280" y="98"  text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="9"  font-family="'Geist Mono', monospace">P3</text>
         <text x="280" y="112" text-anchor="middle" fill="rgba(74,222,128,0.3)" font-size="8"  font-family="'Geist Mono', monospace">⏳ pending</text>
       </svg>
@@ -258,18 +258,18 @@
   .brain-details[open] .brain-summary { border-bottom-color: var(--a11y-border); }
   .brain-title         { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
   .brain-tldr          { flex: 1; min-width: 0; font-size: 0.66rem; color: var(--a11y-text-sec, #c8c8d4); font-family: var(--font-code); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .brain-toggle        { font-size: 0.55rem; color: var(--acc, #f59e0b); font-family: var(--font-code); letter-spacing: 0.6px; text-transform: uppercase; flex-shrink: 0; }
+  .brain-toggle        { font-size: 0.55rem; color: var(--acc, #e0af68); font-family: var(--font-code); letter-spacing: 0.6px; text-transform: uppercase; flex-shrink: 0; }
   .brain-box           { padding: 8px 10px; transition: background 0.3s; }
   .brain-box.brain-reject { background: rgba(248,113,113,0.05); }
   .brain-box.brain-catch  { background: rgba(251,191,36,0.05); }
-  .brain-box.brain-fire   { background: rgba(245,158,11,0.06); }
+  .brain-box.brain-fire   { background: rgba(224,175,104,0.06); }
   .brain-text          { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: var(--font-code); }
 
   .pc-badge   { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius: 8px; }
   .pc-badge.resolved { background: rgba(74,222,128,0.15); color: #4ade80; }
   .pc-badge.rejected { background: rgba(248,113,113,0.15); color: #f87171; }
-  .pc-badge.queued   { background: rgba(245,158,11,0.15); color: #f59e0b; }
-  .pc-badge.running  { background: rgba(245,158,11,0.2);  color: #fbbf24; }
+  .pc-badge.queued   { background: rgba(224,175,104,0.15); color: #e0af68; }
+  .pc-badge.running  { background: rgba(224,175,104,0.2);  color: #fbbf24; }
   .pc-badge.skipped  { background: rgba(148,163,184,0.12); color: #94a3b8; }
   .pc-badge.caught   { background: rgba(251,191,36,0.15); color: #fbbf24; }
 
@@ -320,7 +320,7 @@
   .node-value   { font-size: 0.7rem; font-weight: 700; font-family: var(--font-code); color: #f1f5f9; max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .node-method  { font-size: 0.58rem; font-weight: 600; font-family: var(--font-code); color: rgba(255,255,255,0.7); }
 
-  .chain-arrow  { font-size: 0.95rem; font-weight: 800; color: #f59e0b; }
+  .chain-arrow  { font-size: 0.95rem; font-weight: 800; color: #e0af68; }
 
   /* ── Microtask queue (hero) ──────────────────────────────────────── */
   /* This panel replaces the old .runtime-panel/.mt-box treatment. The
@@ -329,13 +329,13 @@
      microtask queue IS the core promise-chain story. */
   .mt-panel-hero { min-width: 0; background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
   .mt-hero-hdr   { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); font-size: 0.82rem; font-weight: 800; font-family: var(--font-code); letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.96); }
-  .mt-hero-count { font-size: 0.62rem; font-weight: 700; color: rgba(245,158,11,0.9); letter-spacing: 0.5px; text-transform: none; background: rgba(245,158,11,0.10); border: 1px solid rgba(245,158,11,0.28); border-radius: 999px; padding: 2px 8px; }
+  .mt-hero-count { font-size: 0.62rem; font-weight: 700; color: rgba(224,175,104,0.9); letter-spacing: 0.5px; text-transform: none; background: rgba(224,175,104,0.10); border: 1px solid rgba(224,175,104,0.28); border-radius: 999px; padding: 2px 8px; }
   .mt-hero-body  { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; min-height: 96px; flex: 1; }
   .mt-item-hero  { display: flex; align-items: center; gap: 8px; font-size: 0.92rem; font-weight: 600; font-family: var(--font-code); color: rgba(255,255,255,0.88); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 8px 12px; }
-  .mt-item-hero.mt-next { color: #fbbf24; font-weight: 800; background: rgba(245,158,11,0.16); border-color: rgba(245,158,11,0.55); box-shadow: 0 0 0 1px rgba(245,158,11,0.35), 0 0 12px rgba(245,158,11,0.20); animation: vx-mt-pulse 1.4s ease-in-out infinite; }
+  .mt-item-hero.mt-next { color: #fbbf24; font-weight: 800; background: rgba(224,175,104,0.16); border-color: rgba(224,175,104,0.55); box-shadow: 0 0 0 1px rgba(224,175,104,0.35), 0 0 12px rgba(224,175,104,0.20); animation: vx-mt-pulse 1.4s ease-in-out infinite; }
   @keyframes vx-mt-pulse {
-    0%, 100% { box-shadow: 0 0 0 1px rgba(245,158,11,0.35), 0 0 12px rgba(245,158,11,0.20); }
-    50%      { box-shadow: 0 0 0 2px rgba(245,158,11,0.55), 0 0 18px rgba(245,158,11,0.35); }
+    0%, 100% { box-shadow: 0 0 0 1px rgba(224,175,104,0.35), 0 0 12px rgba(224,175,104,0.20); }
+    50%      { box-shadow: 0 0 0 2px rgba(224,175,104,0.55), 0 0 18px rgba(224,175,104,0.35); }
   }
   .mt-arrow-hero { color: #fbbf24; font-weight: 900; font-size: 0.95rem; }
   .mt-dot        { color: rgba(255,255,255,0.35); font-weight: 700; font-size: 0.95rem; width: 0.95rem; text-align: center; }
@@ -345,11 +345,11 @@
   .mt-empty-hero { display: flex; flex-direction: column; gap: 6px; flex: 1; }
   .mt-empty-skel { height: 32px; border-radius: 6px;
     background: linear-gradient(90deg,
-      rgba(245,158,11,0.05) 0%,
-      rgba(245,158,11,0.14) 50%,
-      rgba(245,158,11,0.05) 100%);
+      rgba(224,175,104,0.05) 0%,
+      rgba(224,175,104,0.14) 50%,
+      rgba(224,175,104,0.05) 100%);
     background-size: 200% 100%;
-    border: 1px dashed rgba(245,158,11,0.22);
+    border: 1px dashed rgba(224,175,104,0.22);
     animation: vx-mt-empty 2.4s ease-in-out infinite;
   }
   .mt-empty-skel:nth-child(2) { animation-delay: 0.2s; }

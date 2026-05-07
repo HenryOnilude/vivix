@@ -3,7 +3,7 @@
   import ModuleShell from './ModuleShell.svelte';
   import { executeApiCallsCode } from './api-calls-executor.js';
 
-  const ACCENT = '#8b5cf6';
+  const ACCENT = '#bb9af7';
 
   const examples = [
     {
@@ -55,7 +55,7 @@
   function _reqStateColor(state) {
     if (state === 'parsed')    return '#4ade80';
     if (state === 'received')  return '#f59e0b';
-    if (state === 'sending')   return '#8b5cf6';
+    if (state === 'sending')   return '#bb9af7';
     if (state === 'parsing')   return '#fbbf24';
     return '#94a3b8';
   }
@@ -310,15 +310,15 @@
     <div class="vis-placeholder">
       <svg viewBox="0 0 400 200" class="ph-svg">
         <!-- Browser -->
-        <rect x="20" y="70" width="100" height="60" rx="5" fill="rgba(139,92,246,0.07)" stroke="rgba(139,92,246,0.4)" stroke-width="2" stroke-dasharray="5 3"/>
+        <rect x="20" y="70" width="100" height="60" rx="5" fill="rgba(187,154,247,0.07)" stroke="rgba(187,154,247,0.4)" stroke-width="2" stroke-dasharray="5 3"/>
         <text x="70" y="96"  text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9"  font-family="'Geist Mono', monospace">Browser</text>
-        <text x="70" y="112" text-anchor="middle" fill="rgba(139,92,246,0.8)" font-size="8" font-family="'Geist Mono', monospace">fetch()</text>
+        <text x="70" y="112" text-anchor="middle" fill="rgba(187,154,247,0.8)" font-size="8" font-family="'Geist Mono', monospace">fetch()</text>
         <!-- Request arrow -->
-        <line x1="120" y1="100" x2="180" y2="100" stroke="rgba(139,92,246,0.5)" stroke-width="1.5"/>
-        <polygon points="180,96 188,100 180,104" fill="rgba(139,92,246,0.5)"/>
+        <line x1="120" y1="100" x2="180" y2="100" stroke="rgba(187,154,247,0.5)" stroke-width="1.5"/>
+        <polygon points="180,96 188,100 180,104" fill="rgba(187,154,247,0.5)"/>
         <text x="150" y="95" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="7" font-family="'Geist Mono', monospace">GET /api/user</text>
         <!-- Server -->
-        <rect x="188" y="70" width="100" height="60" rx="5" fill="rgba(139,92,246,0.04)" stroke="rgba(139,92,246,0.25)" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <rect x="188" y="70" width="100" height="60" rx="5" fill="rgba(187,154,247,0.04)" stroke="rgba(187,154,247,0.25)" stroke-width="1.5" stroke-dasharray="4 3"/>
         <text x="238" y="96"  text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="'Geist Mono', monospace">Server</text>
         <text x="238" y="112" text-anchor="middle" fill="rgba(74,222,128,0.5)" font-size="8" font-family="'Geist Mono', monospace">200 OK</text>
         <!-- Response arrow -->
@@ -345,17 +345,17 @@
   .brain-tldr  { flex: 1; min-width: 0; font-size: 12px; color: var(--c-text); font-family: var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.85; }
   .brain-chev  { color: var(--c-text-sec); flex-shrink: 0; transition: transform var(--t-fast) var(--ease-state); }
   .brain-box   { padding: 8px 10px; transition: background 0.3s; }
-  .brain-box.brain-fetch { background: rgba(139,92,246,0.05); }
+  .brain-box.brain-fetch { background: rgba(187,154,247,0.05); }
   .brain-box.brain-json  { background: rgba(74,222,128,0.04); }
   .brain-box.brain-error { background: rgba(248,113,113,0.05); }
   .brain-text  { font-size: 0.62rem; color: var(--a11y-text-sec, #c8c8d4); line-height: 1.6; margin: 0; white-space: pre-wrap; font-family: var(--font-code); }
 
   .api-badge { font-size: 0.5rem; font-weight: 700; font-family: var(--font-code); padding: 2px 7px; border-radius: 8px; }
-  .api-badge.sending  { background: rgba(139,92,246,0.2);  color: #8b5cf6; }
+  .api-badge.sending  { background: rgba(187,154,247,0.2);  color: #bb9af7; }
   .api-badge.received { background: rgba(245,158,11,0.15); color: #f59e0b; }
   .api-badge.parsing  { background: rgba(251,191,36,0.15); color: #fbbf24; }
   .api-badge.parsed   { background: rgba(74,222,128,0.15); color: #4ade80; }
-  .api-badge.async    { background: rgba(139,92,246,0.12); color: #a78bfa; }
+  .api-badge.async    { background: rgba(187,154,247,0.12); color: #a78bfa; }
   .api-badge.caught   { background: rgba(251,191,36,0.15); color: #fbbf24; }
   .api-badge.thrown   { background: rgba(248,113,113,0.15); color: #f87171; }
 
@@ -369,11 +369,11 @@
   .req-skeleton-card {
     height: 30px; border-radius: 6px;
     background: linear-gradient(90deg,
-      rgba(139,92,246,0.06) 0%,
-      rgba(139,92,246,0.16) 50%,
-      rgba(139,92,246,0.06) 100%);
+      rgba(187,154,247,0.06) 0%,
+      rgba(187,154,247,0.16) 50%,
+      rgba(187,154,247,0.06) 100%);
     background-size: 200% 100%;
-    border: 1px dashed rgba(139,92,246,0.20);
+    border: 1px dashed rgba(187,154,247,0.20);
     animation: vx-req-skeleton 2.4s ease-in-out infinite;
   }
   .req-skeleton-card:nth-child(2) { animation-delay: 0.25s; }
@@ -399,18 +399,18 @@
 
   .stack-box   { display: flex; flex-direction: column-reverse; gap: 3px; padding: 8px 10px; min-height: 56px; }
   .stack-frame { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 4px 8px; transition: all 0.3s; }
-  .stack-frame.stack-top        { border-color: rgba(139,92,246,0.3); background: rgba(139,92,246,0.06); }
+  .stack-frame.stack-top        { border-color: rgba(187,154,247,0.3); background: rgba(187,154,247,0.06); }
   .stack-frame.stack-suspended  { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.05); }
   .stack-name  { font-size: 0.65rem; font-family: var(--font-code); color: rgba(255,255,255,0.92); font-weight: 600; }
-  .stack-state { font-size: 0.48rem; font-family: var(--font-code); color: #8b5cf6; }
-  .stack-state { color: #8b5cf6; }
+  .stack-state { font-size: 0.48rem; font-family: var(--font-code); color: #bb9af7; }
+  .stack-state { color: #bb9af7; }
   .stack-frame.stack-suspended .stack-state { color: #f59e0b; }
   .stack-empty { font-size: 0.6rem; color: rgba(255,255,255,0.6); font-family: var(--font-code); }
 
   .vars-box  { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; min-height: 56px; }
   .var-row   { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 6px; border-radius: 4px; transition: all 0.3s; }
-  .var-row.var-flash { background: rgba(139,92,246,0.08); }
-  .var-name  { font-size: 0.6rem; font-weight: 700; font-family: var(--font-code); color: #8b5cf6; min-width: 40px; }
+  .var-row.var-flash { background: rgba(187,154,247,0.08); }
+  .var-name  { font-size: 0.6rem; font-weight: 700; font-family: var(--font-code); color: #bb9af7; min-width: 40px; }
   .var-value { font-size: 0.6rem; font-family: var(--font-code); color: rgba(255,255,255,0.88); text-align: right; }
   /* Silent skeleton: two ghosted rows mirroring the .var-row rhythm.
      No copy text — the faint bars preview where heap variables will
@@ -419,9 +419,9 @@
   .var-skeleton-row {
     height: 10px; border-radius: 3px;
     background: linear-gradient(90deg,
-      rgba(139,92,246,0.06) 0%,
-      rgba(139,92,246,0.14) 50%,
-      rgba(139,92,246,0.06) 100%);
+      rgba(187,154,247,0.06) 0%,
+      rgba(187,154,247,0.14) 50%,
+      rgba(187,154,247,0.06) 100%);
     background-size: 200% 100%;
     animation: vx-var-skeleton 2.4s ease-in-out infinite;
   }

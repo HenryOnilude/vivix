@@ -5,7 +5,7 @@
   import { executeAsyncCode, _fv } from './async-executor.js';
   import { fly } from 'svelte/transition';
 
-  const ACCENT = '#cc88ff';
+  const ACCENT = '#bb9af7';
 
   const examples = [
     {
@@ -41,7 +41,7 @@
   function _tc(val) {
     if (typeof val === 'number') return '#ffcc66'; if (typeof val === 'string') return '#ff8866';
     if (typeof val === 'boolean') return val ? '#00ff88' : '#ff4466';
-    if (Array.isArray(val)) return '#88aaff'; if (typeof val === 'object') return '#cc88ff'; return '#aaa';
+    if (Array.isArray(val)) return '#88aaff'; if (typeof val === 'object') return '#bb9af7'; return '#aaa';
   }
 
   function _tb(val) {
@@ -356,7 +356,7 @@
   .brain-summary { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--a11y-surface2); border-bottom:1px solid transparent; cursor:pointer; list-style:none; user-select:none; }
   .brain-summary::-webkit-details-marker { display:none; }
   .brain-details[open] .brain-summary { border-bottom-color: var(--a11y-border); }
-  .brain-toggle                        { font-size:0.55rem; color:#cc88ff; font-family:var(--font-code); letter-spacing:0.6px; text-transform:uppercase; flex-shrink:0; }
+  .brain-toggle                        { font-size:0.55rem; color:#bb9af7; font-family:var(--font-code); letter-spacing:0.6px; text-transform:uppercase; flex-shrink:0; }
   .brain-toggle::after                      { content: 'see more'; }
   .brain-details[open] .brain-toggle::after { content: 'see less'; }
   .brain-tldr    { flex:1; min-width:0; font-size:0.72rem; color:#bbb; font-family:var(--font-code); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -364,14 +364,14 @@
   .brain-title  { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; flex-shrink:0; }
   .async-badge  { font-size:0.55rem; padding:1px 6px; border-radius:3px; }
   .suspended    { color:#ffcc66; background:#ffcc6615; }
-  .awaiting     { color:#cc88ff; background:#cc88ff15; }
+  .awaiting     { color:#bb9af7; background:#bb9af715; }
   .parallel     { color:#4ade80; background:#4ade8015; }
-  .asyncbadge   { color:#cc88ff; background:#cc88ff15; }
+  .asyncbadge   { color:#bb9af7; background:#bb9af715; }
   .brain-box    { background:var(--a11y-bg, #0a0a12); padding:10px 12px; transition:all 0.3s; }
   .brain-done   { border-color:#88aaff33; background:#88aaff08; }
   .brain-await  { border-color:#ffcc6633; background:#ffcc6608; }
   .brain-resume { border-color:#00ff8833; background:#00ff8808; }
-  .brain-async  { border-color:#cc88ff33; background:#cc88ff08; }
+  .brain-async  { border-color:#bb9af733; background:#bb9af708; }
   .brain-text   { font-size:0.75rem; line-height:1.6; color:#bbb; white-space:pre-wrap; word-wrap:break-word; font-family: var(--font-ui); margin:0; }
   .brain-done .brain-text   { color:#aabbff; }
   .brain-await .brain-text  { color:#ffe099; }
@@ -387,15 +387,15 @@
   .runtime-hdr   { padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .stack-box     { padding:6px 8px; display:flex; flex-direction:column; gap:3px; min-height:40px; }
   .stack-frame   { display:flex; justify-content:space-between; align-items:center; padding:3px 6px; border-radius:3px; border:1px solid #1a1a2e; font-size:0.65rem; transition:all 0.3s; }
-  .stack-top     { border-color:#cc88ff44; background:#cc88ff10; }
+  .stack-top     { border-color:#bb9af744; background:#bb9af710; }
   .stack-name    { color:#ccc; font-weight:600; font-family: var(--font-code); font-size:0.65rem; }
-  .stack-arrow   { font-size:0.5rem; color:#cc88ff; }
+  .stack-arrow   { font-size:0.5rem; color:#bb9af7; }
   .stack-empty   { font-size:0.6rem; color:#2a2a3e; padding:4px; }
   .event-box     { padding:6px 8px; min-height:40px; }
   .event-item    { font-size:0.6rem; color:#ffcc66; padding:2px 6px; background:#ffcc6610; border-radius:3px; margin-bottom:2px; font-family: var(--font-code); }
   .event-empty   { font-size:0.6rem; color:#2a2a3e; padding:4px; }
   .micro-label   { font-size:0.5rem; color:#444; text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
-  .micro-item    { font-size:0.6rem; color:#cc88ff; padding:2px 6px; background:#cc88ff10; border-radius:3px; margin-bottom:2px; font-family: var(--font-code); }
+  .micro-item    { font-size:0.6rem; color:#bb9af7; padding:2px 6px; background:#bb9af710; border-radius:3px; margin-bottom:2px; font-family: var(--font-code); }
 
   /* ── Hero row (Call Stack + Event Loop, ∼3× upsized) ─────────────
      These rules compose on top of the base .runtime-* classes and
@@ -406,7 +406,7 @@
   .runtime-hdr-hero    { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px; font-size:0.82rem; letter-spacing:1.6px; color:rgba(255,255,255,0.94); font-weight:800; text-transform:uppercase; background:var(--a11y-surface2, #0d0d16); border-bottom:1px solid var(--a11y-border, #1a1a2e); }
   .cs-status           { display:inline-flex; align-items:center; gap:5px; font-size:0.62rem; font-weight:700; font-family:var(--font-code); letter-spacing:0.5px; text-transform:none; padding:3px 10px; border-radius:999px; border:1px solid transparent; }
   .cs-status-idle      { color:rgba(255,255,255,0.55); background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.10); }
-  .cs-status-running   { color:#cc88ff; background:rgba(204,136,255,0.10); border-color:rgba(204,136,255,0.35); }
+  .cs-status-running   { color:#bb9af7; background:rgba(187,154,247,0.10); border-color:rgba(187,154,247,0.35); }
   .cs-status-suspend   { color:#ffcc66; background:rgba(255,204,102,0.12); border-color:rgba(255,204,102,0.40); animation: vx-cs-pulse 1.4s ease-in-out infinite; }
   @keyframes vx-cs-pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(255,204,102,0.30); }
@@ -417,7 +417,7 @@
   .el-status-idle      { color:rgba(255,255,255,0.55); background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.10); }
   .el-status-running   { color:#4ade80; background:rgba(74,222,128,0.10); border-color:rgba(74,222,128,0.35); animation: vx-el-pulse 1.6s ease-in-out infinite; }
   .el-status-waiting   { color:#ffcc66; background:rgba(255,204,102,0.12); border-color:rgba(255,204,102,0.35); }
-  .el-status-tick      { color:#cc88ff; background:rgba(204,136,255,0.12); border-color:rgba(204,136,255,0.40); animation: vx-el-pulse 1.2s ease-in-out infinite; }
+  .el-status-tick      { color:#bb9af7; background:rgba(187,154,247,0.12); border-color:rgba(187,154,247,0.40); animation: vx-el-pulse 1.2s ease-in-out infinite; }
   @keyframes vx-el-pulse {
     0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 30%, transparent); }
     50%      { box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 0%, transparent); }
@@ -425,7 +425,7 @@
   .stack-box-hero      { padding:14px 16px; gap:10px; min-height:128px; }
   .stack-frame-hero    { padding:12px 16px; border-radius:6px; font-size:1rem; border:1.5px solid #1a1a2e; }
   .stack-frame-hero .stack-name { font-size:1rem; color:#e2e8f0; font-weight:700; }
-  .stack-frame-hero.stack-top   { border-color:#cc88ff66; background:#cc88ff14; box-shadow:inset 3px 0 0 #cc88ff; }
+  .stack-frame-hero.stack-top   { border-color:#bb9af766; background:#bb9af714; box-shadow:inset 3px 0 0 #bb9af7; }
   .stack-frame-hero.stack-top .stack-name { color:#fff; }
   .stack-frame-hero .stack-arrow{ font-size:0.72rem; letter-spacing:0.3px; }
   /* Suspend modifier — drawn on the top frame just before it leaves
@@ -447,9 +447,9 @@
   .stack-empty-hero    { padding:18px 12px; font-size:0.8rem; color:rgba(255,255,255,0.45); text-align:center; font-style:italic; font-family:var(--font-code); }
 
   .event-box-hero      { padding:14px 16px; min-height:128px; }
-  /* Phase-spec: event-loop items are async/suspended → purple (#cc88ff,
+  /* Phase-spec: event-loop items are async/suspended → purple (#bb9af7,
      module accent). Travelling motion owned by in:fly in markup. */
-  .event-item-hero     { font-size:0.92rem; padding:8px 12px; border-radius:6px; margin-bottom:6px; background:rgba(204,136,255,0.10); border:1px solid rgba(204,136,255,0.28); color:#cc88ff; font-weight:600; }
+  .event-item-hero     { font-size:0.92rem; padding:8px 12px; border-radius:6px; margin-bottom:6px; background:rgba(187,154,247,0.10); border:1px solid rgba(187,154,247,0.28); color:#bb9af7; font-weight:600; }
   .event-empty-hero    { font-size:0.78rem; padding:14px 6px; color:rgba(255,255,255,0.42); font-style:italic; text-align:center; }
   /* Phase-spec: microtasks are active/running (about to fire on resume)
      → green (#9ece6a, heap accent). Contrast against the purple
@@ -460,7 +460,7 @@
   /* Variable frame */
   .frame-box   { padding:8px 10px; }
   .var-row     { display:flex; justify-content:space-between; align-items:center; padding:4px 8px; border-radius:4px; transition:all 0.35s; margin-bottom:2px; }
-  .var-flash   { background:#cc88ff18; box-shadow:inset 3px 0 0 #cc88ff; }
+  .var-flash   { background:#bb9af718; box-shadow:inset 3px 0 0 #bb9af7; }
   .var-left    { display:flex; align-items:center; gap:6px; }
   .var-name    { font-size:0.8rem; color:#88aaff; font-weight:600; font-family: var(--font-code); }
   .var-type    { font-size:0.55rem; padding:1px 5px; border-radius:3px; background:#ffffff08; }
@@ -494,9 +494,9 @@
   .tl-bars       { display:flex; gap:2px; align-items:center; flex:1; }
   .tl-bars-par   { flex-direction:column; gap:2px; }
   .tl-bar        { padding:3px 8px; border-radius:3px; min-width:50px; transition:all 0.3s; border:1px solid transparent; }
-  .tl-seq        { background:#cc88ff18; border-color:#cc88ff33; }
+  .tl-seq        { background:#bb9af718; border-color:#bb9af733; }
   .tl-par        { background:#4ade8018; border-color:#4ade8033; width:100%; }
-  .tl-done.tl-seq { background:#cc88ff30; border-color:#cc88ff66; }
+  .tl-done.tl-seq { background:#bb9af730; border-color:#bb9af766; }
   .tl-done.tl-par { background:#4ade8030; border-color:#4ade8066; }
   .tl-bar-label  { font-size:0.5rem; color:#888; font-family: var(--font-code); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
   .tl-done .tl-bar-label { color:#ccc; }
