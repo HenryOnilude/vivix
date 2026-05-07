@@ -145,7 +145,8 @@
                 autoRotate: false,
               },
               ease: 'power1.inOut',
-              duration: 0.6,
+              // Was 0.6s — capped at 500ms (T_SLOW) per design-system spec.
+              duration: 0.5,
             }, 0.5);
 
           // ── Stage 3 — The Epiphany ─────────────────────────────────────
@@ -200,7 +201,8 @@
           })
             .fromTo('.stage-peak-pulse',
               { opacity: 0.9, scale: 0.2 },
-              { opacity: 0, scale: 3, ease: 'power2.out', duration: 1.2 }, 0)
+              // Was 1.2s — capped at 500ms (T_SLOW) per spec.
+              { opacity: 0, scale: 3, ease: 'power2.out', duration: 0.5 }, 0)
             .fromTo('.stage-peak-line',
               { opacity: 0, y: 6 },
               { opacity: 1, y: 0, ease: 'power2.out', duration: 0.4 }, 0.1)

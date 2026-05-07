@@ -1,4 +1,5 @@
 <script>
+  import TruncText from './TruncText.svelte';
   import ModuleShell from './ModuleShell.svelte';
   import { executeEventListenerCode } from './event-listener-executor.js';
 
@@ -138,6 +139,7 @@
   {examples}
   accent={ACCENT}
   routeKey="event-listeners"
+  activePanel={(step, sd) => sd?.output?.length > 0 ? 'stdout' : 'top'}
   titlePrefix="event"
   titleAccent="Listeners"
   subtitle="— DOM Events"
@@ -155,7 +157,7 @@
          explanation. -->
     <div class="elements-row">
       <div class="runtime-panel el-panel">
-        <div class="runtime-hdr">DOM Elements</div>
+        <div class="runtime-hdr" title="DOM elements — nodes in the document tree. Each can register listeners that fire when matching events dispatch.">DOM Elements</div>
         <div class="el-box">
           {#if sd.elements && Object.keys(sd.elements).length > 0}
             {#each Object.entries(sd.elements) as [name, el]}
@@ -191,7 +193,7 @@
       </div>
 
       <div class="runtime-panel">
-        <div class="runtime-hdr">Call Stack</div>
+        <div class="runtime-hdr" title="Call stack — functions currently running. Event handlers push a frame here when they fire.">Call Stack</div>
         <div class="stack-box">
           {#if sd.callStack && sd.callStack.length > 0}
             {#each [...sd.callStack].reverse() as frame, i}
@@ -210,7 +212,7 @@
     <!-- Event queue (directly under the hero row — same visual family) -->
     {#if sd.eventQueue && sd.eventQueue.length > 0}
       <div class="eq-panel">
-        <div class="runtime-hdr">Event Queue</div>
+        <div class="runtime-hdr" title="Event queue — dispatched events waiting for the call stack to drain before their listeners can run.">Event Queue</div>
         <div class="eq-box">
           {#each sd.eventQueue as ev}
             <div class="eq-item">⚡ {ev}</div>
@@ -282,7 +284,7 @@
         class:brain-dispatch={sd.phase === 'dispatch-event' || sd.phase === 'dispatch-custom'}
         class:brain-handler={sd.phase === 'handler-run'}
       >
-        <pre class="brain-text">{sd.brain}</pre>
+        <pre class="brain-text"><TruncText text={sd.brain} /></pre>
       </div>
     </details>
   {/snippet}

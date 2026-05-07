@@ -102,6 +102,14 @@
      *  boolean, and total comparisons"). Replaces the generic
      *  "module-specific state" subtitle inside CpuDash. */
     moduleCaption = '',
+
+    /** Focal-dimming hook (Phase 3 — design-system spec). Returns which
+     *  panel should hold 100 % opacity on the current step; everything
+     *  else drops to 0.35. Signature: (step, sd) => 'top' | 'heap' |
+     *  'stdout' | 'engine'.
+     *  Default heuristic: stdout when output just grew, heap when a
+     *  variable just changed, otherwise the module-specific top panel. */
+    activePanel = undefined,
   } = $props();
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -173,6 +181,24 @@
 
   let varArr = $derived(sd ? Object.entries(sd.vars || {}) : []);
 
+  /** Focal panel for the current step (Phase-3 spec). Modules pass an
+   *  explicit `activePanel(step, sd)` mapping; if not, fall back to a
+   *  general heuristic that biases to the panel which most-recently
+   *  changed. Resolves to one of: 'top' | 'heap' | 'stdout' | 'engine'. */
+  let _focal = $derived.by(() => {
+    if (!sd) return 'top';
+    if (typeof activePanel === 'function') {
+      try { return activePanel(step, sd) || 'top'; } catch { /* fall through */ }
+    }
+    // Heuristic fallback: stdout if output grew this step, heap if a
+    // variable was just written, top panel otherwise.
+    const prevOutLen = prev?.output?.length || 0;
+    const curOutLen  = sd?.output?.length || 0;
+    if (curOutLen > prevOutLen) return 'stdout';
+    if (sd?.changed && sd.changed.name) return 'heap';
+    return 'top';
+  });
+
   /** Badge colour for the time complexity label */
   let timeBadgeColor  = $derived(complexityBadgeColor(cx.time));
   /** Badge colour for the space complexity label */
@@ -184,6 +210,43 @@
 
   // ── Phase helpers (delegated to shell-logic.js) ───────────────────────────
   function phColor(ph) { return _phColor(ph, accent); }
+
+  // ── Analytics: per-step dwell + module open/exit timing ──────────────────
+  // `_lastStepAt` is reset whenever the user advances (manual or auto) so
+  // dwell_time_ms = (now - _lastStepAt) reads as "how long they sat on the
+  // PREVIOUS step before moving on". `_openedAt` is captured in onMount so
+  // module_exit_early can report total time on the module on unmount /
+  // pagehide if the user leaves without completing.
+  let _lastStepAt = $state(0);
+  let _openedAt   = $state(0);
+  let _exitFired  = $state(false);
+
+  /** Centralised step setter that emits `visualizer_step_triggered` for
+   *  every real advancement (manual click or auto-step timer). Bypassed
+   *  by callers that do NOT represent a step advancement: fresh
+   *  `_runCode()` start (step = 0), URL deep-link restore, and `_reset()`. */
+  function _advanceStep(newStep, source /* 'manual' | 'auto' */) {
+    if (!hasRun || newStep === step || newStep < 0 || newStep >= total) {
+      // Still allow the assignment for legitimate edge cases (e.g. wrap
+      // around to 0 even when newStep === 0 and step === total - 1 — the
+      // wrap is handled by the caller passing the next index explicitly).
+      if (newStep === step) return;
+    }
+    const now = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now() : Date.now();
+    const dwell = _lastStepAt > 0 ? Math.max(0, Math.round(now - _lastStepAt)) : 0;
+    const moduleName = routeKey || titlePrefix || 'unknown';
+    try {
+      posthog.capture('visualizer_step_triggered', {
+        module_name:    moduleName,
+        step_index:     newStep,
+        dwell_time_ms:  dwell,
+        trigger_source: source,
+      });
+    } catch (_) { /* analytics must never break playback */ }
+    step = newStep;
+    _lastStepAt = now;
+  }
 
   // ── Core execute ───────────────────────────────────────────────────────────
   async function _runCode() {
@@ -226,6 +289,10 @@
       total  = steps.length;
       step   = 0;
       hasRun = true;
+      // Anchor dwell-time tracking to "the moment step 0 became visible"
+      // so the first manual/auto advance reports a meaningful interval.
+      _lastStepAt = (typeof performance !== 'undefined' && performance.now)
+        ? performance.now() : Date.now();
       // Snapshot the exact code that produced `steps` — any subsequent edit
       // makes `codeDirty` true and surfaces the "click Visualize to re-run" hint.
       codeSnapshot = codeText;
@@ -238,20 +305,41 @@
     } catch (e) {
       err = e.message;
       if (!errFriendly) errFriendly = friendlyError(e.message, codeText);
+      // Analytics: parser / worker failure. Captures both Acorn parse
+      // errors thrown from `parseCode()` and runtime errors surfaced by
+      // the Web Worker (`result.error` rethrown above). FreeForm uses
+      // this same shell so `is_freeform` is derived from the routeKey.
+      try {
+        const moduleName = routeKey || titlePrefix || 'unknown';
+        const msg = String(e?.message || e || '').slice(0, 200);
+        const errType = (e && e.name) ? e.name
+          : (e && e.constructor && e.constructor.name) ? e.constructor.name
+          : (typeof e);
+        posthog.capture('interpreter_execution_failed', {
+          module_name:   moduleName,
+          is_freeform:   routeKey === 'free-form',
+          error_type:    errType,
+          error_message: msg,
+          code_length:   (codeText || '').length,
+        });
+      } catch (_) { /* swallow */ }
     }
     running = false;
   }
 
   // ── Controls ───────────────────────────────────────────────────────────────
-  function goFirst() { if (hasRun) step = 0; }
-  function goPrev()  { if (hasRun && step > 0) step--; }
-  function goNext()  { if (hasRun && step < total - 1) step++; }
-  function goLast()  { if (hasRun) step = total - 1; }
+  // Each control routes through `_advanceStep` so a single PostHog event is
+  // emitted with the correct trigger_source. Manual nav (button clicks,
+  // keyboard, timeline scrubbing) is 'manual'; auto-step timer is 'auto'.
+  function goFirst() { if (hasRun) _advanceStep(0,           'manual'); }
+  function goPrev()  { if (hasRun && step > 0)         _advanceStep(step - 1, 'manual'); }
+  function goNext()  { if (hasRun && step < total - 1) _advanceStep(step + 1, 'manual'); }
+  function goLast()  { if (hasRun) _advanceStep(total - 1,   'manual'); }
 
   function _startTimer(ms) {
     timer = setInterval(() => {
-      if (step < total - 1) step++;
-      else { step = 0; }
+      if (step < total - 1) _advanceStep(step + 1, 'auto');
+      else                  _advanceStep(0,        'auto');
     }, ms);
   }
 
@@ -259,7 +347,9 @@
     if (playing) {
       clearInterval(timer); timer = null; playing = false;
     } else {
-      if (step >= total - 1) step = 0;
+      // Rewind-to-start when toggling play from the final step counts as a
+      // manual advancement (the user explicitly clicked Auto).
+      if (step >= total - 1) _advanceStep(0, 'manual');
       playing = true;
       _startTimer(interval);
     }
@@ -282,6 +372,7 @@
 
   function _reset() {
     hasRun = false; step = -1; steps = []; err = ''; errFriendly = null; dynamicCx = null;
+    _lastStepAt = 0;
     if (playing) { clearInterval(timer); timer = null; playing = false; }
   }
 
@@ -315,6 +406,25 @@
   // ── URL state: read on mount, auto-run if step param is present ──────────
   let _urlApplied = false;
 
+  /** Auto-advance state (Phase-5 spec).
+   *  After 1500ms on first load, if the user hasn't interacted and there
+   *  is no URL deep-link, automatically run the code and seek to step 3
+   *  (index 2). The pending flag drives a subtle pulse animation on the
+   *  Visualize button so the user knows something will happen. Any
+   *  pointerdown / keydown / wheel before 1500ms cancels the timer. */
+  let _autoAdvancePending = $state(false);
+  let _autoAdvanceTimer   = null;
+  let _autoAdvanceCancelled = false;
+
+  function _cancelAutoAdvance() {
+    _autoAdvanceCancelled = true;
+    _autoAdvancePending   = false;
+    if (_autoAdvanceTimer) {
+      clearTimeout(_autoAdvanceTimer);
+      _autoAdvanceTimer = null;
+    }
+  }
+
   onMount(() => {
     window.addEventListener('keydown', handleKey);
 
@@ -325,6 +435,16 @@
     // identifier (never code), and guard against missing routeKey.
     const moduleName = routeKey || titlePrefix || 'unknown';
     try { posthog.capture('module_opened', { module: moduleName }); } catch (_) {}
+    // Stash the open timestamp so module_exit_early can report
+    // time_on_module_ms when the user leaves without completing.
+    _openedAt  = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now() : Date.now();
+    _exitFired = false;
+
+    // Fire `module_exit_early` on tab close / navigation away. Mirrors
+    // PostHog's $pageleave timing but carries our richer payload.
+    const _onPageHide = () => _maybeFireExitEarly();
+    window.addEventListener('pagehide', _onPageHide);
 
     // Read URL params and apply initial state
     if (!_urlApplied) {
@@ -352,15 +472,80 @@
           // Don't auto-play when opening a shared link
           if (playing) { clearInterval(timer); timer = null; playing = false; }
         });
+      } else {
+        // ── Phase-5 auto-advance ─────────────────────────────────────
+        // No URL deep-link: schedule a 1.5s timer that auto-runs the
+        // visualization and seeks to step 3 (index 2). Cancelled by any
+        // user interaction with the module.
+        _autoAdvancePending = true;
+        _autoAdvanceTimer = setTimeout(() => {
+          _autoAdvanceTimer = null;
+          _autoAdvancePending = false;
+          if (_autoAdvanceCancelled || hasRun) return;
+          _runCode().then(() => {
+            if (_autoAdvanceCancelled) return;
+            // Seek to user-facing step 3 (= index 2). If the program is
+            // shorter than 3 steps, clamp to the final step so we don't
+            // overshoot. Pause playback so the user lands on a held frame.
+            const target = Math.min(2, Math.max(0, steps.length - 1));
+            if (target > 0) step = target;
+            if (playing) { clearInterval(timer); timer = null; playing = false; }
+          }).catch(() => { /* swallow — _runCode handles its own errors */ });
+        }, 1500);
       }
     }
 
+    // Cancel auto-advance on any deliberate user interaction. We listen
+    // on the window so a click anywhere in the module (or any keydown,
+    // wheel, touch) aborts the pending run.
+    const _onUserInteraction = () => {
+      if (!_autoAdvanceCancelled) _cancelAutoAdvance();
+    };
+    window.addEventListener('pointerdown', _onUserInteraction, { passive: true, once: true });
+    window.addEventListener('wheel',       _onUserInteraction, { passive: true, once: true });
+    window.addEventListener('touchstart',  _onUserInteraction, { passive: true, once: true });
+    window.addEventListener('keydown',     _onUserInteraction, { once: true });
+
     return () => {
       window.removeEventListener('keydown', handleKey);
+      window.removeEventListener('pagehide', _onPageHide);
+      window.removeEventListener('pointerdown', _onUserInteraction);
+      window.removeEventListener('wheel',       _onUserInteraction);
+      window.removeEventListener('touchstart',  _onUserInteraction);
+      window.removeEventListener('keydown',     _onUserInteraction);
+      _cancelAutoAdvance();
+      // Component is unmounting (route change, parent unmount, etc.) —
+      // emit module_exit_early if the user opened the module but never
+      // completed it. Idempotent via _exitFired so pagehide + unmount
+      // can't double-fire.
+      _maybeFireExitEarly();
       if (timer) clearInterval(timer);
       if (interpWorker) { interpWorker.terminate(); interpWorker = null; }
     };
   });
+
+  /** Emit `module_exit_early` exactly once if the user opened the module
+   *  and left without reaching the final step. Called from both the
+   *  pagehide listener and the onMount cleanup function. */
+  function _maybeFireExitEarly() {
+    if (_exitFired) return;
+    if (!_openedAt) return;
+    // _completedFor is set to `total` when the user reached the last step
+    // in module_completed. If they never completed, it's still -1.
+    const completed = _completedFor > 0 && _completedFor === total;
+    if (completed) return;
+    _exitFired = true;
+    const now = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now() : Date.now();
+    const moduleName = routeKey || titlePrefix || 'unknown';
+    try {
+      posthog.capture('module_exit_early', {
+        module_name:       moduleName,
+        last_step_reached: step,
+        time_on_module_ms: Math.max(0, Math.round(now - _openedAt)),
+      });
+    } catch (_) { /* swallow */ }
+  }
 
   // ── Silently update URL when state changes ────────────────────────────────
   $effect(() => {
@@ -440,6 +625,14 @@
       posthog.capture('next_module_clicked', {
         from: routeKey || 'unknown',
         to: nextModule.id,
+      });
+    } catch (_) {}
+    // Newer event — fired alongside the legacy `next_module_clicked` so
+    // dashboards can switch over without breaking historical funnels.
+    try {
+      posthog.capture('navigation_cta_clicked', {
+        source_module: routeKey || 'unknown',
+        target_module: nextModule.id,
       });
     } catch (_) {}
     // Let the browser follow the hash — no router imports needed.
@@ -567,7 +760,8 @@
               Code changed — click Visualize to re-run
             </span>
           {/if}
-          <button class="rb" style="background:{accent};color:var(--a11y-bg, #0a0a0f)" onclick={_runCode} disabled={running}
+          <button class="rb" class:auto-advance-pulse={_autoAdvancePending}
+            style="background:{accent};color:var(--a11y-bg, #0a0a0f)" onclick={_runCode} disabled={running}
             aria-label={running ? 'Running code' : (codeDirty ? 'Re-run visualization with edited code' : 'Visualize code execution')}>
             {running ? '⏳ Running…' : (codeDirty ? '▶ Re-run' : '▶ Visualize')}
           </button>
@@ -610,7 +804,7 @@
             onclick={toggleAuto} aria-label={playing ? 'Pause auto-play' : 'Start auto-play'}>{playing ? '⏸' : '⏵'}</button></TapTooltip>
           <TapTooltip text="Forward (→)"><button class="cb" onclick={goNext}  disabled={step >= total - 1} aria-label="Next step">›</button></TapTooltip>
           <TapTooltip text="Last (End)"><button class="cb" onclick={goLast}  disabled={step >= total - 1} aria-label="Last step">⟫</button></TapTooltip>
-          <span class="sc" role="status" aria-live="polite" aria-label="Step {step + 1} of {total}">{step + 1}/{total}</span>
+          <span class="sc" class:auto-advance-pulse={_autoAdvancePending} role="status" aria-live="polite" aria-label="Step {step + 1} of {total}">{step + 1}/{total}</span>
           <!-- Speed selector -->
           <div class="speed-row">
             {#each [0.5, 1, 2, 4] as s}
@@ -648,7 +842,7 @@
                 class:tl-active={isActive}
                 class:tl-past={isPast}
                 style="left:{markerPct(i, total)}%;--ph:{phColor(s.phase)}"
-                onclick={() => step = i}
+                onclick={() => _advanceStep(i, 'manual')}
                 aria-label="Step {i + 1}: {s.phase ?? 'exec'}"
               >{#if showIcons || isActive}<span class="tl-icon">{phIcon(s.phase)}</span>{/if}</button>
             {/each}
@@ -675,8 +869,17 @@
           />
         {/key}
 
-        <!-- Module-specific content above the heap (e.g. branch flowchart, loop tracker) -->
-        {#if topPanel}{@render topPanel(sd)}{/if}
+        <!-- Module-specific content above the heap (e.g. branch flowchart, loop tracker)
+             Wrapped so focal-dimming applies (Phase-3 spec): when the
+             active panel for this step is something other than 'top',
+             the entire module-specific hero subordinates to opacity 0.35. -->
+        {#if topPanel}
+          <div class="focal-slot focal-slot--top"
+               class:dim={_focal !== 'top'}
+               class:focal-active={_focal === 'top'}>
+            {@render topPanel(sd)}
+          </div>
+        {/if}
 
         <!-- Default heap memory card (Machine level and above)
              Always-rendered to prevent layout shift between steps on
@@ -685,8 +888,17 @@
              height; when there are simply no variables yet, the card
              renders with an empty placeholder so the height is reserved
              for the first step that produces a variable. -->
-        <div class="heap-card dl-explore" class:is-empty={varArr.length === 0} class:is-hidden={!showHeap}>
-          <div class="heap-hdr" role="heading" aria-level="3">
+        <!-- Phase-7 collapse: when no variables exist, the panel reduces
+             to its 40px header row + chevron. The header has the same
+             min-height in both states so the first variable landing
+             expands the body downward without shifting anything above. -->
+        <details class="heap-card dl-explore collapsible-empty"
+             open={varArr.length > 0}
+             class:is-empty={varArr.length === 0}
+             class:is-hidden={!showHeap}
+             class:dim={_focal !== 'heap'}
+             class:focal-active={_focal === 'heap'}>
+          <summary class="heap-hdr" role="heading" aria-level="3" title="Heap memory — where your program's variables and objects live during execution.">
             <svg width="14" height="14" viewBox="0 0 14 14">
               <rect x="1" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.5"/>
               <rect x="8" y="1" width="5" height="5" rx="1" fill={accent} opacity="0.3"/>
@@ -695,25 +907,19 @@
             </svg>
             <span class="heap-title">HEAP MEMORY<span class="panel-subtitle">where your variables live</span></span>
             <span class="heap-count">{varArr.length} var{varArr.length !== 1 ? 's' : ''}</span>
-          </div>
-          {#if varArr.length === 0}
-            <!-- Silent skeleton: three ghosted box shapes anticipating the
-                 shape of real heap-box entries. No text, no aria-live —
-                 this is a purely visual affordance that signals "memory
-                 slots will appear here" without the loading-screen feel
-                 of a chatty empty state. -->
-            <div class="heap-skeleton" aria-hidden="true">
-              <div class="heap-skeleton-box"></div>
-              <div class="heap-skeleton-box"></div>
-              <div class="heap-skeleton-box"></div>
-            </div>
-          {:else}
+            <svg class="collapse-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+              <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </summary>
+          {#if varArr.length > 0}
             <div class="heap-grid">
               {#each varArr as [name, val], idx}
                 {@const status = varDiff[name] || 'same'}
                 {@const color  = tc(val)}
-                <div class="heap-box" use:animateBox={{ status, step }}>
-                  <div class="heap-addr dl-inline-deep">0x{(0x4A00 + idx * 8).toString(16).toUpperCase()}</div>
+                {@const _heapAddr = '0x' + (0x4A00 + idx * 8).toString(16).toUpperCase()}
+                <div class="heap-box" use:animateBox={{ status, step }}
+                     title={`Heap address: ${_heapAddr}`}
+                     aria-label={`${name} at heap address ${_heapAddr}`}>
                   <div class="heap-head">
                     <span class="heap-name">{name}</span>
                     <span class="heap-type" style="color:{color};border-color:{color}33">{tb(val)}</span>
@@ -732,41 +938,40 @@
               {/each}
             </div>
           {/if}
-        </div>
+        </details>
 
         <!-- Module-specific content below the heap (e.g. byte map) -->
         {#if bottomPanel}{@render bottomPanel(sd)}{/if}
 
-        <!-- STDOUT
-             Always-rendered to prevent CLS on mobile. Until the program
-             prints, the card displays a placeholder line so its height
-             is reserved across every step. -->
-        <div class="out-card" class:is-empty={!(sd.output && sd.output.length > 0)}>
-          <div class="out-hdr" role="heading" aria-level="3">
+        <!-- Phase-7 collapse: STDOUT folds to its 40px header row when
+             no console output has been produced. First console.log
+             triggers `open` and the body expands downward. -->
+        {@const _hasOutput = !!(sd.output && sd.output.length > 0)}
+        <details class="out-card collapsible-empty"
+             open={_hasOutput}
+             class:is-empty={!_hasOutput}
+             class:dim={_focal !== 'stdout'}
+             class:focal-active={_focal === 'stdout'}>
+          <summary class="out-hdr" role="heading" aria-level="3" title="Standard output — text written by console.log() during this run.">
             <svg width="12" height="12" viewBox="0 0 12 12">
               <rect x="0" y="0" width="12" height="12" rx="2" fill="#111"/>
               <text x="3" y="9" fill={accent} font-size="8" font-family="'Geist Mono', monospace">$</text>
             </svg>
             <span>STDOUT<span class="panel-subtitle">console output</span></span>
-          </div>
-          {#if sd.output && sd.output.length > 0}
+            <svg class="collapse-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+              <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </summary>
+          {#if _hasOutput}
             {#each sd.output as line}
               <div class="out-ln">› {line}</div>
             {/each}
-          {:else}
-            <!-- Silent skeleton: a single ghosted line shape. Replaces
-                 the previous 'awaiting console.log…' string which read
-                 as a loading state rather than a reserved slot. -->
-            <div class="out-skeleton" aria-hidden="true">
-              <span class="out-skeleton-caret">›</span>
-              <span class="out-skeleton-bar"></span>
-            </div>
           {/if}
-        </div>
+        </details>
 
         <!-- COMPLEXITY ANALYSIS — Explore level and above; collapsible, default closed -->
         <details class="cx-card dl-explore" bind:open={cxOpen}>
-          <summary class="cx-hdr">
+          <summary class="cx-hdr" title="Complexity analysis — Big-O time and space cost of the code as it runs.">
             <span class="cx-title">COMPLEXITY ANALYSIS<span class="panel-subtitle">performance cost</span></span>
             <span class="cx-hdr-right">
               {#if cx.dynamic}<span class="cx-live-badge">live</span>{/if}

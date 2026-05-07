@@ -37,60 +37,99 @@
 }
 
 :root {
-  /* ── Semantic font tokens ─────────────────────────────────────────────
-     --font-code    → monospaced technical data (editor, registers, heap)
-     --font-ui      → everything else (labels, narration, buttons)
+  /* ── Semantic font tokens ──────────────────────────────────────────────
+     --font-code    → monospaced technical data (editor, registers, heap
+                       names, stack frame names, values, code content)
+     --font-ui      → everything else (labels, narration, buttons,
+                       panel headers, descriptions, type badges)
      --font-display → hero headline only
-     ──────────────────────────────────────────────────────────────────── */
-  --font-code:    'Geist Mono', 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
-  --font-ui:      'Geist Sans', 'Inter', 'SF Pro Text', system-ui, -apple-system, sans-serif;
+     Per design-system spec: monospace is REMOVED from anything that is
+     not displaying code or data values. Panel headers, description copy,
+     stats labels, and badges all use Geist Sans. */
+  --font-code:    'Geist Mono', 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  --font-ui:      'Geist Sans', system-ui, 'Inter', 'SF Pro Text', -apple-system, sans-serif;
   --font-display: 'Space Grotesk', 'Geist Sans', 'Inter', system-ui, sans-serif;
 
-  /* ── Premium atmospheric palette ──────────────────────────────────────
-     A single near-black void with every surface above it rendered as
-     frosted glass. --accent is the only saturated colour in the chrome. */
-  --bg-void:      #09090B;           /* root page background */
-  --accent:       #00FFD1;           /* primary interactive accent */
-  --accent-soft:  rgba(0, 255, 209, 0.12);
-  --accent-glow:  rgba(0, 255, 209, 0.35);
+  /* ── Background and layering (4-tier system) ─────────────────────────
+     Spec-aligned hierarchy. Surfaces are solid (not alpha-overlaid) so
+     contrast remains predictable; layer differences — not borders — do
+     all the panel separation. */
+  --bg-void:      #08080c;           /* Layer 0 — root page background */
+  --surface-1:    #161b22;           /* Layer 1 — panel surfaces */
+  --surface-2:    #1f2937;           /* Layer 2 — elevated / active */
+  --surface-3:    #243044;           /* Layer 3 — focal / highlighted */
 
-  /* ── Glass card tokens ────────────────────────────────────────────────
-     Every surface that used to be solid --elevation-* should now read
-     --glass-bg + --glass-border and add `backdrop-filter: var(--glass-blur)`.
-     Solid legacy tokens are preserved below so components that have not
-     yet migrated still render. */
-  --glass-bg:     rgba(255, 255, 255, 0.03);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-  --glass-blur:   blur(24px) saturate(140%);
+  /* ── Semantic colour palette ───────────────────────────────────────
+     One token per category. No pure white, no full-saturation colour. */
+  --c-text:       #c9d1d9;           /* primary text */
+  --c-text-sec:   #8b949e;           /* secondary labels, captions */
+  --c-async:      #bb9af7;           /* async / event loop */
+  --c-stack:      #7aa2f7;           /* stack / active / running */
+  --c-heap:       #9ece6a;           /* heap / data / memory */
+  --c-promise:    #e0af68;           /* promises / microtasks */
+  --c-event:      #f7768e;           /* DOM events */
+  --c-error:      #f7768e;           /* error / overflow */
+  --c-cond:       #2ac3de;           /* conditionals */
+  --c-neutral:    #3d4c5e;           /* neutral / inactive */
 
-  /* ── Legacy elevation scale (solid fallbacks) ───────────────────────── */
+  --accent:       #7aa2f7;           /* primary interactive accent (was electric teal) */
+  --accent-soft:  rgba(122, 162, 247, 0.12);
+  --accent-glow:  rgba(122, 162, 247, 0.35);
+
+  /* ── Spacing — 8-point grid ─────────────────────────────────────────── */
+  --sp-0:  4px;   /* compact (badges) */
+  --sp-1:  8px;   /* default gap between panels */
+  --sp-2: 16px;   /* panel internal padding, internal section gap */
+  --sp-3: 24px;   /* large section gaps */
+  --sp-4: 32px;
+
+  /* ── Border-radius — capped at 6px per spec ───────────────────────── */
+  --r-sm:  4px;
+  --r-md:  6px;   /* hard ceiling */
+
+  /* ── Animation timing — capped at 500ms per spec ──────────────────── */
+  --t-micro:    150ms;
+  --t-fast:     250ms;
+  --t-standard: 350ms;
+  --t-slow:     500ms;
+  --ease-enter: cubic-bezier(0,    0,    0.2, 1);
+  --ease-exit:  cubic-bezier(0.4,  0,    1,   1);
+  --ease-state: cubic-bezier(0.4,  0,    0.2, 1);
+
+  /* ── Glass card tokens ─────────────────────────────────────────────────────────────
+     Surfaces now resolve to solid Layer-1 (#161b22) so the previous
+     frosted-glass alpha effect collapses to a flat panel. Borders
+     resolve to transparent so panels rely on layer-colour difference
+     for separation — the spec calls for no visible panel borders. */
+  --glass-bg:     var(--surface-1);
+  --glass-border: 1px solid transparent;
+  --glass-blur:   blur(0);
+
+  /* ── Legacy elevation scale (kept so untouched components still render) */
   --elevation-base:    var(--bg-void);
-  --elevation-surface: rgba(255, 255, 255, 0.02);
-  --elevation-raised:  rgba(255, 255, 255, 0.03);
-  --elevation-overlay: rgba(255, 255, 255, 0.06);
+  --elevation-surface: var(--surface-1);
+  --elevation-raised:  var(--surface-2);
+  --elevation-overlay: var(--surface-3);
 
-  --elevation-shadow-raised:
-    0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    0 2px 12px rgba(0, 0, 0, 0.45);
-  --elevation-shadow-overlay:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 10px 30px rgba(0, 0, 0, 0.6);
+  --elevation-shadow-raised:  none;
+  --elevation-shadow-overlay: none;
 
-  /* ── Accessibility theme tokens ────────────────────────────────────── */
+  /* ── Accessibility theme tokens — names preserved for backwards compat,
+         values updated to spec palette. */
   --a11y-bg:         var(--bg-void);
-  --a11y-surface1:   var(--elevation-surface);
-  --a11y-surface2:   var(--elevation-raised);
-  --a11y-surface3:   var(--elevation-overlay);
-  --a11y-border:     rgba(255, 255, 255, 0.08);
-  --a11y-text:       #eeeef2;
-  --a11y-text-sec:   #c8c8d4;
-  --a11y-text-muted: #666688;
-  --a11y-code-bg:    rgba(255, 255, 255, 0.025);
+  --a11y-surface1:   var(--surface-1);
+  --a11y-surface2:   var(--surface-2);
+  --a11y-surface3:   var(--surface-3);
+  --a11y-border:     transparent;       /* no visible panel borders */
+  --a11y-text:       var(--c-text);
+  --a11y-text-sec:   var(--c-text);
+  --a11y-text-muted: var(--c-text-sec);
+  --a11y-code-bg:    var(--surface-1);
 
   font-family: var(--font-ui);
-  line-height: 1.5;
+  line-height: 1.6;
   font-weight: 400;
-  color: var(--a11y-text-sec);
+  color: var(--c-text);
   background-color: var(--bg-void);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -239,13 +278,218 @@ html[data-depth="explore"] .dl-inline-deep {
 }
 
 /* ═══════════════════════════════════════════
+   PROSE BODY TEXT (Phase-8 typography spec)
+   Spec: 14 px / weight 400 / line-height 1.6 / max-width 60ch / colour
+   #c9d1d9. Applied to the common prose classes used across modules so
+   long descriptions / explanations don't run wider than is comfortable
+   to read. Visual elements (panels, badges) are unaffected.
+   ═══════════════════════════════════════════ */
+.body-text,
+.desc,
+.cx-detail-why,
+.brain-text,
+.brain-tldr {
+  max-width: 60ch;
+  line-height: 1.6;
+  color: var(--c-text);
+}
+
+/* ═══════════════════════════════════════════
+   ENGINE-BLOCK PADDING (Phase-8 spec)
+   Spec: "Engine block ... padding 12px 16px". 12px isn't on the 8-pt
+   grid — honouring the explicit value over the grid for these blocks.
+   Targets the collapsible engine narrative summary + body across all
+   four modules that ship a brain-panel (ApiCalls, AsyncAwait,
+   PromiseChain, EventListeners).
+   ═══════════════════════════════════════════ */
+.brain-collapsible > summary,
+.brain-collapsible .brain-box {
+  padding: 12px 16px !important;
+}
+.brain-collapsible {
+  background: var(--surface-1) !important;
+}
+
+/* ═══════════════════════════════════════════
+   SECONDARY-LABEL OPACITY (Phase-8 spec)
+   Spec: "Secondary labels: 60 % opacity". Applied to label-class
+   elements that are NOT primary headings or data values.
+   ═══════════════════════════════════════════ */
+.secondary-label,
+.heap-count,
+.heap-type,
+.subtitle,
+.desc,
+.cx-stat,
+.examples-label,
+.cs-status-idle,
+.el-status-idle {
+  opacity: 0.6;
+}
+
+/* ═══════════════════════════════════════════
+   TIER-1 PRIMARY PANEL (Phase-3 space-allocation spec)
+   Spec: the module-specific visualisation panel (Tier 1) should occupy
+   ~60 % of the column space, CPU bar (Tier 2) ~30 %, collapsed panels
+   (Tier 3) ~10 %. `.focal-slot--top` wraps each module's topPanel —
+   giving it `flex: 1` lets it absorb whatever vertical space the column
+   has left after fixed-height siblings. `min-height: 320px` guarantees
+   SVG-based visuals always have room to render at full scale.
+   ═══════════════════════════════════════════ */
+.focal-slot--top {
+  flex: 1 1 auto;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+.focal-slot--top > * { flex-shrink: 0; }
+/* Engine narrative (whichever class names a module uses) always sinks
+   to the bottom of the primary-panel column per spec ("Sits below
+   primary panel, not above"). order: 99 wins over default 0 so the
+   block visually relocates without changing DOM order. */
+.focal-slot--top .brain-collapsible,
+.focal-slot--top .brain-details,
+.focal-slot--top .brain-panel { order: 99; }
+
+/* When a Tier-3 panel is collapsed (empty state, chevron only), lock
+   it to the 40 px summary-row height so it can never steal space from
+   the Tier-1 primary. Opening the panel releases the clamp. */
+.collapsible-empty:not([open]) {
+  max-height: 40px;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════
+   COLLAPSIBLE-EMPTY PANEL (Phase-7 spec)
+   Empty panels (HEAP MEMORY when no vars, STDOUT before any console
+   output) collapse to their 40px header row. The header keeps the same
+   min-height in both states so the first datum landing expands the
+   body downward without shifting the surrounding layout.
+   ═══════════════════════════════════════════ */
+.collapsible-empty {
+  display: block;
+  flex-shrink: 0;
+}
+.collapsible-empty > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+.collapsible-empty > summary::-webkit-details-marker { display: none; }
+.collapsible-empty .collapse-chev {
+  margin-left: auto;
+  color: var(--c-text-sec);
+  flex-shrink: 0;
+  transition: transform var(--t-fast) var(--ease-state);
+  opacity: 0.6;
+}
+.collapsible-empty[open] .collapse-chev { transform: rotate(180deg); }
+.collapsible-empty.is-empty {
+  /* Empty state cosmetics: dim the chevron + header so the panel reads
+     as "subordinate / available" per the design-system tier model. */
+  opacity: 0.55;
+}
+.collapsible-empty.is-empty:hover { opacity: 0.85; }
+
+/* ═══════════════════════════════════════════
+   AUTO-ADVANCE PULSE (Phase-5 spec)
+   On first load, ModuleShell schedules a 1.5s timer that auto-runs
+   the visualization and seeks to user-facing step 3. While that timer
+   is pending, the Visualize button gets `.auto-advance-pulse` to
+   announce that something will happen if the user does nothing.
+   ═══════════════════════════════════════════ */
+@keyframes vx-auto-advance-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(122, 162, 247, 0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(122, 162, 247, 0); }
+}
+.auto-advance-pulse {
+  animation: vx-auto-advance-pulse 1.5s var(--ease-state) 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .auto-advance-pulse { animation: none; }
+}
+
+/* ═══════════════════════════════════════════
+   FOCAL DIMMING (per-step active panel)
+   Spec: the panel that answers "what changed this step" stays at full
+   opacity; every other panel drops to 0.35 with a 250ms standard-easing
+   transition. ModuleShell decides which panel is active per step via
+   the `activePanel(step, sd)` prop and applies `.dim` to the rest.
+   ═══════════════════════════════════════════ */
+.dim {
+  opacity: 0.35;
+  transition: opacity var(--t-fast) var(--ease-state);
+  pointer-events: auto;     /* keep clickable so users can still inspect */
+}
+.dim:hover { opacity: 0.75; transition: opacity var(--t-micro) var(--ease-enter); }
+@media (prefers-reduced-motion: reduce) {
+  .dim { transition: none; }
+}
+
+/* Active panel — explicit selector so component <style> blocks that
+   override .heap-card / .out-card opacity inline still get the right
+   value when this class is present. */
+.focal-active {
+  opacity: 1 !important;
+  transition: opacity var(--t-fast) var(--ease-enter);
+}
+
+/* ═══════════════════════════════════════════
+   CHARTJUNK SUPPRESSION (design-system level)
+   Spec calls out subtitles like "where your variables live", "console
+   output", "performance cost", "function depth", "memory changes",
+   "program counter", "current operation" — every panel-subtitle is
+   redundant once the heading itself is present. Hiding the class kills
+   them all in one rule rather than touching each call site.
+   ═══════════════════════════════════════════ */
+.panel-subtitle { display: none !important; }
+
+/* ═══════════════════════════════════════════
+   PANEL HEADERS — Geist Sans 11px uppercase
+   Across all 12 modules the panel headers (HEAP MEMORY, CALL STACK,
+   STDOUT, etc.) are class-named with `-hdr`, `-title`, `*hdr`. Many
+   were originally inline-styled with var(--font-code). Force the UI
+   font here so any header that uses one of these conventional class
+   names automatically follows the design-system spec. Anything that
+   really IS data (variable names, values, code lines) uses
+   var(--font-code) on a more specific selector and overrides this.
+   ═══════════════════════════════════════════ */
+[class$="-hdr"],
+[class$="-title"],
+[class$="-label"]:not(.heap-name):not(.heap-val):not(.cl-text),
+[class~="runtime-hdr"],
+[class~="panel-head"] {
+  font-family: var(--font-ui);
+  letter-spacing: 0.08em;
+}
+
+/* ═══════════════════════════════════════════
+   BORDER-RADIUS CAP
+   Spec says "no border-radius above 6px anywhere". Browsers can't
+   directly cap a property, so we re-declare on the standard panel
+   classes that previously used 8px+. Per-module styles still in
+   force will be brought down in Phase 2.
+   ═══════════════════════════════════════════ */
+.cpu-dash, .heap, .out-card, .cx-card, .heap-box, .heap-card,
+.brain-panel, .runtime-panel, .frames-panel,
+.eq-panel, .pc-panel, .timeline-panel,
+.elements-row > *, .step-narrative {
+  border-radius: var(--r-md);
+  border: none;
+}
+
+/* ═══════════════════════════════════════════
    SHARED MODULE STYLES
    Used by all visual learning modules.
    Per-module accent colors stay in component <style>.
    ═══════════════════════════════════════════ */
 
 /* ── Module shell ── */
-.module { width:100%; height:100%; display:flex; flex-direction:column; padding:14px 18px; gap:10px; overflow:hidden; font-family:'Inter','SF Pro',system-ui,sans-serif; }
+.module { width:100%; height:100%; display:flex; flex-direction:column; padding:var(--sp-2) var(--sp-2); gap:var(--sp-1); overflow:hidden; font-family:var(--font-ui); }
 .top-bar { display:flex; align-items:center; gap:14px; flex-shrink:0; }
 .back-link { font-size:0.75rem; color:rgba(255,255,255,0.45); text-decoration:none; }
 .back-link:hover { color:rgba(255,255,255,0.72); }
@@ -261,8 +505,8 @@ html[data-depth="explore"] .dl-inline-deep {
 .ex-btn:hover { color:rgba(255,255,255,0.88); border-color:rgba(255,255,255,0.30); }
 
 /* ── Main layout ── */
-.main-layout { flex:1; display:flex; gap:14px; min-height:0; overflow:hidden; }
-.code-side { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.main-layout { flex:1; display:flex; gap:var(--sp-2); min-height:0; overflow:hidden; }
+.code-side { flex:1; display:flex; flex-direction:column; gap:var(--sp-1); min-width:0; }
 
 /* ── Panel header ── */
 .panel-head { display:flex; justify-content:space-between; align-items:center; padding:5px 10px; background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:6px 6px 0 0; font-size:0.75rem; color:rgba(255,255,255,0.45); letter-spacing:0.5px; text-transform:uppercase; }
@@ -294,8 +538,14 @@ html[data-depth="explore"] .dl-inline-deep {
 .slider { flex:1; }
 .step-count { font-size:0.7rem; color:rgba(255,255,255,0.45); white-space:nowrap; }
 
-/* ── Visual panel ── */
-.vis-panel { width:480px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; overflow-y:auto; overflow-x:hidden; padding-right:2px; }
+/* ── Visual panel ──
+   Phase-3 Tier-1 spec: primary visualisation panel should absorb the
+   space vacated by the retired 6-panel CPU grid. Widened from 480 → 560
+   and the `.focal-slot--top` wrapper (see collapsible-empty rules below)
+   is set to `flex: 1` so the primary panel stretches vertically to fill
+   whatever space is left after Tier-2 (CPU bar 40 px) and any expanded
+   Tier-3 panels. */
+.vis-panel { width:560px; flex-shrink:0; display:flex; flex-direction:column; gap:var(--sp-1); overflow-y:auto; overflow-x:hidden; padding-right:2px; }
 
 /* ── CPU dashboard ── */
 .cpu-dash { flex-shrink:0; background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:8px; overflow:hidden; }
@@ -305,35 +555,35 @@ html[data-depth="explore"] .dl-inline-deep {
 /* ── Heap / Memory boxes ── */
 .heap { background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:8px; overflow:hidden; flex-shrink:0; }
 .heap-hdr { display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
-.heap-label { font-size:0.72rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
-.heap-count { margin-left:auto; font-size:0.65rem; color:rgba(255,255,255,0.30); font-family:monospace; }
+.heap-label { font-size:11px; color:var(--c-text-sec); font-family:var(--font-ui); letter-spacing:0.08em; font-weight:500; text-transform:uppercase; }
+.heap-count { margin-left:auto; font-size:11px; color:var(--c-text-sec); font-family:var(--font-ui); opacity:0.6; }
 .heap-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; padding:8px; }
 .heap-box { background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:6px; padding:8px; display:flex; flex-direction:column; gap:3px; transition:all 0.3s; }
 .heap-box-hdr { display:flex; justify-content:space-between; align-items:center; }
 .heap-name { font-size:0.8rem; color:var(--a11y-text); font-weight:700; font-family:'Geist Mono','SF Mono',monospace; }
-.heap-type { font-size:0.5rem; font-weight:600; padding:1px 5px; border-radius:3px; background:rgba(255,255,255,0.06); font-family:monospace; }
+.heap-type { font-size:0.42rem; font-weight:600; padding:1px 4px; border-radius:var(--r-sm); background:var(--surface-2); font-family:var(--font-ui); opacity:0.7; }
 .heap-val { font-size:0.85rem; font-weight:700; font-family:'Geist Mono','SF Mono',monospace; }
 
 /* ── Stdout card ── */
 .out-card { background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:8px; overflow:hidden; flex-shrink:0; }
-.out-hdr { display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); font-size:0.72rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+.out-hdr { display:flex; align-items:center; gap:var(--sp-1); padding:var(--sp-1) var(--sp-2); background:var(--surface-2); border-bottom:none; font-size:11px; color:var(--c-text-sec); font-family:var(--font-ui); letter-spacing:0.08em; font-weight:500; text-transform:uppercase; }
 .out-ln { padding:3px 10px; font-size:0.75rem; color:rgba(255,255,255,0.82); font-family:'Geist Mono','SF Mono',monospace; }
 
 /* ── Complexity card ── */
-.cx-card { background:var(--glass-bg); border:var(--glass-border); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border-radius:8px; overflow:hidden; flex-shrink:0; }
-.cx-card-hdr { padding:5px 10px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); }
-.cx-card-title { font-size:0.72rem; color:rgba(255,255,255,0.45); font-family:monospace; letter-spacing:1.5px; font-weight:700; }
+.cx-card { background:var(--surface-1); border:none; border-radius:var(--r-md); overflow:hidden; flex-shrink:0; }
+.cx-card-hdr { padding:var(--sp-1) var(--sp-2); background:var(--surface-2); border-bottom:none; }
+.cx-card-title { font-size:11px; color:var(--c-text-sec); font-family:var(--font-ui); letter-spacing:0.08em; font-weight:500; text-transform:uppercase; }
 .cx-chart { display:flex; align-items:flex-end; gap:4px; height:60px; padding:8px 10px 0; }
 .cx-col { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; }
 .cx-bar { width:100%; border-radius:3px 3px 0 0; min-height:2px; transition:height 0.6s ease, opacity 0.6s ease; }
-.cx-bar-lbl { font-family:monospace; font-size:0.42rem; text-align:center; margin-top:2px; font-weight:600; }
-.cx-detail { padding:8px 10px; border-top:1px solid var(--a11y-border); display:flex; flex-direction:column; gap:4px; }
+.cx-bar-lbl { font-family:var(--font-ui); font-size:0.42rem; text-align:center; margin-top:2px; font-weight:600; }
+.cx-detail { padding:var(--sp-2); border-top:none; display:flex; flex-direction:column; gap:var(--sp-0); }
 .cx-detail-row { display:flex; justify-content:space-between; align-items:center; }
-.cx-detail-label { font-size:0.68rem; color:rgba(255,255,255,0.55); font-family:monospace; }
-.cx-detail-badge { font-size:0.65rem; font-family:monospace; font-weight:800; padding:2px 10px; border-radius:4px; }
-.cx-detail-why { font-size:0.68rem; color:rgba(255,255,255,0.52); line-height:1.5; margin-bottom:6px; }
-.cx-live-stats { display:flex; gap:10px; padding:5px 10px; border-top:1px solid var(--a11y-border); }
-.cx-stat { display:flex; align-items:center; gap:4px; font-size:0.65rem; color:rgba(255,255,255,0.38); font-family:monospace; }
+.cx-detail-label { font-size:11px; color:var(--c-text); font-family:var(--font-ui); }
+.cx-detail-badge { font-size:11px; font-family:var(--font-code); font-weight:600; padding:2px 8px; border-radius:var(--r-sm); }
+.cx-detail-why { font-size:13px; color:var(--c-text-sec); line-height:1.55; margin-bottom:var(--sp-1); }
+.cx-live-stats { display:flex; gap:var(--sp-2); padding:var(--sp-1) var(--sp-2); border-top:none; }
+.cx-stat { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--c-text-sec); font-family:var(--font-ui); }
 
 /* ── Placeholder ── */
 .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:20px; }
@@ -345,9 +595,9 @@ html[data-depth="explore"] .dl-inline-deep {
 
 /* ── Responsive ── */
 @media (max-width: 800px) {
-  .main-layout { flex-direction:column; overflow-y:auto; }
+  .main-layout { flex-direction:column; overflow-y:auto; gap:var(--sp-1); }
   .vis-panel { width:100%; }
-  .module { padding:10px 8px; }
+  .module { padding:var(--sp-1) var(--sp-1); }
   .top-bar { gap:8px; }
   .module h2 { font-size:1.1rem; }
   .desc { font-size:0.58rem; }

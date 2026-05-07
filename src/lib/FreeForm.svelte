@@ -375,6 +375,11 @@ const sum = numbers.reduce(function(acc, num) {
     {examples}
     accent={ACCENT}
     routeKey="free-form"
+    activePanel={(step, sd) => {
+      if (sd?.output?.length > (sd?._prevOutLen ?? 0)) return 'stdout';
+      if (sd?.changed && sd.changed.name) return 'heap';
+      return 'top';
+    }}
     titlePrefix="free"
     titleAccent="Form"
     subtitle="— Paste Any JavaScript"

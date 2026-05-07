@@ -55,6 +55,7 @@
   {examples}
   accent={ACCENT}
   routeKey="function"
+  activePanel={() => 'top'}
   titlePrefix="fn"
   titleAccent="Call"
   subtitle="— Functions"

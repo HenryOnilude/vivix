@@ -48,6 +48,7 @@
   {examples}
   accent={ACCENT}
   routeKey="objects"
+  activePanel={() => 'top'}
   titlePrefix="obj"
   titleAccent="Explorer"
   subtitle="— Objects"

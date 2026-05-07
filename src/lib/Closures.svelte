@@ -80,7 +80,7 @@
   function animateScopeCreate(node, { phase }) {
     function run(p) {
       if (p === 'closure-create') {
-        gsap.fromTo(node, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.5)' });
+        gsap.fromTo(node, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.5)' }); // T_SLOW (already at cap)
       }
     }
     run(phase);
@@ -90,9 +90,10 @@
   function animateScopeCall(node, { phase, accent }) {
     function run(p) {
       if (p === 'closure-call') {
+        // Was 0.8s — capped at 500ms (T_SLOW) per design-system spec.
         gsap.fromTo(node,
           { boxShadow: `0 0 0 2px ${accent}` },
-          { boxShadow: `0 0 0 0px ${accent}00`, duration: 0.8, ease: 'power2.out' }
+          { boxShadow: `0 0 0 0px ${accent}00`, duration: 0.5, ease: 'power2.out' }
         );
       }
     }
@@ -104,11 +105,13 @@
   function animateCaptureRef(node, { phase }) {
     function run(p) {
       if (p === 'closure-create') {
-        gsap.from(node, { opacity: 0, y: -6, duration: 0.55, ease: 'power2.out' });
+        // Was 0.55s — brought down to T_SLOW ceiling.
+        gsap.from(node, { opacity: 0, y: -6, duration: 0.5, ease: 'power2.out' });
       } else if (p === 'closure-call') {
+        // Was 0.9s — capped at 500ms (T_SLOW) per spec.
         gsap.fromTo(node,
           { backgroundColor: `${ACCENT}18` },
-          { backgroundColor: 'transparent', duration: 0.9, ease: 'power2.out' }
+          { backgroundColor: 'transparent', duration: 0.5, ease: 'power2.out' }
         );
       }
     }
@@ -119,15 +122,16 @@
   /** Flash a captured-variable row when the closure reads/writes it */
   function animateCaptureFlash(node, { active, accent }) {
     if (active) {
+      // Was 0.7s on enter and update — capped at 500ms (T_SLOW) per spec.
       gsap.fromTo(node,
         { backgroundColor: `${accent}30`, x: 2 },
-        { backgroundColor: 'transparent', x: 0, duration: 0.7, ease: 'power2.out' }
+        { backgroundColor: 'transparent', x: 0, duration: 0.5, ease: 'power2.out' }
       );
     }
     return { update({ active: a, accent: ac }) {
       if (a) gsap.fromTo(node,
         { backgroundColor: `${ac}30`, x: 2 },
-        { backgroundColor: 'transparent', x: 0, duration: 0.7, ease: 'power2.out' }
+        { backgroundColor: 'transparent', x: 0, duration: 0.5, ease: 'power2.out' }
       );
     }};
   }
@@ -143,6 +147,7 @@
   {examples}
   accent={ACCENT}
   routeKey="closures"
+  activePanel={() => 'top'}
   titlePrefix="closure"
   titleAccent="Scope"
   subtitle="— Closures & Scope"

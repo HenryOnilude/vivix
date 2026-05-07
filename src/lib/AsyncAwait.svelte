@@ -1,7 +1,9 @@
 <script>
+  import TruncText from './TruncText.svelte';
   import ModuleShell from './ModuleShell.svelte';
   import { dc } from './utils.js';
   import { executeAsyncCode, _fv } from './async-executor.js';
+  import { fly } from 'svelte/transition';
 
   const ACCENT = '#cc88ff';
 
@@ -95,6 +97,15 @@
   {#snippet topPanel(sd)}
     {@const suspending = sd.phase === 'await-start' || sd.phase === 'suspended'}
     {@const elState    = _eventLoopState(sd)}
+    <!-- Per-spec step→focal mapping for AsyncAwait:
+           steps 1-3 (synchronous setup / call):       stack
+           steps 4-8 (suspend / event loop pending):   loop
+           steps 9-14 (microtask resume / promise):    micro
+         Implemented via phase prefixes since steps map 1:1 to phases. -->
+    {@const _afocal =
+        (sd.phase === 'await-resume' || sd.phase?.startsWith('promise-') || sd.phase?.startsWith('then-') || sd.phase === 'microtask-run') ? 'micro'
+      : (sd.phase === 'suspended' || sd.phase === 'await-start' || sd.phase === 'promise-all-start') ? 'loop'
+      : 'stack'}
 
     <!-- ── Hero row: Call Stack + Event Loop ────────────────────────────
          These two panels ARE the async/await story — bumped ~3× from
@@ -104,8 +115,8 @@
          bottom of the column, collapsed behind a <details>.
     -->
     <div class="runtime-row runtime-row-hero">
-      <div class="runtime-panel">
-        <div class="runtime-hdr runtime-hdr-hero">
+      <div class="runtime-panel" class:dim={_afocal !== 'stack'} class:focal-active={_afocal === 'stack'}>
+        <div class="runtime-hdr runtime-hdr-hero" title="Call stack — the currently executing function frames. The newest call is on top; when it returns, the frame is popped.">
           <span>Call Stack</span>
           {#if suspending}
             <span class="cs-status cs-status-suspend">⏸ suspending</span>
@@ -136,8 +147,8 @@
         </div>
       </div>
 
-      <div class="runtime-panel">
-        <div class="runtime-hdr runtime-hdr-hero">
+      <div class="runtime-panel" class:dim={_afocal !== 'loop' && _afocal !== 'micro'} class:focal-active={_afocal === 'loop' || _afocal === 'micro'}>
+        <div class="runtime-hdr runtime-hdr-hero" title="Event loop — the JavaScript scheduler that decides what runs next. It only picks a new task when the call stack is empty.">
           <span>Event Loop</span>
           <span class="el-status el-status-{elState.key}">
             <span class="el-dot"></span>{elState.label}
@@ -145,8 +156,10 @@
         </div>
         <div class="event-box event-box-hero">
           {#if sd.eventLoop && sd.eventLoop.length > 0}
-            {#each sd.eventLoop as evt}
-              <div class="event-item event-item-hero">{evt}</div>
+            {#each sd.eventLoop as evt, i (evt)}
+              <div class="event-item event-item-hero"
+                   in:fly={{ y: 16, duration: 250, delay: i * 50 }}
+                   out:fly={{ y: -12, duration: 200 }}>{evt}</div>
             {/each}
           {:else}
             <div class="event-empty event-empty-hero">
@@ -156,20 +169,30 @@
             </div>
           {/if}
           {#if sd.microTasks && sd.microTasks.length > 0}
-            <div class="micro-label micro-label-hero">Microtasks ({sd.microTasks.length})</div>
-            {#each sd.microTasks as mt}
-              <div class="micro-item micro-item-hero">{mt}</div>
+            <div class="micro-label micro-label-hero" class:focal-active={_afocal === 'micro'}>Microtasks ({sd.microTasks.length})</div>
+            {#each sd.microTasks as mt, i (mt)}
+              <div class="micro-item micro-item-hero"
+                   in:fly={{ x: -20, duration: 250, delay: i * 50 }}
+                   out:fly={{ x: 20, duration: 200 }}>{mt}</div>
             {/each}
           {/if}
         </div>
       </div>
     </div>
 
-    <!-- Variables in current frame -->
-    <div class="frames-panel">
-      <div class="runtime-hdr">Frames</div>
-      <div class="frame-box">
-        {#if sd.vars && Object.keys(sd.vars).length > 0}
+    <!-- Variables in current frame — Phase-7 collapsible-empty:
+         when no locals, only the 40px summary row shows. First variable
+         landing auto-opens the panel. -->
+    {@const _hasFrameVars = !!(sd.vars && Object.keys(sd.vars).length > 0)}
+    <details class="frames-panel collapsible-empty" open={_hasFrameVars} class:is-empty={!_hasFrameVars}>
+      <summary class="runtime-hdr" title="Frames — local variables in the currently active stack frame. Updates as functions are entered and exited.">
+        <span>Frames</span>
+        <svg class="collapse-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+          <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </summary>
+      {#if _hasFrameVars}
+        <div class="frame-box">
           {#each Object.entries(sd.vars) as [key, val]}
             <div class="var-row" class:var-flash={sd.highlight === key}>
               <div class="var-left">
@@ -179,17 +202,9 @@
               <span class="var-value" style="color:{_tc(val)}">{_fv(val)}</span>
             </div>
           {/each}
-        {:else}
-          <!-- Silent skeleton: two faint rows signalling where heap
-               variables will land. Replaces the "No variables yet"
-               copy which read as a loading state on step 1. -->
-          <div class="var-skeleton" aria-hidden="true">
-            <div class="var-skeleton-row"></div>
-            <div class="var-skeleton-row"></div>
-          </div>
-        {/if}
-      </div>
-    </div>
+        </div>
+      {/if}
+    </details>
 
     <!-- ── Engine narrative — Deep Dive only, collapsed to 1 line ──────
          Previously appeared ABOVE the call stack / event loop. Moved
@@ -218,7 +233,7 @@
         class:brain-resume ={sd.phase === 'await-resume'}
         class:brain-async  ={sd.phase?.startsWith('async-') || sd.phase?.startsWith('promise-')}
       >
-        <pre class="brain-text">{sd.brain}</pre>
+        <pre class="brain-text"><TruncText text={sd.brain} /></pre>
       </div>
       {#if sd.memLabel}<div class="mem-label">{sd.memLabel}</div>{/if}
     </details>
@@ -432,10 +447,15 @@
   .stack-empty-hero    { padding:18px 12px; font-size:0.8rem; color:rgba(255,255,255,0.45); text-align:center; font-style:italic; font-family:var(--font-code); }
 
   .event-box-hero      { padding:14px 16px; min-height:128px; }
-  .event-item-hero     { font-size:0.92rem; padding:8px 12px; border-radius:6px; margin-bottom:6px; background:rgba(255,204,102,0.08); border:1px solid rgba(255,204,102,0.22); color:#ffcc66; font-weight:600; }
+  /* Phase-spec: event-loop items are async/suspended → purple (#cc88ff,
+     module accent). Travelling motion owned by in:fly in markup. */
+  .event-item-hero     { font-size:0.92rem; padding:8px 12px; border-radius:6px; margin-bottom:6px; background:rgba(204,136,255,0.10); border:1px solid rgba(204,136,255,0.28); color:#cc88ff; font-weight:600; }
   .event-empty-hero    { font-size:0.78rem; padding:14px 6px; color:rgba(255,255,255,0.42); font-style:italic; text-align:center; }
-  .micro-label-hero    { font-size:0.6rem; color:rgba(204,136,255,0.8); text-transform:uppercase; letter-spacing:1.2px; margin:10px 0 6px; font-weight:700; font-family:var(--font-code); }
-  .micro-item-hero     { font-size:0.86rem; padding:7px 11px; border-radius:6px; background:rgba(204,136,255,0.10); border:1px solid rgba(204,136,255,0.28); color:#cc88ff; font-weight:600; margin-bottom:4px; font-family:var(--font-code); }
+  /* Phase-spec: microtasks are active/running (about to fire on resume)
+     → green (#9ece6a, heap accent). Contrast against the purple
+     event-loop items above makes the state-change moment legible. */
+  .micro-label-hero    { font-size:0.6rem; color:rgba(158,206,106,0.85); text-transform:uppercase; letter-spacing:1.2px; margin:10px 0 6px; font-weight:700; font-family:var(--font-code); }
+  .micro-item-hero     { font-size:0.86rem; padding:7px 11px; border-radius:6px; background:rgba(158,206,106,0.10); border:1px solid rgba(158,206,106,0.32); color:#9ece6a; font-weight:600; margin-bottom:4px; font-family:var(--font-code); }
 
   /* Variable frame */
   .frame-box   { padding:8px 10px; }

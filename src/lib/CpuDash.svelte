@@ -143,13 +143,49 @@
 
   let parsed = $derived(parseBrain(sd.brain));
   let info   = $derived(phInfo(sd.phase));
+
+  // ── Slim CPU-bar labels (Phase-1 redesign) ───────────────────────────
+  // Pre-compute the four bar segments here so the template stays flat.
+  let barStep = $derived(total > 0 ? `Step ${step + 1}/${total}` : 'Step —');
+  let barLine = $derived(
+    sd?.lineIndex >= 0 ? `LINE ${sd.lineIndex + 1}`
+    : sd?.phase === 'start' ? 'READY'
+    : 'END'
+  );
+  let barOp = $derived((sd?.phase || 'idle').toUpperCase());
+  let barFrame = $derived.by(() => {
+    if (sd?.frames && sd.frames.length > 0) {
+      const top = sd.frames[sd.frames.length - 1];
+      return `${top.name || 'Global'} · ${Object.keys(top.vars || {}).length} vars`;
+    }
+    return `Global · ${Object.keys(sd?.vars || {}).length} vars`;
+  });
 </script>
 
 <div class="cpu-dash" role="region" aria-label="CPU execution dashboard">
+  <!-- ── 40px horizontal status bar (Tier 2 — contextual) ──────────────
+       Spec: replaces the entire 6-panel CPU grid with one slim line so
+       the visualisation panels above can dominate the screen. Geist
+       Sans 12px, low contrast, separator dot in --c-neutral, step
+       counter slightly emphasised. The legacy .bento / .explain-*
+       markup below is hidden via CSS but kept in the DOM so any prop
+       contract or downstream listener remains untouched.
+
+       Format: [Step 4/9] · [LINE 3] · [DECLARE] · [Global · 3 vars] -->
+  <div class="cpu-bar" aria-label="CPU status">
+    <span class="cpu-bar-step">{barStep}</span>
+    <span class="cpu-bar-sep" aria-hidden="true">·</span>
+    <span class="cpu-bar-cell">{barLine}</span>
+    <span class="cpu-bar-sep" aria-hidden="true">·</span>
+    <span class="cpu-bar-cell">{barOp}</span>
+    <span class="cpu-bar-sep" aria-hidden="true">·</span>
+    <span class="cpu-bar-cell">{barFrame}</span>
+  </div>
+
   <!-- ── Bento grid: dense modular read-out of engine state ─────────────
-       CPU dashboard is progressive-disclosure tier 3 — it only appears
-       at Deep Dive. Learn and Explore keep the panel uncluttered and
-       rely on the module-specific call-stack / heap views instead. -->
+       Hidden via CSS post-redesign — kept in the DOM so the existing
+       prop API + snippet hooks (registers/gauge/stack/moduleVisual)
+       continue to compile against this component without breaking. -->
   <div class="bento dl-deep" style="--ph:{phColor(sd.phase)}">
 
     <!-- CPU chip + operation symbol — anchor cell, tall -->
@@ -776,5 +812,77 @@
     .phase-label    { font-size:0.55rem; }
     .explain-simple { font-size:0.58rem; padding:4px 6px 6px; }
     .explain-body   { font-size:0.5rem; max-height:60px; }
+  }
+  /* ═══════════════════════════════════════════
+     PHASE-1 OVERHAUL — slim 40px CPU bar
+     Replaces the legacy bento grid + explanation panel as the sole
+     visible content of the CpuDash. The bento + explain-panel blocks
+     below are kept in the DOM (for prop / snippet API stability) but
+     hidden so the only thing the user actually sees in this region
+     is the slim status line.
+     ═══════════════════════════════════════════ */
+  .cpu-bar {
+    height: 40px;
+    background: var(--surface-1);
+    border: none;
+    border-radius: var(--r-md);
+    /* Phase-3 Tier-2 "CONTEXTUAL" per design spec: the status bar is
+       contextual metadata, not the hero, so it defaults to 40% opacity.
+       Hover / keyboard focus restores full contrast so users can still
+       inspect step/line/phase/frame detail on demand. */
+    opacity: 0.4;
+    transition: opacity var(--t-fast) var(--ease-state);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 var(--sp-2);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--c-text-sec);
+    line-height: 1;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .cpu-bar:hover,
+  .cpu-bar:focus-within { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .cpu-bar { transition: none; }
+  }
+  .cpu-bar-step {
+    font-size: 13px;
+    color: var(--c-text);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .cpu-bar-cell {
+    color: var(--c-text-sec);
+    font-weight: 400;
+    flex-shrink: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .cpu-bar-sep {
+    color: var(--c-neutral);
+    font-size: 12px;
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  /* Legacy 6-panel grid + explanation panel — hidden post-overhaul.
+     Kept in the DOM so any consumer that still references the
+     registers / gauge / stack / moduleVisual snippet props compiles
+     and binds without runtime errors. */
+  .cpu-dash > .bento,
+  .cpu-dash > .cpu-explain-panel {
+    display: none !important;
+  }
+
+  /* The .cpu-dash wrapper itself loses its background / border so the
+     bar appears as a free-floating 40px line on the page background. */
+  .cpu-dash {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
   }
 </style>

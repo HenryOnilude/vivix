@@ -87,7 +87,8 @@ async function _load() {
     const mod = await import('posthog-js');
     const ph = mod.default || mod;
     ph.init(PH_KEY, {
-      api_host: PH_HOST,
+      api_host: 'https://vivix.dev/ingest',
+      ui_host: 'https://eu.posthog.com',
       capture_pageview: true,
       autocapture: false,
       session_recording: { maskAllInputs: true },

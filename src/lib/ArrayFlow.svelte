@@ -64,6 +64,7 @@
   {examples}
   accent={ACCENT}
   routeKey="array"
+  activePanel={() => 'top'}
   titlePrefix="array"
   titleAccent="Flow"
   subtitle="— Arrays"

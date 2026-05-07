@@ -1,4 +1,5 @@
 <script>
+  import TruncText from './TruncText.svelte';
   import ModuleShell from './ModuleShell.svelte';
   import { executePromiseChainCode } from './promise-chain-executor.js';
 
@@ -78,6 +79,7 @@
   {examples}
   accent={ACCENT}
   routeKey="promise-chain"
+  activePanel={() => 'top'}
   titlePrefix="promise"
   titleAccent="Chain"
   subtitle="— Promise Methods"
@@ -134,7 +136,7 @@
 
       <!-- Microtask queue (right, hero) -->
       <div class="mt-panel-hero">
-        <div class="mt-hero-hdr">
+        <div class="mt-hero-hdr" title="Microtask queue — promise reactions and queueMicrotask callbacks. Drained completely between every macrotask.">
           <span>Microtask Queue</span>
           <span class="mt-hero-count">{(sd.microTasks || []).length} queued</span>
         </div>
@@ -187,7 +189,7 @@
         class:brain-catch={sd.phase === 'catch-run'}
         class:brain-fire={sd.phase === 'then-run'}
       >
-        <pre class="brain-text">{sd.brain}</pre>
+        <pre class="brain-text"><TruncText text={sd.brain} /></pre>
       </div>
     </details>
   {/snippet}

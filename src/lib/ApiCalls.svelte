@@ -1,4 +1,5 @@
 <script>
+  import TruncText from './TruncText.svelte';
   import ModuleShell from './ModuleShell.svelte';
   import { executeApiCallsCode } from './api-calls-executor.js';
 
@@ -73,6 +74,7 @@
   {examples}
   accent={ACCENT}
   routeKey="api-calls"
+  activePanel={() => 'top'}
   titlePrefix="api"
   titleAccent="Calls"
   subtitle="— HTTP & fetch()"
@@ -171,11 +173,13 @@
   {/snippet}
 
   {#snippet topPanel(sd)}
-    <!-- Brain explanation — Deep Dive only.
-         On Learn/Explore the request-timeline + response panels below
-         carry the same information visually. -->
-    <div class="brain-panel dl-deep">
-      <div class="brain-hdr">
+    <!-- Engine narrative — collapsed by default per design-system spec.
+         Shows the first sentence (TL;DR, ≤96 chars) as a single visible
+         line; full sd.brain text expands on tap/click via <details>. -->
+    {@const _brainTldr = (sd.brain || '').split(/\n+/).map(s => s.trim()).find(Boolean) || ''}
+    {@const _brainTldrShort = _brainTldr.length > 96 ? _brainTldr.slice(0, 94) + '…' : _brainTldr}
+    <details class="brain-panel dl-deep brain-collapsible">
+      <summary class="brain-hdr">
         <span class="brain-title">Engine</span>
         {#if sd.phase === 'fetch-call'}
           <span class="api-badge sending">→ sending</span>
@@ -192,15 +196,19 @@
         {:else if sd.phase === 'throw'}
           <span class="api-badge thrown">✕ error</span>
         {/if}
-      </div>
+        <span class="brain-tldr">{_brainTldrShort}</span>
+        <svg class="brain-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+          <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </summary>
       <div class="brain-box"
         class:brain-fetch={sd.phase === 'fetch-call' || sd.phase === 'fetch-response'}
         class:brain-json={sd.phase === 'json-parse' || sd.phase === 'json-done'}
         class:brain-error={sd.phase === 'throw' || sd.phase === 'catch-start'}
       >
-        <pre class="brain-text">{sd.brain}</pre>
+        <pre class="brain-text"><TruncText text={sd.brain} /></pre>
       </div>
-    </div>
+    </details>
 
     <!-- Network requests -->
     <div class="requests-panel">
@@ -240,7 +248,7 @@
     <!-- Call stack + heap vars -->
     <div class="runtime-row">
       <div class="runtime-panel">
-        <div class="runtime-hdr">Call Stack</div>
+        <div class="runtime-hdr" title="Call stack — the active function frames. fetch() suspends the top frame until the network response arrives.">Call Stack</div>
         <div class="stack-box">
           {#if sd.callStack && sd.callStack.length > 0}
             {#each [...sd.callStack].reverse() as frame, i}
@@ -260,7 +268,7 @@
       </div>
 
       <div class="runtime-panel">
-        <div class="runtime-hdr">Heap Variables</div>
+        <div class="runtime-hdr" title="Heap variables — long-lived data: response objects, parsed JSON, and any references your code captured.">Heap Variables</div>
         <div class="vars-box">
           {#if sd.vars && Object.keys(sd.vars).length > 0}
             {#each Object.entries(sd.vars) as [key, val]}
@@ -328,9 +336,14 @@
 </ModuleShell>
 
 <style>
-  .brain-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
-  .brain-hdr   { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
-  .brain-title { font-size: 0.62rem; color: rgba(255,255,255,0.92); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
+  .brain-panel { background: var(--surface-1); border: none; border-radius: var(--r-md); overflow: hidden; flex-shrink: 0; }
+  .brain-collapsible[open] .brain-chev { transform: rotate(180deg); }
+  .brain-collapsible > summary { list-style: none; cursor: pointer; user-select: none; }
+  .brain-collapsible > summary::-webkit-details-marker { display: none; }
+  .brain-hdr   { display: flex; align-items: center; gap: var(--sp-1); padding: var(--sp-1) var(--sp-2); background: var(--surface-2); border-bottom: none; min-height: 36px; }
+  .brain-title { font-size: 11px; color: var(--c-text-sec); font-family: var(--font-ui); letter-spacing: 0.08em; font-weight: 500; text-transform: uppercase; flex-shrink: 0; }
+  .brain-tldr  { flex: 1; min-width: 0; font-size: 12px; color: var(--c-text); font-family: var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.85; }
+  .brain-chev  { color: var(--c-text-sec); flex-shrink: 0; transition: transform var(--t-fast) var(--ease-state); }
   .brain-box   { padding: 8px 10px; transition: background 0.3s; }
   .brain-box.brain-fetch { background: rgba(139,92,246,0.05); }
   .brain-box.brain-json  { background: rgba(74,222,128,0.04); }

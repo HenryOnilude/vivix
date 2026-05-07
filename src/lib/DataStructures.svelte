@@ -36,6 +36,7 @@
   {examples}
   accent={ACCENT}
   routeKey="data-structures"
+  activePanel={() => 'top'}
   titlePrefix="data"
   titleAccent="Struct"
   subtitle="— Data Structures"
