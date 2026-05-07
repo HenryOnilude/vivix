@@ -426,7 +426,7 @@
   .ds-card      { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .ds-card-hdr  { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; flex-wrap:wrap; }
   .ds-card-title { font-size:0.65rem; color:#f472b6; font-family: var(--font-code); font-weight:700; }
-  .ds-card-len  { margin-left:auto; font-size:0.5rem; color:#444; font-family: var(--font-code); }
+  .ds-card-len  { margin-left:auto; font-size:0.5rem; color:var(--c-text-sec); font-family: var(--font-code); }
   .ds-type-badge { font-size:0.45rem; color:#f472b6; background:#f472b614; padding:1px 6px; border-radius:3px; border:1px solid #f472b633; font-family: var(--font-code); letter-spacing:0.3px; }
   .queue-badge   { color:#4ade80; background:#4ade8014; border-color:#4ade8033; }
 
@@ -440,7 +440,7 @@
                       background:#08080e; border:1px solid #1a1a2e; border-radius:5px; transition:all 0.3s; }
   .tower-top        { border-color:#f472b644; background:#f472b60a; box-shadow:0 -2px 0 #f472b633; }
   .tower-hl         { border-color:#f472b688; background:#f472b614; box-shadow:inset 3px 0 0 #f472b6; }
-  .tower-idx        { font-size:0.5rem; color:#333; font-family: var(--font-code); min-width:22px; }
+  .tower-idx        { font-size:0.5rem; color:var(--c-text-sec); font-family: var(--font-code); min-width:22px; }
   .tower-val        { font-size:0.85rem; font-weight:800; font-family: var(--font-code); flex:1; }
   .tower-tag        { font-size:0.5rem; color:#f472b6; font-family: var(--font-code); letter-spacing:0.5px; font-weight:700; }
   .stack-floor      { text-align:center; font-size:0.42rem; color:#2a2a3e; font-family: var(--font-code); letter-spacing:2px; padding:4px 0 0; border-top:2px solid #1a1a2e; margin-top:3px; }
@@ -459,7 +459,7 @@
   .q-front          { border-color:#4ade8044; background:#4ade800a; }
   .q-back           { border-color:#f472b644; background:#f472b60a; }
   .q-hl             { border-color:#f472b688; background:#f472b614; box-shadow:0 0 8px #f472b622; }
-  .q-cell-idx       { font-size:0.42rem; color:#333; font-family: var(--font-code); }
+  .q-cell-idx       { font-size:0.42rem; color:var(--c-text-sec); font-family: var(--font-code); }
   .q-cell-val       { font-size:0.78rem; font-weight:800; font-family: var(--font-code); }
   .q-tag            { font-size:0.38rem; font-family: var(--font-code); letter-spacing:0.3px; font-weight:700; margin-top:2px; }
   .q-tag.front      { color:#4ade80; }
@@ -472,20 +472,20 @@
   .hash-hl       { border-color:#f472b644; background:#f472b60a; box-shadow:inset 3px 0 0 #f472b6; }
   .hash-bucket-num { font-size:0.55rem; color:#2a2a3e; font-family: var(--font-code); min-width:14px; text-align:center; background:#0d0d16; padding:2px 3px; border-radius:3px; }
   .hash-key-box  { display:flex; flex-direction:column; background:#0d0d16; border-radius:4px; padding:2px 6px; min-width:60px; }
-  .hash-key-label { font-size:0.38rem; color:#444; font-family: var(--font-code); letter-spacing:0.5px; text-transform:uppercase; }
+  .hash-key-label { font-size:0.38rem; color:var(--c-text-sec); font-family: var(--font-code); letter-spacing:0.5px; text-transform:uppercase; }
   .hash-key-val   { font-size:0.65rem; color:#e0e0e0; font-family: var(--font-code); font-weight:600; }
-  .hash-arrow    { font-size:0.7rem; color:#333; }
+  .hash-arrow    { font-size:0.7rem; color:var(--c-text-sec); }
   .hash-val-box  { display:flex; flex-direction:column; background:#0d0d16; border-radius:4px; padding:2px 8px; flex:1; border:1px solid; }
-  .hash-val-label { font-size:0.38rem; color:#444; font-family: var(--font-code); letter-spacing:0.5px; text-transform:uppercase; }
+  .hash-val-label { font-size:0.38rem; color:var(--c-text-sec); font-family: var(--font-code); letter-spacing:0.5px; text-transform:uppercase; }
   .hash-val      { font-weight:800; font-family: var(--font-code); }
-  .hash-type-tag { font-size:0.42rem; color:#444; font-family: var(--font-code); }
+  .hash-type-tag { font-size:0.42rem; color:var(--c-text-sec); font-family: var(--font-code); }
 
   /* ── Generic DS elements ──────────────────────────────────────────────── */
   .ds-elements  { display:flex; flex-direction:column; gap:2px; padding:6px 8px; }
   .ds-elem      { display:flex; align-items:center; gap:6px; padding:4px 8px; border-radius:4px; background:#08080e; border:1px solid #1a1a2e; transition:all 0.3s; }
   .ds-elem-top  { border-color:#f472b644; }
   .ds-elem-hl   { background:#f472b612; box-shadow:inset 3px 0 0 #f472b6; }
-  .ds-idx       { font-size:0.5rem; color:#333; font-family: var(--font-code); min-width:20px; }
+  .ds-idx       { font-size:0.5rem; color:var(--c-text-sec); font-family: var(--font-code); min-width:20px; }
   .ds-val       { font-size:0.72rem; font-weight:700; font-family: var(--font-code); }
   .ds-tag       { font-size:0.42rem; color:#f472b6; font-family: var(--font-code); margin-left:auto; letter-spacing:0.5px; }
   .ds-tag.front { color:#4ade80; }
@@ -494,7 +494,7 @@
   /* ── Scalar vars ──────────────────────────────────────────────────────── */
   .scalars-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .scalars-hdr   { display:flex; align-items:center; gap:6px; padding:6px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .scalars-label { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
+  .scalars-label { font-size:0.55rem; color:var(--c-text-sec); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .scalars-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; padding:8px; }
   .sc-box        { background:#08080e; border:1px solid #1a1a2e; border-radius:6px; padding:8px; display:flex; flex-direction:column; gap:3px; transition:all 0.3s; }
   .sc-flash      { border-color:#f472b644; background:#f472b608; box-shadow:inset 3px 0 0 #f472b6; }
@@ -507,5 +507,5 @@
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:var(--c-text-sec); font-family: var(--font-code); }
 </style>

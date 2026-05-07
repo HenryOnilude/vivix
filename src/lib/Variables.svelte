@@ -332,7 +332,7 @@
   .byte-squares  { display:flex; flex-wrap:wrap; gap:1.5px; flex:1; }
   .byte-sq       { width:7px; height:12px; border-radius:1px; transition:all 0.3s; flex-shrink:0; }
   .byte-sq-active { box-shadow:0 0 3px currentColor; }
-  .bytes-overflow { font-size:0.45rem; color:#444; font-family: var(--font-code); align-self:center; margin-left:2px; }
+  .bytes-overflow { font-size:0.45rem; color:var(--c-text-sec); font-family: var(--font-code); align-self:center; margin-left:2px; }
 
   .byterow-size  { font-size:0.55rem; font-family: var(--font-code); font-weight:700; min-width:32px; text-align:right; }
 

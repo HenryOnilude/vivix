@@ -393,12 +393,12 @@
   .obj-card-hdr   { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
   .obj-card-title { font-size:0.65rem; color:#c084fc; font-family: var(--font-code); font-weight:700; }
   .obj-access-badge { font-size:0.45rem; color:#4ade80; background:#4ade8010; padding:1px 5px; border-radius:3px; border:1px solid #4ade8025; }
-  .obj-card-count { margin-left:auto; font-size:0.5rem; color:#444; font-family: var(--font-code); }
+  .obj-card-count { margin-left:auto; font-size:0.5rem; color:var(--c-text-sec); font-family: var(--font-code); }
   .obj-props      { padding:6px 8px; display:flex; flex-direction:column; gap:2px; }
   .obj-prop       { display:flex; align-items:center; gap:6px; padding:4px 8px; border-radius:4px; background:#08080e; border:1px solid #1a1a2e; transition:all 0.3s; }
   .prop-hl        { border-color:#c084fc44; background:#c084fc08; box-shadow:inset 3px 0 0 #c084fc; }
   .prop-key       { font-size:0.7rem; color:#e0e0e0; font-family: var(--font-code); font-weight:600; }
-  .prop-sep       { font-size:0.6rem; color:#333; }
+  .prop-sep       { font-size:0.6rem; color:var(--c-text-sec); }
   .prop-val       { font-size:0.72rem; font-weight:700; font-family: var(--font-code); flex:1; }
   .prop-type      { font-size:0.42rem; padding:1px 4px; border-radius:2px; background:#ffffff08; font-family: var(--font-code); margin-left:auto; }
   .obj-empty      { font-size:0.6rem; color:#2a2a3e; padding:6px; font-family: var(--font-code); }
@@ -406,14 +406,14 @@
   /* Hash map card */
   .hash-card      { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .hash-hdr       { display:flex; align-items:center; gap:6px; padding:5px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .hash-title     { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
-  .hash-subtitle  { margin-left:auto; font-size:0.45rem; color:#333; font-family: var(--font-code); }
+  .hash-title     { font-size:0.55rem; color:var(--c-text-sec); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
+  .hash-subtitle  { margin-left:auto; font-size:0.45rem; color:var(--c-text-sec); font-family: var(--font-code); }
   .hash-svg       { width:100%; height:auto; display:block; padding:4px 0 6px; }
 
   /* Scalars */
   .scalars-card  { background:var(--a11y-bg, #0a0a12); border:1px solid #1a1a2e; border-radius:6px; overflow:hidden; flex-shrink:0; }
   .scalars-hdr   { display:flex; align-items:center; gap:6px; padding:6px 10px; background:#0d0d16; border-bottom:1px solid #1a1a2e; }
-  .scalars-label { font-size:0.55rem; color:#555; font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
+  .scalars-label { font-size:0.55rem; color:var(--c-text-sec); font-family: var(--font-code); letter-spacing:1.5px; font-weight:700; }
   .scalars-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; padding:8px; }
   .sc-box        { background:#08080e; border:1px solid #1a1a2e; border-radius:6px; padding:8px; display:flex; flex-direction:column; gap:3px; transition:all 0.3s; }
   .sc-flash      { border-color:#c084fc44; background:#c084fc08; box-shadow:inset 3px 0 0 #c084fc; }
@@ -426,5 +426,5 @@
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:var(--c-text-sec); font-family: var(--font-code); }
 </style>

@@ -460,7 +460,7 @@
   /* ── Condition expression row ───────────────────────────── */
   .cond-row    { display:flex; align-items:center; gap:6px; padding:7px 12px; background:#0d0d16; border-bottom:1px solid #1a1a2e; flex-wrap:wrap; }
   .cond-expr   { font-size:0.72rem; color:#ccc; font-family: var(--font-code); font-weight:600; }
-  .cond-arrow  { font-size:0.6rem; color:#333; }
+  .cond-arrow  { font-size:0.6rem; color:var(--c-text-sec); }
   .cond-sub    { font-size:0.65rem; color:#888; font-family: var(--font-code); background:#ffffff06; padding:1px 5px; border-radius:3px; }
   .cond-badge  { margin-left:auto; font-size:0.6rem; font-family: var(--font-code); font-weight:700; padding:2px 8px; border-radius:4px; }
   .badge-true  { color:#4ade80; background:#4ade8018; border:1px solid #4ade8033; }
@@ -470,7 +470,7 @@
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:var(--c-text-sec); font-family: var(--font-code); }
 
   /* ── Responsive ─────────────────────────────────────────── */
   @media (max-width: 480px) {

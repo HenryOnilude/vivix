@@ -348,7 +348,7 @@
   .brain-details[open] .brain-toggle::after { content: 'see less'; }
   .brain-tldr    { flex: 1; min-width: 0; font-size: 0.66rem; color: var(--a11y-text-sec, #c8c8d4); font-family: var(--font-code); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .brain-hdr     { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
-  .brain-title   { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
+  .brain-title   { font-size: 0.55rem; color:var(--c-text-sec); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
   .brain-box     { padding: 8px 10px; transition: background 0.3s; }
   .brain-box.brain-dispatch { background: rgba(247,118,142,0.05); }
   .brain-box.brain-handler  { background: rgba(247,118,142,0.07); }
@@ -364,7 +364,7 @@
   /* ── Step narrative (Learn/Explore) ─────────────────────── */
   .step-narrative { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
   .sn-hdr   { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-  .sn-label { font-size: 12px; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
+  .sn-label { font-size: 12px; color:var(--c-text-sec); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; }
   .sn-title { font-size: 14px; color: #f7768e; font-weight: 700; font-family: var(--font-ui); }
   .sn-text  { font-size: 13px; color: rgba(255,255,255,0.78); font-family: var(--font-ui); line-height: 1.55; margin: 0; }
 
@@ -457,14 +457,14 @@
   .l-arrow   { color: rgba(255,255,255,0.4); }
   .l-handler { color: rgba(255,255,255,0.78); }
   .l-once    { font-size: 10px; background: rgba(248,113,113,0.15); color: #f87171; border-radius: 4px; padding: 2px 5px; font-weight: 700; }
-  .el-no-listeners { font-size: 11.5px; color: #555; font-family: var(--font-code); font-style: italic; }
+  .el-no-listeners { font-size: 11.5px; color:var(--c-text-sec); font-family: var(--font-code); font-style: italic; }
 
   .stack-box    { display: flex; flex-direction: column-reverse; gap: 4px; padding: 8px 10px; min-height: 60px; }
   .stack-frame  { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 5px 10px; }
   .stack-frame.stack-top { border-color: rgba(247,118,142,0.3); background: rgba(247,118,142,0.06); }
   .stack-name   { font-size: 13px; font-family: var(--font-code); color: rgba(255,255,255,0.78); }
   .stack-arrow  { font-size: 11px; color: #f7768e; font-weight: 600; }
-  .stack-empty  { font-size: 12px; color: #555; font-family: var(--font-code); font-style: italic; }
+  .stack-empty  { font-size: 12px; color:var(--c-text-sec); font-family: var(--font-code); font-style: italic; }
 
   /* ── Event queue ──────────────────────────────────── */
   .eq-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; overflow: hidden; flex-shrink: 0; }

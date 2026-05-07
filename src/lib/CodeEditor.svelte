@@ -276,7 +276,7 @@
     align-items: center;
     justify-content: center;
     font-size: 0.65rem;
-    color: #333;
+    color:var(--c-text-sec);
     font-family: var(--font-code);
   }
 </style>

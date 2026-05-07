@@ -422,7 +422,7 @@
   .arr-cell      { display:flex; flex-direction:column; align-items:center; background:#08080e; border:1px solid #1a1a2e; border-radius:6px; padding:6px 12px; min-width:58px; transition:all 0.3s; }
   .cell-hl       { border-color:#88aaff66; background:#88aaff12; box-shadow:0 0 10px #88aaff22, inset 0 0 0 1px #88aaff33; }
   .cell-scan     { border-color:#a78bfa22; }
-  .cell-idx      { font-size:0.62rem; color:#555; font-family: var(--font-code); }
+  .cell-idx      { font-size:0.62rem; color:var(--c-text-sec); font-family: var(--font-code); }
   .cell-val      { font-size:0.88rem; font-weight:700; font-family: var(--font-code); }
   .arr-empty     { font-size:0.72rem; color:#2a2a3e; padding:8px; font-family: var(--font-code); }
 
@@ -434,7 +434,7 @@
   .ss-from       { font-size:0.72rem; color:#666; font-family: var(--font-code); }
   .ss-arrow      { font-size:0.72rem; color:#f87171; }
   .ss-to         { font-size:0.72rem; color:#f87171; font-family: var(--font-code); font-weight:700; }
-  .ss-more       { font-size:0.65rem; color:#444; font-family: var(--font-code); align-self:center; }
+  .ss-more       { font-size:0.65rem; color:var(--c-text-sec); font-family: var(--font-code); align-self:center; }
 
   /* Scan panel */
   .scan-panel    { background:#a78bfa08; border-top:1px solid #a78bfa22; padding:8px 12px; }
@@ -460,5 +460,5 @@
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.62rem; color:#555; font-family: var(--font-code); }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.62rem; color:var(--c-text-sec); font-family: var(--font-code); }
 </style>

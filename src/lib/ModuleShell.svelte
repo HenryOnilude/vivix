@@ -1308,7 +1308,7 @@
     transition:border-color 0.15s, background 0.15s, width 0.15s, height 0.15s, box-shadow 0.15s;
   }
   .tl-dot:hover:not(.tl-active) {
-    border-color:#555;
+    border-color:var(--c-text-sec);
     transform:translateX(-50%) scale(1.25);
     z-index:3;
   }
@@ -1329,7 +1329,7 @@
   .tl-icon {
     font-size:0.45rem;
     line-height:1;
-    color:#555;
+    color:var(--c-text-sec);
     pointer-events:none;
   }
   .tl-active .tl-icon { color:var(--a11y-bg, #0a0a0f); font-size:0.6rem; font-weight:700; }

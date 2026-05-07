@@ -591,7 +591,7 @@
   .closure-badge       { margin-left:auto; font-size:0.58rem; color:#00d4aa; letter-spacing:0.3px; padding:1px 6px; border:1px solid #00d4aa44; border-radius:3px; background:#00d4aa10; }
 
   .scope-vars  { display:flex; flex-direction:column; gap:3px; padding:6px 8px; }
-  .scope-empty { padding:5px 10px; font-size:0.65rem; color:#444; font-family: var(--font-code); font-style:italic; }
+  .scope-empty { padding:5px 10px; font-size:0.65rem; color:var(--c-text-sec); font-family: var(--font-code); font-style:italic; }
 
   .scope-var {
     display:flex;
@@ -696,7 +696,7 @@
   .scalar-grid  { display:flex; flex-wrap:wrap; gap:8px; padding:12px 14px; }
   .scalar-item  { display:flex; align-items:center; gap:8px; background:#08080e; border:1px solid #1a1a2e; border-radius:6px; padding:8px 14px; }
   .scalar-name  { font-size:1rem; color:#88aaff; font-family: var(--font-code); font-weight:600; }
-  .scalar-sep   { font-size:0.95rem; color:#555; }
+  .scalar-sep   { font-size:0.95rem; color:var(--c-text-sec); }
   .scalar-val   { font-size:1rem; font-weight:700; font-family: var(--font-code); }
 
   /* ── Complexity live stats ─────────────────────────────────────────────── */

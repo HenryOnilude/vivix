@@ -476,7 +476,7 @@
   .phase-name       { font-size:0.5rem; color:#888; font-family: var(--font-code); text-transform:uppercase; letter-spacing:0.5px; }
   .phase-active .phase-name { color:#ffcc66; font-weight:700; }
   .phase-arrow      { font-size:0.45rem; color:#222; }
-  .phase-arrow-active { color:#555; }
+  .phase-arrow-active { color:var(--c-text-sec); }
 
   /* ── Calculation display (body phase only) ──────── */
   .calc-card   { padding:10px 12px 12px; background:#08080e; border-top:1px solid #1a1a2e; display:flex; flex-direction:column; gap:8px; }
@@ -490,12 +490,12 @@
   /* ── Loop body code card ───────────────────── */
   .body-card  { margin:0; border-top:1px solid #1a1a2e; overflow:hidden; }
   .body-hdr   { display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:var(--a11y-bg, #0a0a12); }
-  .body-label { font-size:0.5rem; color:#555; font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
+  .body-label { font-size:0.5rem; color:var(--c-text-sec); font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
   .body-phase { font-size:0.45rem; font-family: var(--font-code); }
   .body-lines { padding:4px 8px 6px; background:#08080e; }
   .body-line  { display:flex; align-items:center; gap:8px; padding:2px 4px; border-radius:3px; opacity:0.4; transition:opacity 0.3s, background 0.3s; }
   .body-line-active { opacity:1; background:#ffcc6608; }
-  .body-ln    { font-size:12px; color:#555; font-family: var(--font-code); min-width:16px; text-align:right; }
+  .body-ln    { font-size:12px; color:var(--c-text-sec); font-family: var(--font-code); min-width:16px; text-align:right; }
   .body-code  { font-size:14px; color:#cfcfcf; font-family: var(--font-code); }
   .body-line-active .body-code { color:#ffcc66; }
 
@@ -503,7 +503,7 @@
   .ph-svg  { width:360px; height:auto; opacity:1; }
   .ph-text { font-size:0.78rem; color:rgba(255,255,255,0.45); text-align:center; }
 
-  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:#444; font-family: var(--font-code); }
+  .cx-s { display:flex; align-items:center; gap:4px; font-size:0.55rem; color:var(--c-text-sec); font-family: var(--font-code); }
 
   @media (max-width: 480px) {
     .phase-row  { padding:4px 6px; gap:2px; }

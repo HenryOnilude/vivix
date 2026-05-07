@@ -256,7 +256,7 @@
   .brain-summary       { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid transparent; cursor: pointer; list-style: none; user-select: none; }
   .brain-summary::-webkit-details-marker { display:none; }
   .brain-details[open] .brain-summary { border-bottom-color: var(--a11y-border); }
-  .brain-title         { font-size: 0.55rem; color: #555; font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
+  .brain-title         { font-size: 0.55rem; color:var(--c-text-sec); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
   .brain-tldr          { flex: 1; min-width: 0; font-size: 0.66rem; color: var(--a11y-text-sec, #c8c8d4); font-family: var(--font-code); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .brain-toggle        { font-size: 0.55rem; color: var(--acc, #e0af68); font-family: var(--font-code); letter-spacing: 0.6px; text-transform: uppercase; flex-shrink: 0; }
   .brain-box           { padding: 8px 10px; transition: background 0.3s; }
