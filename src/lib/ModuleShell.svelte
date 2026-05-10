@@ -1758,12 +1758,18 @@
   /* ═══════════════════════════════════════════════════════════════════
      PROGRESSIVE REVEAL — opt-in via `progressiveReveal` prop.
      Driven entirely by the `[data-pr-step]` attribute on `.mod`.
-     When the attribute is absent (every module except varStore today),
-     none of these rules match and behaviour is identical to before.
 
-     Reveal map (1-indexed step → which panels become visible):
+     Hidden panels use `display: none` so they vanish from the flex
+     column entirely — no leftover gap, no reserved grid row. Two
+     elements use opacity transitions because they need a smooth
+     visual entry/exit:
+       • Engine Startup card — dims to 40% at step 2 then leaves
+       • MODULE (V8) cell    — fades in at step 4 (the brief's "gentle
+                                fade over 350ms" moment)
+
+     Reveal map (1-indexed step → which panels are visible):
        1   Engine Startup only
-       2   + CPU slim bar + STACK cell  (Engine Startup dims to 40%)
+       2   + CPU slim bar + STACK cell  (Engine Startup dimmed)
        3   + HEAP MEMORY + MEMORY MAP + WRITES/PC/OP cells
        4   + MODULE cell (V8 storage decision) — gentle fade-in
        5   + COMPLEXITY ANALYSIS
@@ -1774,85 +1780,49 @@
     background: color-mix(in srgb, var(--acc, #9ece6a) 4%, var(--elevation-surface, #161b22));
     border-radius: 6px;
     overflow: hidden;
-    padding: 12px 16px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 220px;
-    transition:
-      opacity 350ms cubic-bezier(0, 0, 0.2, 1),
-      max-height 350ms cubic-bezier(0, 0, 0.2, 1),
-      padding 350ms cubic-bezier(0, 0, 0.2, 1),
-      margin 350ms cubic-bezier(0, 0, 0.2, 1);
+    transition: opacity 350ms cubic-bezier(0, 0, 0.2, 1);
   }
 
-  /* Universal transition for all reveal-target panels. The transition
-     itself does no work — it only takes effect when one of the rules
-     below changes opacity/max-height. */
-  .mod[data-pr-step] :global(.cpu-dash),
-  .mod[data-pr-step] :global(.cpu-bar),
-  .mod[data-pr-step] :global(.bento),
-  .mod[data-pr-step] :global(.cell-pc),
-  .mod[data-pr-step] :global(.cell-op),
-  .mod[data-pr-step] :global(.cell-writes),
-  .mod[data-pr-step] :global(.cell-stack),
-  .mod[data-pr-step] :global(.cell-module),
-  .mod[data-pr-step] .heap-card,
-  .mod[data-pr-step] .bottom-panel-wrap,
-  .mod[data-pr-step] .out-card,
-  .mod[data-pr-step] .cx-card {
-    transition:
-      opacity 350ms cubic-bezier(0, 0, 0.2, 1),
-      max-height 350ms cubic-bezier(0, 0, 0.2, 1),
-      padding 350ms cubic-bezier(0, 0, 0.2, 1),
-      margin 350ms cubic-bezier(0, 0, 0.2, 1),
-      border-color 350ms cubic-bezier(0, 0, 0.2, 1);
-    max-height: 2000px; /* large fallback so transitions animate */
+  /* MODULE cell smooth fade-in (the unique educational moment per brief). */
+  .mod[data-pr-step] :global(.cell-module) {
+    transition: opacity 350ms cubic-bezier(0, 0, 0.2, 1);
   }
 
-  /* Helper: full collapse — opacity 0 and zero height, no overflow. */
+  /* ── STEP 1 ── Engine Startup only ───────────────────────────────── */
   .mod[data-pr-step="1"] :global(.cpu-dash),
   .mod[data-pr-step="1"] .heap-card,
   .mod[data-pr-step="1"] .bottom-panel-wrap,
   .mod[data-pr-step="1"] .out-card,
   .mod[data-pr-step="1"] .cx-card {
-    opacity: 0;
-    max-height: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    border: none;
-    pointer-events: none;
+    display: none;
   }
 
-  /* STEP 2: CPU bar + STACK cell on. Other bento cells + heap/stdout/cx off.
-     Engine Startup dims to 40% but stays in flow. */
+  /* ── STEP 2 ── + CPU bar + STACK cell; Engine Startup dims to 40% ── */
   .mod[data-pr-step="2"] .engine-startup-card {
     opacity: 0.4;
   }
   .mod[data-pr-step="2"] :global(.cell-pc),
   .mod[data-pr-step="2"] :global(.cell-op),
   .mod[data-pr-step="2"] :global(.cell-writes),
-  .mod[data-pr-step="2"] :global(.cell-module) {
-    opacity: 0;
-    pointer-events: none;
+  .mod[data-pr-step="2"] :global(.cell-module),
+  .mod[data-pr-step="2"] :global(.cell-hint) {
+    display: none;
   }
   .mod[data-pr-step="2"] .heap-card,
   .mod[data-pr-step="2"] .bottom-panel-wrap,
   .mod[data-pr-step="2"] .out-card,
   .mod[data-pr-step="2"] .cx-card {
-    opacity: 0;
-    max-height: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    border: none;
-    pointer-events: none;
+    display: none;
   }
 
-  /* STEP 3: HEAP + MEMORY MAP arrive, plus WRITES/PC/OP. MODULE + CX still off.
-     Engine Startup retires. */
+  /* ── STEP 3 ── + HEAP MEMORY + MEMORY MAP + WRITES/PC/OP ─────────── */
+  /* Engine Startup retires from step 3 onward. */
   .mod[data-pr-step="3"] .engine-startup-card,
   .mod[data-pr-step="4"] .engine-startup-card,
   .mod[data-pr-step="5"] .engine-startup-card,
@@ -1860,12 +1830,7 @@
   .mod[data-pr-step="7"] .engine-startup-card,
   .mod[data-pr-step="8"] .engine-startup-card,
   .mod[data-pr-step="9"] .engine-startup-card {
-    opacity: 0;
-    max-height: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    pointer-events: none;
+    display: none;
   }
   .mod[data-pr-step="3"] :global(.cell-module) {
     opacity: 0;
@@ -1873,31 +1838,18 @@
   }
   .mod[data-pr-step="3"] .out-card,
   .mod[data-pr-step="3"] .cx-card {
-    opacity: 0;
-    max-height: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    border: none;
-    pointer-events: none;
+    display: none;
   }
 
-  /* STEP 4: MODULE cell fades in (the unique educational moment).
-     CX still hidden. */
+  /* ── STEP 4 ── MODULE cell fades in (smooth 350ms) ───────────────── */
   .mod[data-pr-step="4"] :global(.cell-module) {
     opacity: 1;
   }
   .mod[data-pr-step="4"] .out-card,
   .mod[data-pr-step="4"] .cx-card {
-    opacity: 0;
-    max-height: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    border: none;
-    pointer-events: none;
+    display: none;
   }
 
-  /* STEP 5+: COMPLEXITY ANALYSIS visible. Everything on. */
+  /* ── STEP 5+ ── COMPLEXITY ANALYSIS visible. Everything on. ──────── */
   /* (No overrides needed — default panel styles apply.) */
 </style>
