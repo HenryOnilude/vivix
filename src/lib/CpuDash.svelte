@@ -868,15 +868,6 @@
     user-select: none;
   }
 
-  /* Legacy 6-panel grid + explanation panel — hidden post-overhaul.
-     Kept in the DOM so any consumer that still references the
-     registers / gauge / stack / moduleVisual snippet props compiles
-     and binds without runtime errors. */
-  .cpu-dash > .bento,
-  .cpu-dash > .cpu-explain-panel {
-    display: none !important;
-  }
-
   /* The .cpu-dash wrapper itself loses its background / border so the
      bar appears as a free-floating 40px line on the page background. */
   .cpu-dash {

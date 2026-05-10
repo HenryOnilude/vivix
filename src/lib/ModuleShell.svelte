@@ -110,6 +110,13 @@
      *  Default heuristic: stdout when output just grew, heap when a
      *  variable just changed, otherwise the module-specific top panel. */
     activePanel = undefined,
+
+    /** Opt-in progressive-reveal driver. When `true`, the outer `.mod`
+     *  container gets a `data-pr-step={1..N}` attribute that pure-CSS
+     *  rules can key off to fade panels in step-by-step. Other modules
+     *  leave this `false` and see no behavioural change. Currently only
+     *  varStore uses this hook (see Variables.svelte for the reveal map). */
+    progressiveReveal = false,
   } = $props();
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -185,6 +192,14 @@
    *  explicit `activePanel(step, sd)` mapping; if not, fall back to a
    *  general heuristic that biases to the panel which most-recently
    *  changed. Resolves to one of: 'top' | 'heap' | 'stdout' | 'engine'. */
+  // Progressive-reveal driver. Emits 1-indexed step counts (1, 2, 3 …) only
+  // when `progressiveReveal` is on AND a run is in progress. Otherwise null,
+  // which Svelte translates into an absent `data-pr-step` attribute — meaning
+  // the CSS rules below never match and the module behaves exactly as before.
+  let _prStep = $derived(
+    progressiveReveal && hasRun && step >= 0 ? step + 1 : null
+  );
+
   let _focal = $derived.by(() => {
     if (!sd) return 'top';
     if (typeof activePanel === 'function') {
@@ -689,7 +704,8 @@
   }
 </script>
 
-<div class="mod" role="main" aria-label="{titlePrefix}{titleAccent} learning module">
+<div class="mod" role="main" aria-label="{titlePrefix}{titleAccent} learning module"
+     data-pr-step={_prStep}>
   <!-- Header -->
   <header class="hdr">
     <a href="#/" class="back" aria-label="Back to all modules">← modules</a>
@@ -855,6 +871,18 @@
     <div class="vis-panel" class:mob-hidden={hasRun && mobileTab !== 'visual'}>
       {#if sd}
 
+        <!-- Engine Startup card (progressive-reveal only).
+             Re-renders the module's pre-Visualize placeholder inside a
+             dedicated wrapper at step 1 so the user starts with the
+             Engine Startup diagram and panels can then arrive one by
+             one. The wrapper is dimmed at step 2 and hidden from step 3
+             onward via pure CSS keyed off `[data-pr-step]`. -->
+        {#if progressiveReveal && placeholder}
+          <div class="engine-startup-card" aria-hidden="true">
+            {@render placeholder()}
+          </div>
+        {/if}
+
         <!-- CPU dashboard -->
         {#key step}
           <CpuDash
@@ -940,8 +968,14 @@
           {/if}
         </details>
 
-        <!-- Module-specific content below the heap (e.g. byte map) -->
-        {#if bottomPanel}{@render bottomPanel(sd)}{/if}
+        <!-- Module-specific content below the heap (e.g. byte map).
+             Wrapped so progressive-reveal CSS can target it as a single
+             unit. `display: contents` (set on the wrapper) preserves the
+             existing flex layout when reveal is off — other modules see
+             zero behavioural change. -->
+        {#if bottomPanel}
+          <div class="bottom-panel-wrap">{@render bottomPanel(sd)}</div>
+        {/if}
 
         <!-- Phase-7 collapse: STDOUT folds to its 40px header row when
              no console output has been produced. First console.log
@@ -1720,4 +1754,150 @@
     .cx-chart   { height:36px; }
     .cb         { padding:5px 8px; font-size:0.65rem; min-height:36px; min-width:36px; }
   }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     PROGRESSIVE REVEAL — opt-in via `progressiveReveal` prop.
+     Driven entirely by the `[data-pr-step]` attribute on `.mod`.
+     When the attribute is absent (every module except varStore today),
+     none of these rules match and behaviour is identical to before.
+
+     Reveal map (1-indexed step → which panels become visible):
+       1   Engine Startup only
+       2   + CPU slim bar + STACK cell  (Engine Startup dims to 40%)
+       3   + HEAP MEMORY + MEMORY MAP + WRITES/PC/OP cells
+       4   + MODULE cell (V8 storage decision) — gentle fade-in
+       5   + COMPLEXITY ANALYSIS
+     ═══════════════════════════════════════════════════════════════════ */
+
+  /* Engine Startup card — only rendered when progressiveReveal is on. */
+  .engine-startup-card {
+    background: color-mix(in srgb, var(--acc, #9ece6a) 4%, var(--elevation-surface, #161b22));
+    border-radius: 6px;
+    overflow: hidden;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    transition:
+      opacity 350ms cubic-bezier(0, 0, 0.2, 1),
+      max-height 350ms cubic-bezier(0, 0, 0.2, 1),
+      padding 350ms cubic-bezier(0, 0, 0.2, 1),
+      margin 350ms cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  /* Universal transition for all reveal-target panels. The transition
+     itself does no work — it only takes effect when one of the rules
+     below changes opacity/max-height. */
+  .mod[data-pr-step] :global(.cpu-dash),
+  .mod[data-pr-step] :global(.cpu-bar),
+  .mod[data-pr-step] :global(.bento),
+  .mod[data-pr-step] :global(.cell-pc),
+  .mod[data-pr-step] :global(.cell-op),
+  .mod[data-pr-step] :global(.cell-writes),
+  .mod[data-pr-step] :global(.cell-stack),
+  .mod[data-pr-step] :global(.cell-module),
+  .mod[data-pr-step] .heap-card,
+  .mod[data-pr-step] .bottom-panel-wrap,
+  .mod[data-pr-step] .out-card,
+  .mod[data-pr-step] .cx-card {
+    transition:
+      opacity 350ms cubic-bezier(0, 0, 0.2, 1),
+      max-height 350ms cubic-bezier(0, 0, 0.2, 1),
+      padding 350ms cubic-bezier(0, 0, 0.2, 1),
+      margin 350ms cubic-bezier(0, 0, 0.2, 1),
+      border-color 350ms cubic-bezier(0, 0, 0.2, 1);
+    max-height: 2000px; /* large fallback so transitions animate */
+  }
+
+  /* Helper: full collapse — opacity 0 and zero height, no overflow. */
+  .mod[data-pr-step="1"] :global(.cpu-dash),
+  .mod[data-pr-step="1"] .heap-card,
+  .mod[data-pr-step="1"] .bottom-panel-wrap,
+  .mod[data-pr-step="1"] .out-card,
+  .mod[data-pr-step="1"] .cx-card {
+    opacity: 0;
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: none;
+    pointer-events: none;
+  }
+
+  /* STEP 2: CPU bar + STACK cell on. Other bento cells + heap/stdout/cx off.
+     Engine Startup dims to 40% but stays in flow. */
+  .mod[data-pr-step="2"] .engine-startup-card {
+    opacity: 0.4;
+  }
+  .mod[data-pr-step="2"] :global(.cell-pc),
+  .mod[data-pr-step="2"] :global(.cell-op),
+  .mod[data-pr-step="2"] :global(.cell-writes),
+  .mod[data-pr-step="2"] :global(.cell-module) {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .mod[data-pr-step="2"] .heap-card,
+  .mod[data-pr-step="2"] .bottom-panel-wrap,
+  .mod[data-pr-step="2"] .out-card,
+  .mod[data-pr-step="2"] .cx-card {
+    opacity: 0;
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: none;
+    pointer-events: none;
+  }
+
+  /* STEP 3: HEAP + MEMORY MAP arrive, plus WRITES/PC/OP. MODULE + CX still off.
+     Engine Startup retires. */
+  .mod[data-pr-step="3"] .engine-startup-card,
+  .mod[data-pr-step="4"] .engine-startup-card,
+  .mod[data-pr-step="5"] .engine-startup-card,
+  .mod[data-pr-step="6"] .engine-startup-card,
+  .mod[data-pr-step="7"] .engine-startup-card,
+  .mod[data-pr-step="8"] .engine-startup-card,
+  .mod[data-pr-step="9"] .engine-startup-card {
+    opacity: 0;
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .mod[data-pr-step="3"] :global(.cell-module) {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .mod[data-pr-step="3"] .out-card,
+  .mod[data-pr-step="3"] .cx-card {
+    opacity: 0;
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: none;
+    pointer-events: none;
+  }
+
+  /* STEP 4: MODULE cell fades in (the unique educational moment).
+     CX still hidden. */
+  .mod[data-pr-step="4"] :global(.cell-module) {
+    opacity: 1;
+  }
+  .mod[data-pr-step="4"] .out-card,
+  .mod[data-pr-step="4"] .cx-card {
+    opacity: 0;
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: none;
+    pointer-events: none;
+  }
+
+  /* STEP 5+: COMPLEXITY ANALYSIS visible. Everything on. */
+  /* (No overrides needed — default panel styles apply.) */
 </style>

@@ -64,6 +64,7 @@
   dataFlow
   interpreterOptions={{ trackVar: true }}
   moduleCaption="V8's storage decision for each variable — stack-inline (SMI) vs heap-boxed (HeapNumber, SeqString, JSObject)"
+  progressiveReveal
 >
 
   <!-- Memory-layout visual: stack frame on left, heap region on right.
