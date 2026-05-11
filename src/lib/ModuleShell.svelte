@@ -1793,64 +1793,53 @@
   }
 
   /* MODULE cell smooth fade-in (the unique educational moment per brief). */
-  .mod[data-pr-step] :global(.cell-module) {
+  :global(.mod[data-pr-step] .cell-module) {
+    transition: opacity 350ms cubic-bezier(0, 0, 0.2, 1);
+  }
+  :global(.mod[data-pr-step] .cpu-explain-panel) {
     transition: opacity 350ms cubic-bezier(0, 0, 0.2, 1);
   }
 
   /* ── STEP 1 ── Engine Startup only ───────────────────────────────── */
-  .mod[data-pr-step="1"] :global(.cpu-dash),
-  .mod[data-pr-step="1"] .heap-card,
-  .mod[data-pr-step="1"] .bottom-panel-wrap,
-  .mod[data-pr-step="1"] .out-card,
-  .mod[data-pr-step="1"] .cx-card {
-    display: none;
+  :global(.mod[data-pr-step="1"] .cpu-dash),
+  :global(.mod[data-pr-step="1"] .heap-card),
+  :global(.mod[data-pr-step="1"] .bottom-panel-wrap),
+  :global(.mod[data-pr-step="1"] .out-card),
+  :global(.mod[data-pr-step="1"] .cx-card) {
+    display: none !important;
   }
 
   /* ── STEP 2 ── + CPU bar + STACK cell; Engine Startup dims to 40% ── */
-  .mod[data-pr-step="2"] .engine-startup-card {
+  :global(.mod[data-pr-step="2"] .engine-startup-card) {
     opacity: 0.4;
   }
-  .mod[data-pr-step="2"] :global(.cell-pc),
-  .mod[data-pr-step="2"] :global(.cell-op),
-  .mod[data-pr-step="2"] :global(.cell-writes),
-  .mod[data-pr-step="2"] :global(.cell-module),
-  .mod[data-pr-step="2"] :global(.cell-hint) {
-    display: none;
-  }
-  .mod[data-pr-step="2"] .heap-card,
-  .mod[data-pr-step="2"] .bottom-panel-wrap,
-  .mod[data-pr-step="2"] .out-card,
-  .mod[data-pr-step="2"] .cx-card {
-    display: none;
+  :global(.mod[data-pr-step="2"] .cell-pc),
+  :global(.mod[data-pr-step="2"] .cell-op),
+  :global(.mod[data-pr-step="2"] .cell-writes),
+  :global(.mod[data-pr-step="2"] .cell-module),
+  :global(.mod[data-pr-step="2"] .cell-hint),
+  :global(.mod[data-pr-step="2"] .cpu-explain-panel),
+  :global(.mod[data-pr-step="2"] .heap-card),
+  :global(.mod[data-pr-step="2"] .bottom-panel-wrap),
+  :global(.mod[data-pr-step="2"] .out-card),
+  :global(.mod[data-pr-step="2"] .cx-card) {
+    display: none !important;
   }
 
   /* ── STEP 3 ── + HEAP MEMORY + MEMORY MAP + WRITES/PC/OP ─────────── */
-  /* Engine Startup retires from step 3 onward. */
-  .mod[data-pr-step="3"] .engine-startup-card,
-  .mod[data-pr-step="4"] .engine-startup-card,
-  .mod[data-pr-step="5"] .engine-startup-card,
-  .mod[data-pr-step="6"] .engine-startup-card,
-  .mod[data-pr-step="7"] .engine-startup-card,
-  .mod[data-pr-step="8"] .engine-startup-card,
-  .mod[data-pr-step="9"] .engine-startup-card {
-    display: none;
+  :global(.mod[data-pr-step="3"] .cell-module) {
+    display: none !important;
   }
-  .mod[data-pr-step="3"] :global(.cell-module) {
-    opacity: 0;
-    pointer-events: none;
-  }
-  .mod[data-pr-step="3"] .out-card,
-  .mod[data-pr-step="3"] .cx-card {
-    display: none;
+  :global(.mod[data-pr-step="3"] .out-card),
+  :global(.mod[data-pr-step="3"] .cx-card) {
+    display: none !important;
   }
 
   /* ── STEP 4 ── MODULE cell fades in (smooth 350ms) ───────────────── */
-  .mod[data-pr-step="4"] :global(.cell-module) {
-    opacity: 1;
-  }
-  .mod[data-pr-step="4"] .out-card,
-  .mod[data-pr-step="4"] .cx-card {
-    display: none;
+  /* (cell-module is now visible via default — no override needed.) */
+  :global(.mod[data-pr-step="4"] .out-card),
+  :global(.mod[data-pr-step="4"] .cx-card) {
+    display: none !important;
   }
 
   /* ── STEP 5+ ── COMPLEXITY ANALYSIS visible. Everything on. ──────── */
