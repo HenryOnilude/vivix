@@ -76,14 +76,15 @@
     {@const entries = Object.entries(sd.vars || {})}
     {@const active  = sd.highlight}
     {@const W = 520}
-    {@const H = 110}
+    {@const H = 140}
+    {@const boxH = 88}
     {@const stackX = 6}
     {@const stackW = 220}
     {@const heapX  = stackX + stackW + 32}
     {@const heapW  = W - heapX - 6}
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- STACK region -->
-      <rect x={stackX} y="14" width={stackW} height={H - 22} rx="6"
+      <rect x={stackX} y="14" width={stackW} height={boxH} rx="6"
         fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
       <text x={stackX + 8} y="10" fill="#e2e8f0" font-size="7.5" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">STACK FRAME</text>
@@ -91,15 +92,16 @@
         font-family="'Geist Mono', monospace">inline tagged pointers</text>
 
       <!-- HEAP region -->
-      <rect x={heapX} y="14" width={heapW} height={H - 22} rx="6"
+      <rect x={heapX} y="14" width={heapW} height={boxH} rx="6"
         fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
       <text x={heapX + 8} y="10" fill="#e2e8f0" font-size="7.5" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">HEAP</text>
       <text x={heapX + heapW - 8} y="10" text-anchor="end" fill="#94a3b8" font-size="6.5"
         font-family="'Geist Mono', monospace">boxed objects</text>
 
-      <!-- Divider gap arrow -->
-      <line x1={stackX + stackW + 6} y1={H/2} x2={heapX - 6} y2={H/2}
+      <!-- Divider gap arrow — sits at the vertical centre of the boxes,
+           not the SVG (H grew to leave room for the caption below). -->
+      <line x1={stackX + stackW + 6} y1={14 + boxH/2} x2={heapX - 6} y2={14 + boxH/2}
         stroke="#334155" stroke-width="1" stroke-dasharray="2 2"/>
 
       {#if entries.length === 0}
@@ -158,10 +160,14 @@
         {/each}
       {/if}
 
-      <!-- Active variable's "why" caption — the depth payoff -->
+      <!-- Active variable's "why" caption — the depth payoff.
+           Sits in the dedicated whitespace band below the boxes (H was
+           extended from 110 to 140 specifically to give this caption
+           proper breathing room rather than cramming it against the
+           bottom edge of the active row). -->
       {#if active && sd.vars && active in sd.vars}
         {@const c = classify(sd.vars[active])}
-        <text x={W/2} y={H - 4} text-anchor="middle" fill={c.color} font-size="8"
+        <text x={W/2} y={H - 14} text-anchor="middle" fill={c.color} font-size="9"
           font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.3">
           {active} → {c.why}
         </text>
