@@ -875,9 +875,12 @@
              Re-renders the module's pre-Visualize placeholder inside a
              dedicated wrapper at step 1 so the user starts with the
              Engine Startup diagram and panels can then arrive one by
-             one. The wrapper is dimmed at step 2 and hidden from step 3
-             onward via pure CSS keyed off `[data-pr-step]`. -->
-        {#if progressiveReveal && placeholder}
+             one. Conditionally rendered for steps 1-2 only (step <= 1
+             in 0-indexed terms): visible at step 1, dimmed to 40% at
+             step 2 via CSS, then removed from the DOM entirely from
+             step 3 onward so its 220px min-height can't reserve any
+             phantom layout space. -->
+        {#if progressiveReveal && placeholder && step <= 1}
           <div class="engine-startup-card" aria-hidden="true">
             {@render placeholder()}
           </div>
