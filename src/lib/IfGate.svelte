@@ -273,14 +273,16 @@
           </div>
 
           <!-- ── Enhanced SVG flowchart ─────────────────────────────── -->
-          <!-- Explicit aspect-ratio locks the rendered height to the
-               viewBox proportions. Without it, `height: auto` can leave
-               the SVG sized at the browser's intrinsic SVG fallback
-               (150 CSS px), pushing the IF/ELSE blocks at the bottom of
-               the viewBox to render past the .branch-card box and
-               visually overlap the HEAP MEMORY card stacked below. -->
-          <svg viewBox="0 0 300 {svgH}" class="branch-svg"
-               style="aspect-ratio: 300 / {svgH};"
+          <!-- Explicit width/height attributes give the SVG element a
+               concrete intrinsic aspect ratio. The CSS rule
+               `.branch-svg { width:100%; height:auto }` then scales the
+               element proportionally inside `.branch-card`. (The
+               primary fix for the overlap with the heap card lives in
+               app.css — `.focal-slot--top` must use `flex-shrink: 0`
+               so the slot expands to fit its taller content instead of
+               being squeezed by the outer vis-panel flex column.) -->
+          <svg viewBox="0 0 300 {svgH}" width="300" height={svgH}
+               class="branch-svg"
                preserveAspectRatio="xMidYMid meet">
             <defs>
               <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">

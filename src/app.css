@@ -337,7 +337,14 @@ html[data-depth="explore"] .dl-inline-deep {
    SVG-based visuals always have room to render at full scale.
    ═══════════════════════════════════════════ */
 .focal-slot--top {
-  flex: 1 1 auto;
+  /* `flex-shrink: 0` is critical: the inner .branch-card / topPanel
+     content has `flex-shrink: 0` too, so if this slot were allowed to
+     shrink it would clip its own children, and they would overflow
+     downward onto the next vis-panel sibling (the heap card). Keeping
+     shrink at 0 makes the slot expand to fit its content; `flex-grow:
+     1` still lets it absorb spare vertical space when content is
+     short, matching the Phase-3 Tier-1 space-allocation spec. */
+  flex: 1 0 auto;
   min-height: 320px;
   display: flex;
   flex-direction: column;
