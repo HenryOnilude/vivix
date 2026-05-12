@@ -400,50 +400,50 @@ const sum = numbers.reduce(function(acc, num) {
       {@const isLLM = hasBrain && !patternId}
       {@const status = patternId ? 'matched' : isLLM ? 'ai-narrated' : 'scanning'}
       {@const W = 520}
-      {@const H = 110}
+      {@const H = 160}
       {@const statusColor = patternId ? ACCENT : isLLM ? '#a78bfa' : '#64748b'}
 
       <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         <!-- Header -->
-        <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+        <text x="12" y="20" fill="#e2e8f0" font-size="11" font-weight="700"
           font-family="'Geist Mono', monospace" letter-spacing="1">PATTERN REGISTRY</text>
-        <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+        <text x="510" y="20" text-anchor="end" fill="#94a3b8" font-size="9"
           font-family="'Geist Mono', monospace">registry scan → AI fallback</text>
 
         <!-- Confidence meter -->
-        <text x="12" y="34" fill="#94a3b8" font-size="6.5" font-weight="600"
+        <text x="12" y="46" fill="#94a3b8" font-size="9" font-weight="600"
           font-family="'Geist Mono', monospace" letter-spacing="0.8">CONFIDENCE</text>
 
-        <rect x="12" y="38" width="400" height="16" rx="3"
+        <rect x="12" y="52" width="400" height="22" rx="3"
           fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
-        <rect x="13" y="39" width={patternId ? 398 : isLLM ? 240 : 20} height="14" rx="2"
+        <rect x="13" y="53" width={patternId ? 398 : isLLM ? 240 : 20} height="20" rx="2"
           fill={statusColor} opacity={patternId ? 0.55 : isLLM ? 0.35 : 0.25}/>
 
         <!-- Tick marks on meter -->
         {#each [0, 25, 50, 75, 100] as pct}
-          <line x1={13 + (pct / 100) * 398} y1="54" x2={13 + (pct / 100) * 398} y2="58"
+          <line x1={13 + (pct / 100) * 398} y1="74" x2={13 + (pct / 100) * 398} y2="78"
             stroke="#334155" stroke-width="0.5"/>
-          <text x={13 + (pct / 100) * 398} y="64" text-anchor="middle"
-            fill="#64748b" font-size="5.5"
+          <text x={13 + (pct / 100) * 398} y="88" text-anchor="middle"
+            fill="#64748b" font-size="9"
             font-family="'Geist Mono', monospace">{pct}</text>
         {/each}
 
         <!-- Status chip on the right -->
-        <rect x="420" y="32" width="92" height="28" rx="4"
+        <rect x="420" y="44" width="92" height="40" rx="4"
           fill={`${statusColor}1f`} stroke={statusColor} stroke-width="1.2"/>
-        <text x="466" y="43" text-anchor="middle"
-          fill={statusColor} font-size="7" font-weight="800"
+        <text x="466" y="60" text-anchor="middle"
+          fill={statusColor} font-size="10" font-weight="800"
           font-family="'Geist Mono', monospace" letter-spacing="0.6">
           {status.toUpperCase()}
         </text>
-        <text x="466" y="54" text-anchor="middle"
-          fill={statusColor} font-size="6.5" font-weight="600"
+        <text x="466" y="76" text-anchor="middle"
+          fill={statusColor} font-size="9" font-weight="600"
           font-family="'Geist Mono', monospace">
           {patternId ? (patternId.length > 12 ? patternId.slice(0, 11) + '…' : patternId) : isLLM ? 'local-ai' : 'no pattern'}
         </text>
 
         <!-- Pipeline legend -->
-        <text x="12" y="80" fill="#94a3b8" font-size="6" font-weight="600"
+        <text x="12" y="114" fill="#94a3b8" font-size="9" font-weight="600"
           font-family="'Geist Mono', monospace" letter-spacing="0.5">PIPELINE</text>
 
         {#each [
@@ -453,23 +453,23 @@ const sum = numbers.reduce(function(acc, num) {
           { label: 'explain', active: !!patternId },
           { label: 'ai fallback', active: isLLM },
         ] as stage, i}
-          {@const sx = 60 + i * 86}
-          <rect x={sx} y="72" width="78" height="14" rx="2"
+          {@const sx = 78 + i * 86}
+          <rect x={sx} y="104" width="78" height="20" rx="2"
             fill={stage.active ? `${statusColor}22` : '#0b0b14'}
             stroke={stage.active ? statusColor : '#1a1a2e'} stroke-width="1"/>
-          <text x={sx + 39} y="82" text-anchor="middle"
+          <text x={sx + 39} y="118" text-anchor="middle"
             fill={stage.active ? statusColor : '#64748b'}
-            font-size="6.5" font-weight="700"
+            font-size="10" font-weight="700"
             font-family="'Geist Mono', monospace">{stage.label}</text>
           {#if i < 4}
-            <line x1={sx + 78} y1="79" x2={sx + 86} y2="79"
+            <line x1={sx + 78} y1="114" x2={sx + 86} y2="114"
               stroke="#334155" stroke-width="0.8"/>
           {/if}
         {/each}
 
         <!-- Footer caption -->
-        <text x={W/2} y={H - 2} text-anchor="middle"
-          fill={statusColor} font-size="7.5" font-weight="600"
+        <text x={W/2} y={H - 6} text-anchor="middle"
+          fill={statusColor} font-size="11" font-weight="600"
           font-family="'Geist Mono', monospace">
           {patternId ? `pattern "${patternId}" matched — using hand-written explanation`
             : isLLM ? 'no registry match — local AI narrating this step'
