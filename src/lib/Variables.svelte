@@ -76,32 +76,32 @@
     {@const entries = Object.entries(sd.vars || {})}
     {@const active  = sd.highlight}
     {@const W = 520}
-    {@const H = 140}
-    {@const boxH = 88}
+    {@const H = 172}
+    {@const boxH = 112}
     {@const stackX = 6}
     {@const stackW = 220}
     {@const heapX  = stackX + stackW + 32}
     {@const heapW  = W - heapX - 6}
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- STACK region -->
-      <rect x={stackX} y="14" width={stackW} height={boxH} rx="6"
+      <rect x={stackX} y="18" width={stackW} height={boxH} rx="6"
         fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
-      <text x={stackX + 8} y="10" fill="#e2e8f0" font-size="7.5" font-weight="700"
+      <text x={stackX + 8} y="13" fill="#e2e8f0" font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">STACK FRAME</text>
-      <text x={stackX + stackW - 8} y="10" text-anchor="end" fill="#94a3b8" font-size="6.5"
+      <text x={stackX + stackW - 8} y="13" text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace">inline tagged pointers</text>
 
       <!-- HEAP region -->
-      <rect x={heapX} y="14" width={heapW} height={boxH} rx="6"
+      <rect x={heapX} y="18" width={heapW} height={boxH} rx="6"
         fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
-      <text x={heapX + 8} y="10" fill="#e2e8f0" font-size="7.5" font-weight="700"
+      <text x={heapX + 8} y="13" fill="#e2e8f0" font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">HEAP</text>
-      <text x={heapX + heapW - 8} y="10" text-anchor="end" fill="#94a3b8" font-size="6.5"
+      <text x={heapX + heapW - 8} y="13" text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace">boxed objects</text>
 
       <!-- Divider gap arrow — sits at the vertical centre of the boxes,
            not the SVG (H grew to leave room for the caption below). -->
-      <line x1={stackX + stackW + 6} y1={14 + boxH/2} x2={heapX - 6} y2={14 + boxH/2}
+      <line x1={stackX + stackW + 6} y1={18 + boxH/2} x2={heapX - 6} y2={18 + boxH/2}
         stroke="#334155" stroke-width="1" stroke-dasharray="2 2"/>
 
       {#if entries.length === 0}
@@ -111,29 +111,29 @@
              the loading-state feel of a "no variables declared yet"
              string on a large dark panel. -->
         {#each [0,1,2] as i}
-          {@const slotY = 22 + i * 22}
-          <rect x={stackX + 8} y={slotY} width={stackW - 16} height="18" rx="3"
+          {@const slotY = 28 + i * 30}
+          <rect x={stackX + 8} y={slotY} width={stackW - 16} height="24" rx="3"
             fill="#08080e" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.55"/>
-          <rect x={heapX + 8} y={slotY} width={heapW - 16} height="18" rx="3"
+          <rect x={heapX + 8} y={slotY} width={heapW - 16} height="24" rx="3"
             fill="#08080e" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.4"/>
         {/each}
       {:else}
         {#each entries as [name, val], i}
           {@const c = classify(val)}
           {@const isActive = name === active}
-          {@const slotH = 18}
-          {@const slotY = 22 + i * (slotH + 4)}
+          {@const slotH = 24}
+          {@const slotY = 28 + i * (slotH + 6)}
 
           <!-- Stack-side slot (always rendered — this IS the variable binding) -->
           <rect x={stackX + 8} y={slotY} width={stackW - 16} height={slotH} rx="3"
             fill={isActive ? `${c.color}1f` : '#08080e'}
             stroke={isActive ? c.color : '#1a1a2e'}
             stroke-width={isActive ? 1.5 : 1}/>
-          <text x={stackX + 14} y={slotY + 12} fill={isActive ? c.color : '#f1f5f9'}
-            font-size="9" font-weight="700" font-family="'Geist Mono', monospace">{name}</text>
-          <text x={stackX + stackW - 14} y={slotY + 12} text-anchor="end"
+          <text x={stackX + 14} y={slotY + 16} fill={isActive ? c.color : '#f1f5f9'}
+            font-size="13" font-weight="700" font-family="'Geist Mono', monospace">{name}</text>
+          <text x={stackX + stackW - 14} y={slotY + 16} text-anchor="end"
             fill={isActive ? c.color : '#94a3b8'}
-            font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">
+            font-size="10" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">
             {c.region === 'stack' ? `${c.tag} · inline` : `→ ${c.tag}`}
           </text>
 
@@ -149,11 +149,11 @@
               fill={isActive ? `${c.color}1f` : '#08080e'}
               stroke={isActive ? c.color : '#1a1a2e'}
               stroke-width={isActive ? 1.5 : 1}/>
-            <text x={heapX + 14} y={slotY + 12} fill={isActive ? c.color : '#f1f5f9'}
-              font-size="9" font-weight="700" font-family="'Geist Mono', monospace">{c.label}</text>
-            <text x={heapX + heapW - 14} y={slotY + 12} text-anchor="end"
+            <text x={heapX + 14} y={slotY + 16} fill={isActive ? c.color : '#f1f5f9'}
+              font-size="13" font-weight="700" font-family="'Geist Mono', monospace">{c.label}</text>
+            <text x={heapX + heapW - 14} y={slotY + 16} text-anchor="end"
               fill={isActive ? c.color : '#94a3b8'}
-              font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.3">
+              font-size="10" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.3">
               {byteSize(val)}B
             </text>
           {/if}
@@ -161,13 +161,13 @@
       {/if}
 
       <!-- Active variable's "why" caption — the depth payoff.
-           Sits in the dedicated whitespace band below the boxes (H was
-           extended from 110 to 140 specifically to give this caption
-           proper breathing room rather than cramming it against the
-           bottom edge of the active row). -->
+           Sits in the dedicated whitespace band below the boxes. H is
+           sized so there's clear vertical space between the bottom of
+           the boxes and the caption (H = 172, boxes end at 18+boxH=130,
+           caption baseline at H-14=158 — a 28px breathing band). -->
       {#if active && sd.vars && active in sd.vars}
         {@const c = classify(sd.vars[active])}
-        <text x={W/2} y={H - 14} text-anchor="middle" fill={c.color} font-size="9"
+        <text x={W/2} y={H - 14} text-anchor="middle" fill={c.color} font-size="11"
           font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.3">
           {active} → {c.why}
         </text>
