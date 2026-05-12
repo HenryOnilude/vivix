@@ -71,13 +71,13 @@
     {@const objOps = sd.objOps || 0}
     {@const hKey = sd.highlightKey}
     {@const W = 520}
-    {@const H = 110}
+    {@const H = 160}
 
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
-      <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+      <text x="12" y="20" fill="#e2e8f0" font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">HASH BUCKETS</text>
-      <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+      <text x="510" y="20" text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace">
         {objName ? `${objName} · ${keys.length} key${keys.length === 1 ? '' : 's'}` : 'no object yet'}
       </text>
@@ -88,47 +88,47 @@
              declared yet" text — the dashed chips signal where keys
              will land. -->
         {#each [0,1,2] as i}
-          <rect x="14" y={26 + i * 16} width="84" height="14" rx="3"
+          <rect x="14" y={36 + i * 22} width="92" height="18" rx="3"
             fill="#0b0b14" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
         {/each}
       {:else}
         <!-- Key chips on the left -->
         {#each keys.slice(0, 4) as key, i}
           {@const isActive = hKey === key || sd.highlight === key}
-          <rect x="14" y={26 + i * 16} width="84" height="14" rx="3"
+          <rect x="14" y={36 + i * 22} width="92" height="18" rx="3"
             fill={isActive ? `${ACCENT}1f` : '#0b0b14'}
             stroke={isActive ? ACCENT : '#1a1a2e'}
             stroke-width={isActive ? 1.5 : 1}/>
-          <text x="20" y={36 + i * 16}
+          <text x="20" y={50 + i * 22}
             fill={isActive ? ACCENT : '#f1f5f9'}
-            font-size="8" font-weight="700"
+            font-size="11" font-weight="700"
             font-family="'Geist Mono', monospace">"{key.length > 8 ? key.slice(0,7) + '…' : key}"</text>
         {/each}
         {#if keys.length > 4}
-          <text x="14" y={26 + 4 * 16 + 10} fill="#64748b" font-size="6.5"
+          <text x="14" y={36 + 4 * 22 + 14} fill="#64748b" font-size="9"
             font-family="'Geist Mono', monospace">+{keys.length - 4} more</text>
         {/if}
 
         <!-- Hash arrow + label -->
-        <text x="118" y="22" fill="#94a3b8" font-size="6" letter-spacing="0.6"
+        <text x="122" y="32" fill="#94a3b8" font-size="9" letter-spacing="0.6"
           font-family="'Geist Mono', monospace">hash(key) % N</text>
 
         <!-- Buckets in the middle -->
-        {@const bucketsX = 180}
-        {@const bucketW = 78}
-        {@const bucketH = 16}
+        {@const bucketsX = 188}
+        {@const bucketW = 92}
+        {@const bucketH = 22}
         {#each [0, 1, 2, 3] as b}
-          {@const by = 22 + b * (bucketH + 2)}
+          {@const by = 36 + b * (bucketH + 4)}
           {@const bucketKeys = layout.filter(L => L.bucket === b).map(L => L.key)}
           {@const bucketActive = bucketKeys.includes(hKey) || bucketKeys.includes(sd.highlight)}
           <rect x={bucketsX} y={by} width={bucketW} height={bucketH} rx="2"
             fill={bucketActive ? `${ACCENT}1f` : '#0b0b14'}
             stroke={bucketActive ? ACCENT : '#1a1a2e'}
             stroke-width={bucketActive ? 1.5 : 1}/>
-          <text x={bucketsX + 4} y={by + 11} fill="#94a3b8" font-size="6"
+          <text x={bucketsX + 6} y={by + 15} fill="#94a3b8" font-size="9"
             font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">B{b}</text>
-          <text x={bucketsX + bucketW - 4} y={by + 11} text-anchor="end"
-            fill={bucketActive ? ACCENT : '#cbd5e1'} font-size="7" font-weight="600"
+          <text x={bucketsX + bucketW - 6} y={by + 15} text-anchor="end"
+            fill={bucketActive ? ACCENT : '#cbd5e1'} font-size="10" font-weight="600"
             font-family="'Geist Mono', monospace">
             {bucketKeys.length === 0 ? '—' : bucketKeys.join(', ').slice(0, 14) + (bucketKeys.join(', ').length > 14 ? '…' : '')}
           </text>
@@ -137,7 +137,7 @@
           {#each layout.filter(L => L.bucket === b) as L}
             {@const ki = keys.indexOf(L.key)}
             {#if ki < 4}
-              <line x1="100" y1={33 + ki * 16} x2={bucketsX - 2} y2={by + bucketH/2}
+              <line x1="108" y1={45 + ki * 22} x2={bucketsX - 2} y2={by + bucketH/2}
                 stroke={hKey === L.key || sd.highlight === L.key ? ACCENT : '#334155'}
                 stroke-width={hKey === L.key || sd.highlight === L.key ? 1.5 : 0.7}
                 opacity={hKey === L.key || sd.highlight === L.key ? 1 : 0.5}/>
@@ -146,42 +146,42 @@
         {/each}
 
         <!-- Hidden-class chain on the right -->
-        {@const hcX = 290}
-        <text x={hcX} y="22" fill="#94a3b8" font-size="6.5" font-weight="700"
+        {@const hcX = 300}
+        <text x={hcX} y="32" fill="#94a3b8" font-size="9" font-weight="700"
           font-family="'Geist Mono', monospace" letter-spacing="0.8">HIDDEN CLASS</text>
 
         {#each Array(Math.min(keys.length, 4)) as _, i}
-          {@const cx = hcX + i * 50}
-          <rect x={cx} y="30" width="40" height="20" rx="3"
+          {@const cx = hcX + i * 54}
+          <rect x={cx} y="42" width="46" height="28" rx="3"
             fill={i === keys.length - 1 ? `${ACCENT}1f` : '#0b0b14'}
             stroke={i === keys.length - 1 ? ACCENT : '#334155'}
             stroke-width={i === keys.length - 1 ? 1.5 : 1}/>
-          <text x={cx + 20} y="44" text-anchor="middle"
+          <text x={cx + 23} y="60" text-anchor="middle"
             fill={i === keys.length - 1 ? ACCENT : '#94a3b8'}
-            font-size="8" font-weight="700"
+            font-size="12" font-weight="700"
             font-family="'Geist Mono', monospace">C{i}</text>
           {#if i < Math.min(keys.length, 4) - 1}
-            <line x1={cx + 40} y1="40" x2={cx + 50} y2="40"
+            <line x1={cx + 46} y1="56" x2={cx + 54} y2="56"
               stroke="#475569" stroke-width="1" marker-end="url(#obj-arrow)"/>
           {/if}
           {#if keys[i]}
-            <text x={cx + 20} y="62" text-anchor="middle"
-              fill="#94a3b8" font-size="6"
+            <text x={cx + 23} y="86" text-anchor="middle"
+              fill="#94a3b8" font-size="9"
               font-family="'Geist Mono', monospace">+{keys[i].length > 5 ? keys[i].slice(0,4) + '…' : keys[i]}</text>
           {/if}
         {/each}
 
         <!-- Op counter on far right -->
-        <text x={W - 12} y="76" text-anchor="end" fill="#94a3b8" font-size="6.5"
+        <text x={W - 12} y="108" text-anchor="end" fill="#94a3b8" font-size="9"
           font-family="'Geist Mono', monospace" letter-spacing="0.5">OPS</text>
-        <text x={W - 12} y="92" text-anchor="end" fill={ACCENT}
-          font-size="13" font-weight="800"
+        <text x={W - 12} y="128" text-anchor="end" fill={ACCENT}
+          font-size="15" font-weight="800"
           font-family="'Geist Mono', monospace">{objOps}</text>
       {/if}
 
       <!-- Footer caption -->
-      <text x={W/2} y={H - 4} text-anchor="middle"
-        fill={ACCENT} font-size="7.5" font-weight="600"
+      <text x={W/2} y={H - 12} text-anchor="middle"
+        fill={ACCENT} font-size="11" font-weight="600"
         font-family="'Geist Mono', monospace">
         {!objEntry
           ? 'awaiting object declaration'
