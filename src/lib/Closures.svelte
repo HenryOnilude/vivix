@@ -228,7 +228,7 @@
               fill={isClosure && !isInnermost ? '#fbbf24' : '#e2e8f0'}
               font-size="11" font-weight="600"
               font-family="'Geist Mono', monospace">
-              {k}: {typeof v === 'string' ? `"${String(v).slice(0,5)}"` : typeof v === 'object' ? '{…}' : String(v).slice(0, 6)}
+              {k}: {typeof v === 'string' && v.startsWith('ƒ') ? v : typeof v === 'string' ? `"${String(v).slice(0,5)}"` : typeof v === 'object' ? '{…}' : String(v).slice(0, 6)}
             </text>
           {/each}
           {#if Object.keys(frame.vars || {}).length === 0}

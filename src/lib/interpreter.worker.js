@@ -45,7 +45,10 @@ function sanitize(val, depth) {
   if (depth > 50) return '[max depth]';
   if (val === null || val === undefined) return val;
   const t = typeof val;
-  if (t === 'function') return `[Function: ${val.name || 'anonymous'}]`;
+  if (t === 'function') {
+    const fname = (val.name && val.name !== 'anonymous') ? val.name : '';
+    return fname ? `ƒ ${fname}()` : 'ƒ ()';
+  }
   if (t === 'symbol')   return val.toString();
   if (t === 'bigint')   return val.toString();
   if (t !== 'object')   return val;              // string, number, boolean
