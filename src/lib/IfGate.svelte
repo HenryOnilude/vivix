@@ -456,7 +456,18 @@
 
 <style>
   .branch-card { background:var(--a11y-surface1); border:1px solid var(--a11y-border); border-radius:6px; overflow:hidden; flex-shrink:0; }
-  .branch-svg  { width:100%; height:auto; display:block; }
+  /* Cap the rendered flowchart so it doesn't dominate the column at
+     wider viewports. `preserveAspectRatio="meet"` on the SVG scales
+     the diagram to fit within these bounds; `margin: 0 auto` centres
+     it inside the card so the diamond stays optically centred. */
+  .branch-svg  {
+    width: 100%;
+    height: auto;
+    max-width: 520px;
+    max-height: 320px;
+    display: block;
+    margin: 0 auto;
+  }
 
   /* ── Sub-expression evaluation row ─────────────────────── */
   .eval-row    { display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--a11y-surface2); border-bottom:1px solid var(--a11y-border); flex-wrap:wrap; }
