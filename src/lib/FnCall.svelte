@@ -64,6 +64,7 @@
   {mapStep}
   showHeap={false}
   moduleCaption="call-stack tower — frames push when functions are called, pop when they return; the top frame is the one currently executing"
+  progressiveReveal
 >
 
   <!-- Call-stack tower: vertical stack with active frame on top, ground = Global -->

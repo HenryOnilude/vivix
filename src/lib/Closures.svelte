@@ -156,6 +156,7 @@
   {mapStep}
   showHeap={false}
   moduleCaption="scope-chain ladder — each nested scope keeps a pointer to its parent, so inner functions can still read outer variables long after those functions have returned"
+  progressiveReveal
 >
 
   <!-- Scope-chain ladder: nested boxes with captured variables highlighted -->

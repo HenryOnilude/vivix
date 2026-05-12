@@ -130,6 +130,7 @@
   {mapStep}
   dataFlow
   moduleCaption="iteration timeline — each tick = one pass through the loop body, condition gate decides if the next iteration runs"
+  progressiveReveal
 >
 
   <!-- Iteration timeline: ticks on a track, current tick highlighted, condition gate at the right -->

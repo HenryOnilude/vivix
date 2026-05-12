@@ -391,6 +391,7 @@ const sum = numbers.reduce(function(acc, num) {
     runHint="Pick a starter or paste your own"
     editorPlaceholder="Paste any JavaScript and step through it"
     moduleCaption="pattern-detection meter — the Pattern Registry scans your code for canonical shapes (loops, closures, async, etc.); when a pattern is found, the meter lights up and a hand-written explanation appears"
+    progressiveReveal
   >
     <!-- Pattern-detection meter: confidence bar + detected/unknown split -->
     {#snippet cpuModuleVisual(sd)}

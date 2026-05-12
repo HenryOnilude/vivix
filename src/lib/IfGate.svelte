@@ -94,6 +94,7 @@
   dataFlow
   interpreterOptions={{ trackIf: true }}
   moduleCaption="condition evaluation — operands fed into the comparison, boolean result, branch taken"
+  progressiveReveal
 >
 
   <!-- Truth-evaluation diagram: condition → diamond → branch path -->

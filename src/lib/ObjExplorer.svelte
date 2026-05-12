@@ -57,6 +57,7 @@
   {mapStep}
   showHeap={false}
   moduleCaption="hash-bucket diagram — keys are hashed into buckets, V8 finds them in O(1) regardless of object size; same shape = same hidden class"
+  progressiveReveal
 >
 
   <!-- Hash-bucket visual: keys flow into buckets, hidden-class chain on the right -->

@@ -82,6 +82,7 @@
   {executeCode}
   showHeap={false}
   moduleCaption="event-loop runtime — fetch() is handed off to Web APIs, its .then/await resolution goes on the microtask queue; the event loop drains microtasks before any macrotask (setTimeout, I/O)"
+  progressiveReveal
 >
 
   <!-- Event-loop runtime: Call Stack · Web APIs · Microtask queue · Callback queue -->

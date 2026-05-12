@@ -45,6 +45,7 @@
   {mapStep}
   showHeap={false}
   moduleCaption="LIFO vs FIFO — stacks add and remove from the same end (push/pop), queues add at one end and remove from the other (push/shift)"
+  progressiveReveal
 >
 
   <!-- LIFO/FIFO arrow diagram showing access pattern -->

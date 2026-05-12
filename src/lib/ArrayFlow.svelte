@@ -73,6 +73,7 @@
   {mapStep}
   showHeap={false}
   moduleCaption="contiguous memory strip — each cell is one array slot, the active index pulses; ops at the end are O(1), ops at the start force every element to shift"
+  progressiveReveal
 >
 
   <!-- Contiguous memory strip: array cells with index labels, active op highlighted -->
