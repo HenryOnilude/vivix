@@ -59,15 +59,15 @@
     {@const isQueue = type === 'queue'}
     {@const dsOps = sd.dsOps || 0}
     {@const W = 520}
-    {@const H = 110}
+    {@const H = 160}
 
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
-      <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+      <text x="12" y="20" fill="#e2e8f0" font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">
         {isStack ? 'STACK · LIFO' : isQueue ? 'QUEUE · FIFO' : 'DATA STRUCTURE'}
       </text>
-      <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+      <text x="510" y="20" text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace">
         {arrName ? `${arrName} · ${arr.length} item${arr.length === 1 ? '' : 's'}` : 'no structure yet'}
       </text>
@@ -77,18 +77,18 @@
              strip. No copy text — the dashed outlines preview where
              items will land without a loading-state feel. -->
         {#each [0,1,2,3] as i}
-          {@const cellW = 50}
-          {@const cellH = 24}
-          {@const stripX = 80}
-          {@const stripY = 38}
+          {@const cellW = 54}
+          {@const cellH = 34}
+          {@const stripX = 86}
+          {@const stripY = 56}
           <rect x={stripX + i * (cellW + 4)} y={stripY} width={cellW} height={cellH} rx="3"
             fill="#0b0b14" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
         {/each}
       {:else}
-        {@const cellW = 50}
-        {@const cellH = 24}
-        {@const stripX = 80}
-        {@const stripY = 38}
+        {@const cellW = 54}
+        {@const cellH = 34}
+        {@const stripX = 86}
+        {@const stripY = 56}
         {@const visible = arr.slice(0, 7)}
 
         <!-- Items in the structure -->
@@ -96,75 +96,75 @@
           {@const cx = stripX + i * (cellW + 4)}
           <rect x={cx} y={stripY} width={cellW} height={cellH} rx="3"
             fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
-          <text x={cx + cellW/2} y={stripY + 16} text-anchor="middle"
-            fill="#f1f5f9" font-size="9" font-weight="700"
+          <text x={cx + cellW/2} y={stripY + 22} text-anchor="middle"
+            fill="#f1f5f9" font-size="13" font-weight="700"
             font-family="'Geist Mono', monospace">
             {typeof val === 'string' ? `"${val.length > 4 ? val.slice(0,3) + '…' : val}"`
             : typeof val === 'object' && val !== null ? '{}'
             : String(val).length > 5 ? String(val).slice(0, 4) + '…' : val}
           </text>
-          <text x={cx + cellW/2} y={stripY + cellH + 9} text-anchor="middle"
-            fill="#64748b" font-size="6"
+          <text x={cx + cellW/2} y={stripY + cellH + 13} text-anchor="middle"
+            fill="#64748b" font-size="9"
             font-family="'Geist Mono', monospace">[{i}]</text>
         {/each}
 
         {#if isStack}
           <!-- LIFO: arrows BOTH push and pop at the END (right side) -->
-          {@const arrowX = stripX + visible.length * (cellW + 4) + 20}
-          <text x="20" y={stripY + 16} fill="#94a3b8" font-size="6.5" font-weight="600"
+          {@const arrowX = stripX + visible.length * (cellW + 4) + 22}
+          <text x="20" y={stripY + 18} fill="#94a3b8" font-size="9" font-weight="600"
             font-family="'Geist Mono', monospace" letter-spacing="0.5">FRONT</text>
-          <text x="20" y={stripY + 26} fill="#64748b" font-size="6"
+          <text x="20" y={stripY + 32} fill="#64748b" font-size="9"
             font-family="'Geist Mono', monospace">(closed)</text>
 
           <!-- Push arrow IN -->
-          <line x1={arrowX + 50} y1={stripY + 6} x2={arrowX + 4} y2={stripY + 6}
+          <line x1={arrowX + 56} y1={stripY + 8} x2={arrowX + 4} y2={stripY + 8}
             stroke="#4ade80" stroke-width="1.5" marker-end="url(#ds-arrow-in)"/>
-          <text x={arrowX + 28} y={stripY - 1} text-anchor="middle"
-            fill="#4ade80" font-size="6.5" font-weight="700"
+          <text x={arrowX + 30} y={stripY - 2} text-anchor="middle"
+            fill="#4ade80" font-size="10" font-weight="700"
             font-family="'Geist Mono', monospace">push</text>
 
           <!-- Pop arrow OUT -->
-          <line x1={arrowX + 4} y1={stripY + 18} x2={arrowX + 50} y2={stripY + 18}
+          <line x1={arrowX + 4} y1={stripY + 26} x2={arrowX + 56} y2={stripY + 26}
             stroke="#f87171" stroke-width="1.5" marker-end="url(#ds-arrow-out)"/>
-          <text x={arrowX + 28} y={stripY + cellH + 4} text-anchor="middle"
-            fill="#f87171" font-size="6.5" font-weight="700"
+          <text x={arrowX + 30} y={stripY + cellH + 6} text-anchor="middle"
+            fill="#f87171" font-size="10" font-weight="700"
             font-family="'Geist Mono', monospace">pop</text>
 
-          <text x={arrowX + 30} y={stripY + cellH + 16} text-anchor="middle"
-            fill={ACCENT} font-size="7" font-weight="800"
+          <text x={arrowX + 32} y={stripY + cellH + 24} text-anchor="middle"
+            fill={ACCENT} font-size="11" font-weight="800"
             font-family="'Geist Mono', monospace" letter-spacing="0.5">TOP</text>
         {:else if isQueue}
           <!-- FIFO: shift OUT from front (left), push IN at back (right) -->
-          {@const enterX = stripX + visible.length * (cellW + 4) + 20}
-          <line x1={enterX + 44} y1={stripY + cellH/2} x2={enterX + 4} y2={stripY + cellH/2}
+          {@const enterX = stripX + visible.length * (cellW + 4) + 22}
+          <line x1={enterX + 50} y1={stripY + cellH/2} x2={enterX + 4} y2={stripY + cellH/2}
             stroke="#4ade80" stroke-width="1.5" marker-end="url(#ds-arrow-in)"/>
-          <text x={enterX + 24} y={stripY - 2} text-anchor="middle"
-            fill="#4ade80" font-size="6.5" font-weight="700"
+          <text x={enterX + 27} y={stripY - 4} text-anchor="middle"
+            fill="#4ade80" font-size="10" font-weight="700"
             font-family="'Geist Mono', monospace">push</text>
-          <text x={enterX + 24} y={stripY + cellH + 9} text-anchor="middle"
-            fill="#94a3b8" font-size="6"
+          <text x={enterX + 27} y={stripY + cellH + 13} text-anchor="middle"
+            fill="#94a3b8" font-size="9"
             font-family="'Geist Mono', monospace">enqueue</text>
 
-          <line x1={stripX - 4} y1={stripY + cellH/2} x2={stripX - 44} y2={stripY + cellH/2}
+          <line x1={stripX - 4} y1={stripY + cellH/2} x2={stripX - 50} y2={stripY + cellH/2}
             stroke="#f87171" stroke-width="1.5" marker-end="url(#ds-arrow-out)"/>
-          <text x={stripX - 24} y={stripY - 2} text-anchor="middle"
-            fill="#f87171" font-size="6.5" font-weight="700"
+          <text x={stripX - 27} y={stripY - 4} text-anchor="middle"
+            fill="#f87171" font-size="10" font-weight="700"
             font-family="'Geist Mono', monospace">shift</text>
-          <text x={stripX - 24} y={stripY + cellH + 9} text-anchor="middle"
-            fill="#94a3b8" font-size="6"
+          <text x={stripX - 27} y={stripY + cellH + 13} text-anchor="middle"
+            fill="#94a3b8" font-size="9"
             font-family="'Geist Mono', monospace">dequeue · O(n)</text>
         {/if}
 
         <!-- Op counter -->
-        <text x="14" y="92" fill="#94a3b8" font-size="6.5" font-weight="600"
+        <text x="14" y="122" fill="#94a3b8" font-size="9" font-weight="600"
           font-family="'Geist Mono', monospace" letter-spacing="0.5">DS OPS</text>
-        <text x="14" y="104" fill={ACCENT} font-size="11" font-weight="800"
+        <text x="14" y="140" fill={ACCENT} font-size="15" font-weight="800"
           font-family="'Geist Mono', monospace">{dsOps}</text>
       {/if}
 
       <!-- Footer caption -->
-      <text x={W/2} y={H - 4} text-anchor="middle"
-        fill={ACCENT} font-size="7.5" font-weight="600"
+      <text x={W/2} y={H - 8} text-anchor="middle"
+        fill={ACCENT} font-size="11" font-weight="600"
         font-family="'Geist Mono', monospace">
         {!arrEntry
           ? 'awaiting structure declaration'
