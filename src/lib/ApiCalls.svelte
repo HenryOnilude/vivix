@@ -93,14 +93,14 @@
     {@const inFlight = reqs.filter(r => r.state === 'sending' || r.state === 'parsing')}
     {@const microtaskActive = phase === 'fetch-response' || phase === 'json-done' || phase === 'async-call'}
     {@const W = 520}
-    {@const H = 110}
+    {@const H = 170}
     {@const colW = 120}
     {@const gap = 8}
     {@const startX = 8}
 
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
-      <text x={W/2} y="12" text-anchor="middle" fill="#e2e8f0" font-size="7.5"
+      <text x={W/2} y="18" text-anchor="middle" fill="#e2e8f0" font-size="11"
         font-weight="700" font-family="'Geist Mono', monospace" letter-spacing="1">JS RUNTIME · EVENT LOOP</text>
 
       <!-- 4 columns: stack | Web APIs | microtask queue | callback queue -->
@@ -111,31 +111,31 @@
         { label: 'CALLBACK Q', sub: 'setTimeout / I/O', color: '#fbbf24', items: [], active: false, tag: 'drained after' },
       ] as col, i}
         {@const cx = startX + i * (colW + gap)}
-        <rect x={cx} y="18" width={colW} height="70" rx="4"
+        <rect x={cx} y="28" width={colW} height="112" rx="4"
           fill={col.active ? `${col.color}14` : '#0b0b14'}
           stroke={col.active ? col.color : '#1a1a2e'}
           stroke-width={col.active ? 1.5 : 1}/>
 
         <!-- Column header -->
-        <text x={cx + 6} y="30"
+        <text x={cx + 8} y="44"
           fill={col.active ? col.color : '#cbd5e1'}
-          font-size="7" font-weight="800"
+          font-size="10" font-weight="800"
           font-family="'Geist Mono', monospace" letter-spacing="0.6">{col.label}</text>
-        <text x={cx + colW - 6} y="30" text-anchor="end"
-          fill="#64748b" font-size="5.5"
+        <text x={cx + colW - 8} y="44" text-anchor="end"
+          fill="#64748b" font-size="8"
           font-family="'Geist Mono', monospace">{col.sub}</text>
 
         <!-- Items -->
         {#if col.items.length === 0}
-          <text x={cx + colW/2} y="56" text-anchor="middle"
-            fill="#64748b" font-size="6.5" font-style="italic"
+          <text x={cx + colW/2} y="86" text-anchor="middle"
+            fill="#64748b" font-size="10" font-style="italic"
             font-family="'Geist Mono', monospace">empty</text>
         {:else}
           {#each col.items as item, j}
-            <rect x={cx + 4} y={36 + j * 13} width={colW - 8} height={11} rx="2"
+            <rect x={cx + 4} y={54 + j * 18} width={colW - 8} height={16} rx="2"
               fill="#0b0b14" stroke={col.color} stroke-width="0.8" opacity="0.85"/>
-            <text x={cx + 8} y={44 + j * 13}
-              fill={col.color} font-size="6.5" font-weight="700"
+            <text x={cx + 10} y={66 + j * 18}
+              fill={col.color} font-size="9" font-weight="700"
               font-family="'Geist Mono', monospace">
               {item.length > 18 ? item.slice(0, 17) + '…' : item}
             </text>
@@ -143,19 +143,19 @@
         {/if}
 
         <!-- Tag -->
-        <text x={cx + colW/2} y="82" text-anchor="middle"
-          fill={col.active ? col.color : '#64748b'} font-size="5.5" font-weight="600"
+        <text x={cx + colW/2} y="132" text-anchor="middle"
+          fill={col.active ? col.color : '#64748b'} font-size="9" font-weight="600"
           font-family="'Geist Mono', monospace" letter-spacing="0.3">{col.tag}</text>
       {/each}
 
       <!-- Event loop arrow underneath queues → stack -->
-      <path d="M {startX + 2 * (colW + gap) + colW/2} 92 Q {startX + colW/2} 104 {startX + colW/2} 92"
+      <path d="M {startX + 2 * (colW + gap) + colW/2} 146 Q {startX + colW/2} 160 {startX + colW/2} 146"
         fill="none" stroke="#a78bfa" stroke-width="1" stroke-dasharray="2 2"
         opacity={microtaskActive ? 1 : 0.4} marker-end="url(#api-loop-arrow)"/>
 
       <!-- Footer caption -->
-      <text x={W/2} y={H - 1} text-anchor="middle"
-        fill={ACCENT} font-size="7.5" font-weight="600"
+      <text x={W/2} y={H - 4} text-anchor="middle"
+        fill={ACCENT} font-size="11" font-weight="600"
         font-family="'Geist Mono', monospace">
         {phase === 'fetch-call' ? 'fetch() handed off to Web APIs — stack continues immediately'
           : phase === 'fetch-response' ? 'response ready — resolution queued as microtask'
