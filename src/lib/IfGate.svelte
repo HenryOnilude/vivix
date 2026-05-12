@@ -145,11 +145,11 @@
         stroke-width={cond === true ? 2 : 1}
         opacity={cond === true ? 1 : 0.4}
         marker-end="url(#ifg-arrow-t)"/>
-      <rect x="382" y="30" width="96" height="28" rx="3"
+      <rect x="382" y="30" width="82" height="28" rx="3"
         fill={cond === true ? '#4ade8014' : '#0b0b14'}
         stroke={cond === true ? '#4ade80' : '#334155'}
         stroke-width={cond === true ? 1.5 : 1}/>
-      <text x="430" y="48" text-anchor="middle"
+      <text x="423" y="48" text-anchor="middle"
         fill={cond === true ? '#4ade80' : '#64748b'}
         font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace">if &#123; ... &#125;</text>
@@ -160,19 +160,19 @@
         stroke-width={cond === false ? 2 : 1}
         opacity={cond === false ? 1 : 0.4}
         marker-end="url(#ifg-arrow-f)"/>
-      <rect x="382" y="68" width="96" height="28" rx="3"
+      <rect x="382" y="68" width="82" height="28" rx="3"
         fill={cond === false ? '#f8717114' : '#0b0b14'}
         stroke={cond === false ? '#f87171' : '#334155'}
         stroke-width={cond === false ? 1.5 : 1}/>
-      <text x="430" y="86" text-anchor="middle"
+      <text x="423" y="86" text-anchor="middle"
         fill={cond === false ? '#f87171' : '#64748b'}
         font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace">else &#123; ... &#125;</text>
 
-      <!-- Comparison counter -->
-      <text x="488" y="48" text-anchor="middle" fill="#94a3b8" font-size="9"
+      <!-- Comparison counter (nudged right to clear the if/else boxes) -->
+      <text x="498" y="48" text-anchor="middle" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace" letter-spacing="0.5">CMPS</text>
-      <text x="488" y="70" text-anchor="middle" fill={ACCENT} font-size="15" font-weight="800"
+      <text x="498" y="70" text-anchor="middle" fill={ACCENT} font-size="15" font-weight="800"
         font-family="'Geist Mono', monospace">{comps}</text>
 
       <!-- Footer caption -->
