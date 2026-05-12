@@ -27,6 +27,13 @@ export function fv(val) {
   if (typeof val === 'string') return `"${val}"`;
   if (typeof val === 'boolean') return String(val);
   if (Array.isArray(val)) return `[${val.map(v => typeof v === 'string' ? `"${v}"` : typeof v === 'object' && v !== null ? JSON.stringify(v) : v).join(', ')}]`;
+  // Functions render as `ƒ name()` — otherwise `String(val)` below would
+  // dump the runtime wrapper's full source code (interpreter internals)
+  // into UI surfaces like the LET memLabel for closure examples.
+  if (typeof val === 'function') {
+    const fname = (val.name && val.name !== 'anonymous') ? val.name : '';
+    return fname ? `ƒ ${fname}()` : 'ƒ ()';
+  }
   if (typeof val === 'object') return JSON.stringify(val);
   return String(val);
 }
