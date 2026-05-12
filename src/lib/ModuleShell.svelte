@@ -1003,6 +1003,15 @@
             {#each sd.output as line}
               <div class="out-ln">› {line}</div>
             {/each}
+          {:else}
+            <!-- Empty-state skeleton: a ghosted caret + shimmering
+                 bar telegraphs "a console.log line will land here"
+                 without taking up the full 96px reserved height as
+                 dead space. Mirrors the heap-skeleton pattern. -->
+            <div class="out-skeleton" aria-hidden="true">
+              <span class="out-skeleton-caret">›</span>
+              <span class="out-skeleton-bar"></span>
+            </div>
           {/if}
         </details>
 
