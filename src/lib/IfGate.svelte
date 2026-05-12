@@ -273,7 +273,15 @@
           </div>
 
           <!-- ── Enhanced SVG flowchart ─────────────────────────────── -->
-          <svg viewBox="0 0 300 {svgH}" class="branch-svg">
+          <!-- Explicit aspect-ratio locks the rendered height to the
+               viewBox proportions. Without it, `height: auto` can leave
+               the SVG sized at the browser's intrinsic SVG fallback
+               (150 CSS px), pushing the IF/ELSE blocks at the bottom of
+               the viewBox to render past the .branch-card box and
+               visually overlap the HEAP MEMORY card stacked below. -->
+          <svg viewBox="0 0 300 {svgH}" class="branch-svg"
+               style="aspect-ratio: 300 / {svgH};"
+               preserveAspectRatio="xMidYMid meet">
             <defs>
               <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stop-color="#4ade80" stop-opacity="0.3"/>
