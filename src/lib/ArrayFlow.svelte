@@ -83,7 +83,7 @@
     {@const arr = Array.isArray(vars[arrName]) ? vars[arrName] : []}
     {@const arrOps = sd.arrOps || 0}
     {@const W = 520}
-    {@const H = 110}
+    {@const H = 150}
     {@const stripX = 12}
     {@const stripW = 460}
     {@const maxCells = 10}
@@ -93,9 +93,9 @@
 
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
-      <text x={stripX} y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+      <text x={stripX} y="20" fill="#e2e8f0" font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">CONTIGUOUS MEMORY</text>
-      <text x={stripX + stripW} y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+      <text x={stripX + stripW} y="20" text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace">
         {arrName ? `${arrName}[] · ${arr.length} element${arr.length === 1 ? '' : 's'}` : 'no array yet'}
       </text>
@@ -107,7 +107,7 @@
              land without the loading-state feel. -->
         {#each [0,1,2,3,4] as i}
           {@const cx = stripX + i * cellW}
-          <rect x={cx} y="32" width={cellW - 4} height="32" rx="3"
+          <rect x={cx} y="46" width={cellW - 4} height="44" rx="3"
             fill="#0b0b14" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
         {/each}
       {:else}
@@ -115,51 +115,51 @@
         {#each visible as val, i}
           {@const cx = stripX + i * cellW}
           {@const isActive = arrOps > 0 && i === 0 && (arrName === sd.highlight)}
-          <rect x={cx} y="32" width={cellW - 4} height="32" rx="3"
+          <rect x={cx} y="46" width={cellW - 4} height="44" rx="3"
             fill={isActive ? `${ACCENT}1f` : '#0b0b14'}
             stroke={isActive ? ACCENT : '#1a1a2e'}
             stroke-width={isActive ? 1.8 : 1}/>
 
           <!-- Index label above cell -->
-          <text x={cx + (cellW - 4)/2} y="28" text-anchor="middle"
-            fill={isActive ? ACCENT : '#94a3b8'} font-size="6.5" font-weight="600"
+          <text x={cx + (cellW - 4)/2} y="40" text-anchor="middle"
+            fill={isActive ? ACCENT : '#94a3b8'} font-size="9" font-weight="600"
             font-family="'Geist Mono', monospace" letter-spacing="0.5">[{i}]</text>
 
           <!-- Value inside cell -->
-          <text x={cx + (cellW - 4)/2} y="52" text-anchor="middle"
+          <text x={cx + (cellW - 4)/2} y="74" text-anchor="middle"
             fill={isActive ? ACCENT : '#f1f5f9'}
-            font-size={typeof val === 'number' ? '11' : '9'}
+            font-size={typeof val === 'number' ? '14' : '12'}
             font-weight="700" font-family="'Geist Mono', monospace">
             {typeof val === 'string' ? `"${val.length > 4 ? val.slice(0,3) + '…' : val}"` : String(val).length > 6 ? String(val).slice(0,5) + '…' : val}
           </text>
         {/each}
 
         {#if arr.length > maxCells}
-          <text x={stripX + maxCells * cellW + 10} y="52"
-            fill="#64748b" font-size="9" font-weight="600"
+          <text x={stripX + maxCells * cellW + 10} y="74"
+            fill="#64748b" font-size="12" font-weight="600"
             font-family="'Geist Mono', monospace">+{arr.length - maxCells}</text>
         {/if}
 
         <!-- Memory addresses (decorative, shows contiguity) -->
-        <text x={stripX} y="78" fill="#64748b" font-size="6"
+        <text x={stripX} y="108" fill="#64748b" font-size="9"
           font-family="'Geist Mono', monospace" letter-spacing="0.3">0x00</text>
-        <text x={stripX + visible.length * cellW - cellW + 4} y="78" text-anchor="end"
-          fill="#64748b" font-size="6"
+        <text x={stripX + visible.length * cellW - cellW + 4} y="108" text-anchor="end"
+          fill="#64748b" font-size="9"
           font-family="'Geist Mono', monospace" letter-spacing="0.3">0x{(visible.length * 8).toString(16).padStart(2, '0')}</text>
-        <line x1={stripX} y1="72" x2={stripX + visible.length * cellW - 4} y2="72"
+        <line x1={stripX} y1="100" x2={stripX + visible.length * cellW - 4} y2="100"
           stroke="#334155" stroke-width="0.5" stroke-dasharray="2 2"/>
 
         <!-- Op counter on the right of the strip -->
-        <text x={W - 12} y="44" text-anchor="end" fill="#94a3b8" font-size="6.5"
+        <text x={W - 12} y="58" text-anchor="end" fill="#94a3b8" font-size="9"
           font-family="'Geist Mono', monospace" letter-spacing="0.5">OPS</text>
-        <text x={W - 12} y="58" text-anchor="end" fill={ACCENT}
-          font-size="13" font-weight="800"
+        <text x={W - 12} y="78" text-anchor="end" fill={ACCENT}
+          font-size="15" font-weight="800"
           font-family="'Geist Mono', monospace">{arrOps}</text>
       {/if}
 
       <!-- Footer caption -->
-      <text x={W/2} y={H - 6} text-anchor="middle"
-        fill={ACCENT} font-size="7.5" font-weight="600"
+      <text x={W/2} y={H - 12} text-anchor="middle"
+        fill={ACCENT} font-size="11" font-weight="600"
         font-family="'Geist Mono', monospace">
         {visible.length === 0
           ? 'awaiting array declaration'
