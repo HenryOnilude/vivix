@@ -138,20 +138,20 @@
     {@const iters = sd.loopIterations || 0}
     {@const cond  = sd.conditionResult}
     {@const W = 520}
-    {@const H = 110}
-    {@const trackY = 50}
+    {@const H = 150}
+    {@const trackY = 72}
     {@const trackX = 12}
     {@const trackW = 360}
     {@const maxTicks = 16}
     {@const tickCount = Math.min(Math.max(iters + (cond === true ? 1 : 0), 4), maxTicks)}
     {@const tickGap = trackW / Math.max(tickCount - 1, 1)}
-    {@const gateX = trackX + trackW + 30}
-    {@const gateY = trackY - 18}
+    {@const gateX = trackX + trackW + 26}
+    {@const gateY = trackY - 22}
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
-      <text x={trackX} y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+      <text x={trackX} y="20" fill="#e2e8f0" font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">ITERATION TIMELINE</text>
-      <text x={trackX + trackW} y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+      <text x={trackX + trackW} y="20" text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace">tick = body executed once</text>
 
       <!-- Track line -->
@@ -178,37 +178,37 @@
           stroke-width={isCurrent ? 2 : 1.5}
           opacity={isFuture ? 0.5 : 1}/>
         {#if i % 4 === 0 || isCurrent}
-          <text x={cx} y={trackY + 18} text-anchor="middle"
+          <text x={cx} y={trackY + 22} text-anchor="middle"
             fill={isCurrent ? ACCENT : '#94a3b8'}
-            font-size="7" font-weight={isCurrent ? '700' : '500'}
+            font-size="10" font-weight={isCurrent ? '700' : '500'}
             font-family="'Geist Mono', monospace">{i}</text>
         {/if}
       {/each}
 
       <!-- Current iter indicator above track -->
       {#if iters > 0 || cond !== null}
-        <text x={trackX + Math.min(iters, tickCount - 1) * tickGap} y={trackY - 12}
-          text-anchor="middle" fill={ACCENT} font-size="8" font-weight="700"
+        <text x={trackX + Math.min(iters, tickCount - 1) * tickGap} y={trackY - 16}
+          text-anchor="middle" fill={ACCENT} font-size="12" font-weight="700"
           font-family="'Geist Mono', monospace">i = {iters}</text>
       {/if}
 
       <!-- Condition gate at the right -->
-      <rect x={gateX} y={gateY} width="100" height="36" rx="4"
+      <rect x={gateX} y={gateY} width="118" height="48" rx="4"
         fill={cond === true ? '#4ade8014' : cond === false ? '#f8717114' : '#0b0b14'}
         stroke={cond === true ? '#4ade80' : cond === false ? '#f87171' : '#334155'}
         stroke-width="1.5"/>
-      <text x={gateX + 50} y={gateY + 14} text-anchor="middle"
-        fill="#94a3b8" font-size="6.5" font-weight="600"
+      <text x={gateX + 59} y={gateY + 18} text-anchor="middle"
+        fill="#94a3b8" font-size="9" font-weight="600"
         font-family="'Geist Mono', monospace" letter-spacing="0.8">CONDITION</text>
-      <text x={gateX + 50} y={gateY + 28} text-anchor="middle"
+      <text x={gateX + 59} y={gateY + 38} text-anchor="middle"
         fill={cond === true ? '#4ade80' : cond === false ? '#f87171' : '#94a3b8'}
-        font-size="11" font-weight="800"
+        font-size="14" font-weight="800"
         font-family="'Geist Mono', monospace">
         {cond === true ? 'TRUE' : cond === false ? 'FALSE' : '—'}
       </text>
 
       <!-- Footer caption: explains what the gate decides -->
-      <text x={W/2} y={H - 6} text-anchor="middle" fill={ACCENT} font-size="7.5"
+      <text x={W/2} y={H - 12} text-anchor="middle" fill={ACCENT} font-size="11"
         font-weight="600" font-family="'Geist Mono', monospace">
         {cond === true  ? `condition true → run iteration ${iters}`
         : cond === false ? `condition false → exit loop after ${iters} iteration${iters === 1 ? '' : 's'}`
