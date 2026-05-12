@@ -165,31 +165,31 @@
     {@const depth = sd.scopeDepth || chain.length || 1}
     {@const captured = sd.capturedCount || 0}
     {@const W = 520}
-    {@const H = 110}
+    {@const H = 170}
     {@const visible = chain.slice(-4)}
     {@const hiddenCount = chain.length - visible.length}
 
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
-      <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+      <text x="12" y="20" fill="#e2e8f0" font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">SCOPE CHAIN</text>
-      <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+      <text x="510" y="20" text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace">inner ← outer · lookup walks outward</text>
 
       {#if hiddenCount > 0}
-        <text x={W/2} y="26" text-anchor="middle" fill="#64748b" font-size="6.5"
+        <text x={W/2} y="36" text-anchor="middle" fill="#64748b" font-size="9"
           font-style="italic" font-family="'Geist Mono', monospace">
           +{hiddenCount} outer scope{hiddenCount === 1 ? '' : 's'}
         </text>
       {/if}
 
       {#if visible.length === 0}
-        <text x={W/2} y={H/2} text-anchor="middle" fill="#94a3b8" font-size="9"
+        <text x={W/2} y={H/2} text-anchor="middle" fill="#94a3b8" font-size="13"
           font-family="'Geist Mono', monospace">no scope chain yet</text>
       {:else}
-        {@const boxW = 118}
-        {@const boxH = 54}
-        {@const boxY = 30}
+        {@const boxW = 128}
+        {@const boxH = 80}
+        {@const boxY = 46}
         {@const gap = 12}
         {@const totalW = visible.length * boxW + (visible.length - 1) * gap}
         {@const startX = (W - totalW) / 2}
@@ -208,37 +208,37 @@
             stroke-dasharray={isClosure && !isInnermost ? '3 2' : ''}/>
 
           <!-- Frame name -->
-          <text x={fx + 6} y={boxY + 11}
+          <text x={fx + 8} y={boxY + 18}
             fill={isInnermost ? ACCENT : isClosure ? ACCENT : '#cbd5e1'}
-            font-size="8" font-weight="800"
+            font-size="12" font-weight="800"
             font-family="'Geist Mono', monospace" letter-spacing="0.3">
             {frame.name || 'anon'}{frame.name !== 'Global' ? '()' : ''}
           </text>
 
           <!-- Tag -->
-          <text x={fx + boxW - 6} y={boxY + 11} text-anchor="end"
-            fill={isClosure ? '#fbbf24' : '#64748b'} font-size="5.5" font-weight="700"
+          <text x={fx + boxW - 6} y={boxY + 18} text-anchor="end"
+            fill={isClosure ? '#fbbf24' : '#64748b'} font-size="9" font-weight="700"
             font-family="'Geist Mono', monospace" letter-spacing="0.5">
             {isInnermost ? 'ACTIVE' : isClosure ? 'CAPTURED' : 'SCOPE'}
           </text>
 
           <!-- Variables -->
           {#each varEntries as [k, v], vi}
-            <text x={fx + 8} y={boxY + 23 + vi * 10}
+            <text x={fx + 10} y={boxY + 36 + vi * 16}
               fill={isClosure && !isInnermost ? '#fbbf24' : '#e2e8f0'}
-              font-size="7" font-weight="600"
+              font-size="11" font-weight="600"
               font-family="'Geist Mono', monospace">
               {k}: {typeof v === 'string' ? `"${String(v).slice(0,5)}"` : typeof v === 'object' ? '{…}' : String(v).slice(0, 6)}
             </text>
           {/each}
           {#if Object.keys(frame.vars || {}).length === 0}
-            <text x={fx + 8} y={boxY + 28}
-              fill="#64748b" font-size="6.5" font-style="italic"
+            <text x={fx + 10} y={boxY + 44}
+              fill="#64748b" font-size="10" font-style="italic"
               font-family="'Geist Mono', monospace">(empty)</text>
           {/if}
           {#if Object.keys(frame.vars || {}).length > 3}
-            <text x={fx + 8} y={boxY + 52}
-              fill="#64748b" font-size="5.5"
+            <text x={fx + 10} y={boxY + 74}
+              fill="#64748b" font-size="9"
               font-family="'Geist Mono', monospace">+{Object.keys(frame.vars).length - 3} more</text>
           {/if}
 
@@ -250,18 +250,18 @@
         {/each}
 
         <!-- Legend dot -->
-        <circle cx="20" cy={H - 10} r="3" fill={ACCENT}/>
-        <text x="28" y={H - 7} fill="#fbbf24" font-size="6.5" font-weight="600"
+        <circle cx="22" cy={H - 18} r="4" fill={ACCENT}/>
+        <text x="30" y={H - 14} fill="#fbbf24" font-size="9" font-weight="600"
           font-family="'Geist Mono', monospace">captured = kept alive by inner fn</text>
       {/if}
 
       <!-- Depth stat -->
-      <text x={W - 12} y={H - 18} text-anchor="end" fill="#94a3b8" font-size="6.5"
+      <text x={W - 12} y={H - 28} text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace" letter-spacing="0.5">DEPTH {depth} · CAPTURED {captured}</text>
 
       <!-- Footer caption -->
-      <text x={W/2} y={H - 1} text-anchor="middle"
-        fill={ACCENT} font-size="7.5" font-weight="600"
+      <text x={W/2} y={H - 4} text-anchor="middle"
+        fill={ACCENT} font-size="11" font-weight="600"
         font-family="'Geist Mono', monospace">
         {captured > 0
           ? `${captured} variable${captured === 1 ? '' : 's'} captured — outer scope survives because inner function still references it`
