@@ -103,82 +103,82 @@
     {@const raw   = sd.lastRaw || ''}
     {@const comps = sd.comps || 0}
     {@const W = 520}
-    {@const H = 110}
+    {@const H = 150}
     {@const dx = 250}
-    {@const dy = 44}
+    {@const dy = 60}
 
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
-      <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+      <text x="12" y="18" fill="#e2e8f0" font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">CONDITION EVALUATION</text>
-      <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+      <text x="510" y="18" text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace">expression → diamond → branch</text>
 
       <!-- Condition expression box -->
-      <rect x="12" y="28" width="180" height="32" rx="4"
+      <rect x="12" y="34" width="190" height="44" rx="4"
         fill="#0b0b14" stroke={raw ? ACCENT : '#1a1a2e'} stroke-width={raw ? 1.5 : 1}/>
-      <text x="20" y="40" fill="#94a3b8" font-size="6.5" font-weight="600"
+      <text x="22" y="50" fill="#94a3b8" font-size="9" font-weight="600"
         font-family="'Geist Mono', monospace" letter-spacing="0.8">EXPRESSION</text>
-      <text x="20" y="54" fill={raw ? '#f1f5f9' : '#64748b'} font-size="9" font-weight="700"
+      <text x="22" y="70" fill={raw ? '#f1f5f9' : '#64748b'} font-size="13" font-weight="700"
         font-family="'Geist Mono', monospace">{raw ? (raw.length > 24 ? raw.slice(0, 22) + '…' : raw) : 'awaiting if/else'}</text>
 
       <!-- Arrow from expression to diamond -->
-      <line x1="195" y1="44" x2="225" y2="44"
+      <line x1="205" y1="60" x2="225" y2="60"
         stroke={raw ? ACCENT : '#334155'} stroke-width="1.5"
         marker-end="url(#ifg-arrow-{raw ? 'a' : 'i'})"/>
 
       <!-- Decision diamond -->
-      <polygon points="{dx},{dy-18} {dx+30},{dy} {dx},{dy+18} {dx-30},{dy}"
+      <polygon points="{dx},{dy-24} {dx+34},{dy} {dx},{dy+24} {dx-34},{dy}"
         fill={cond === true ? '#4ade8014' : cond === false ? '#f8717114' : '#0b0b14'}
         stroke={cond === true ? '#4ade80' : cond === false ? '#f87171' : raw ? ACCENT : '#334155'}
         stroke-width="1.5"/>
-      <text x={dx} y={dy + 3} text-anchor="middle"
+      <text x={dx} y={dy + 5} text-anchor="middle"
         fill={cond === true ? '#4ade80' : cond === false ? '#f87171' : raw ? ACCENT : '#94a3b8'}
-        font-size="9" font-weight="800"
+        font-size="13" font-weight="800"
         font-family="'Geist Mono', monospace">
         {cond === true ? 'T' : cond === false ? 'F' : '?'}
       </text>
 
       <!-- TRUE branch (top arrow) -->
-      <line x1={dx + 24} y1={dy - 10} x2="380" y2="32"
+      <line x1={dx + 28} y1={dy - 14} x2="380" y2="44"
         stroke={cond === true ? '#4ade80' : '#1a1a2e'}
         stroke-width={cond === true ? 2 : 1}
         opacity={cond === true ? 1 : 0.4}
         marker-end="url(#ifg-arrow-t)"/>
-      <rect x="382" y="20" width="86" height="22" rx="3"
+      <rect x="382" y="30" width="96" height="28" rx="3"
         fill={cond === true ? '#4ade8014' : '#0b0b14'}
         stroke={cond === true ? '#4ade80' : '#334155'}
         stroke-width={cond === true ? 1.5 : 1}/>
-      <text x="425" y="34" text-anchor="middle"
+      <text x="430" y="48" text-anchor="middle"
         fill={cond === true ? '#4ade80' : '#64748b'}
-        font-size="8.5" font-weight="700"
+        font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace">if &#123; ... &#125;</text>
 
       <!-- FALSE branch (bottom arrow) -->
-      <line x1={dx + 24} y1={dy + 10} x2="380" y2="58"
+      <line x1={dx + 28} y1={dy + 14} x2="380" y2="82"
         stroke={cond === false ? '#f87171' : '#1a1a2e'}
         stroke-width={cond === false ? 2 : 1}
         opacity={cond === false ? 1 : 0.4}
         marker-end="url(#ifg-arrow-f)"/>
-      <rect x="382" y="48" width="86" height="22" rx="3"
+      <rect x="382" y="68" width="96" height="28" rx="3"
         fill={cond === false ? '#f8717114' : '#0b0b14'}
         stroke={cond === false ? '#f87171' : '#334155'}
         stroke-width={cond === false ? 1.5 : 1}/>
-      <text x="425" y="62" text-anchor="middle"
+      <text x="430" y="86" text-anchor="middle"
         fill={cond === false ? '#f87171' : '#64748b'}
-        font-size="8.5" font-weight="700"
+        font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace">else &#123; ... &#125;</text>
 
       <!-- Comparison counter -->
-      <text x="476" y="34" fill="#94a3b8" font-size="6"
+      <text x="488" y="48" text-anchor="middle" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace" letter-spacing="0.5">CMPS</text>
-      <text x="476" y="46" fill={ACCENT} font-size="11" font-weight="800"
+      <text x="488" y="70" text-anchor="middle" fill={ACCENT} font-size="15" font-weight="800"
         font-family="'Geist Mono', monospace">{comps}</text>
 
       <!-- Footer caption -->
-      <text x={W/2} y={H - 6} text-anchor="middle"
+      <text x={W/2} y={H - 12} text-anchor="middle"
         fill={cond === true ? '#4ade80' : cond === false ? '#f87171' : ACCENT}
-        font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace">
+        font-size="11" font-weight="600" font-family="'Geist Mono', monospace">
         {cond === true  ? 'condition truthy → if-branch executes, else-branch skipped'
         : cond === false ? 'condition falsy → if-branch skipped, else-branch executes'
         : raw            ? 'evaluating operands…'
