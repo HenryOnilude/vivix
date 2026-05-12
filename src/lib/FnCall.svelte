@@ -74,26 +74,26 @@
     {@const calls = sd.calls || 0}
     {@const ret = sd.lastFnReturn}
     {@const W = 520}
-    {@const H = 110}
+    {@const H = 160}
     {@const towerX = 80}
-    {@const towerW = 200}
-    {@const frameH = 18}
-    {@const groundY = H - 14}
+    {@const towerW = 210}
+    {@const frameH = 24}
+    {@const groundY = H - 22}
     {@const visibleFrames = stack.slice(-5)}
     {@const hiddenCount = stack.length - visibleFrames.length}
     {@const sx = towerX + towerW + 30}
 
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <!-- Header -->
-      <text x="12" y="14" fill="#e2e8f0" font-size="7.5" font-weight="700"
+      <text x="12" y="18" fill="#e2e8f0" font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">CALL STACK</text>
-      <text x="510" y="14" text-anchor="end" fill="#94a3b8" font-size="6.5"
+      <text x="510" y="18" text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace">grows up · top = currently running</text>
 
       <!-- Hidden-frames indicator -->
       {#if hiddenCount > 0}
-        <text x={towerX + towerW / 2} y="26" text-anchor="middle"
-          fill="#64748b" font-size="6.5" font-style="italic"
+        <text x={towerX + towerW / 2} y="34" text-anchor="middle"
+          fill="#64748b" font-size="9" font-style="italic"
           font-family="'Geist Mono', monospace">+{hiddenCount} more frame{hiddenCount === 1 ? '' : 's'} below</text>
       {/if}
 
@@ -105,23 +105,23 @@
           fill={isTop ? `${ACCENT}1f` : '#0b0b14'}
           stroke={isTop ? ACCENT : '#1a1a2e'}
           stroke-width={isTop ? 1.8 : 1}/>
-        <text x={towerX + 10} y={yPos + 12}
+        <text x={towerX + 12} y={yPos + 16}
           fill={isTop ? ACCENT : '#cbd5e1'}
-          font-size="9" font-weight={isTop ? '800' : '600'}
+          font-size="13" font-weight={isTop ? '800' : '600'}
           font-family="'Geist Mono', monospace">
           {frame}{frame !== 'Global' ? '()' : ''}
         </text>
         {#if isTop}
-          <text x={towerX + towerW - 10} y={yPos + 12} text-anchor="end"
-            fill={ACCENT} font-size="6.5" font-weight="700"
+          <text x={towerX + towerW - 10} y={yPos + 16} text-anchor="end"
+            fill={ACCENT} font-size="9" font-weight="700"
             font-family="'Geist Mono', monospace" letter-spacing="0.5">← TOP / RUNNING</text>
         {:else if frame === 'Global'}
-          <text x={towerX + towerW - 10} y={yPos + 12} text-anchor="end"
-            fill="#94a3b8" font-size="6.5" font-weight="600"
+          <text x={towerX + towerW - 10} y={yPos + 16} text-anchor="end"
+            fill="#94a3b8" font-size="9" font-weight="600"
             font-family="'Geist Mono', monospace" letter-spacing="0.5">global scope</text>
         {:else}
-          <text x={towerX + towerW - 10} y={yPos + 12} text-anchor="end"
-            fill="#64748b" font-size="6.5" font-weight="500"
+          <text x={towerX + towerW - 10} y={yPos + 16} text-anchor="end"
+            fill="#64748b" font-size="9" font-weight="500"
             font-family="'Geist Mono', monospace" letter-spacing="0.3">paused</text>
         {/if}
       {/each}
@@ -129,40 +129,40 @@
       <!-- Ground line -->
       <line x1={towerX - 6} y1={groundY} x2={towerX + towerW + 6} y2={groundY}
         stroke="#334155" stroke-width="1.5"/>
-      <text x={towerX + towerW / 2} y={groundY + 10} text-anchor="middle"
-        fill="#64748b" font-size="6" letter-spacing="0.8"
+      <text x={towerX + towerW / 2} y={groundY + 13} text-anchor="middle"
+        fill="#64748b" font-size="9" letter-spacing="0.8"
         font-family="'Geist Mono', monospace">STACK BASE</text>
 
       <!-- Right-side stats -->
-      <rect x={sx} y="22" width="120" height="22" rx="3"
+      <rect x={sx} y="30" width="130" height="30" rx="3"
         fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
-      <text x={sx + 8} y="32" fill="#94a3b8" font-size="6.5" font-weight="600"
+      <text x={sx + 10} y="44" fill="#94a3b8" font-size="9" font-weight="600"
         font-family="'Geist Mono', monospace" letter-spacing="0.8">DEPTH NOW</text>
-      <text x={sx + 112} y="38" text-anchor="end"
+      <text x={sx + 122} y="54" text-anchor="end"
         fill={stack.length > 1 ? ACCENT : '#cbd5e1'}
-        font-size="11" font-weight="800"
+        font-size="14" font-weight="800"
         font-family="'Geist Mono', monospace">{stack.length}</text>
 
-      <rect x={sx} y="48" width="120" height="22" rx="3"
+      <rect x={sx} y="66" width="130" height="30" rx="3"
         fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
-      <text x={sx + 8} y="58" fill="#94a3b8" font-size="6.5" font-weight="600"
+      <text x={sx + 10} y="80" fill="#94a3b8" font-size="9" font-weight="600"
         font-family="'Geist Mono', monospace" letter-spacing="0.8">PEAK DEPTH</text>
-      <text x={sx + 112} y="64" text-anchor="end"
-        fill={ACCENT} font-size="11" font-weight="800"
+      <text x={sx + 122} y="90" text-anchor="end"
+        fill={ACCENT} font-size="14" font-weight="800"
         font-family="'Geist Mono', monospace">{maxDepth}</text>
 
-      <rect x={sx} y="74" width="120" height="22" rx="3"
+      <rect x={sx} y="102" width="130" height="30" rx="3"
         fill="#0b0b14" stroke="#1a1a2e" stroke-width="1"/>
-      <text x={sx + 8} y="84" fill="#94a3b8" font-size="6.5" font-weight="600"
+      <text x={sx + 10} y="116" fill="#94a3b8" font-size="9" font-weight="600"
         font-family="'Geist Mono', monospace" letter-spacing="0.8">TOTAL CALLS</text>
-      <text x={sx + 112} y="90" text-anchor="end"
-        fill="#a78bfa" font-size="11" font-weight="800"
+      <text x={sx + 122} y="126" text-anchor="end"
+        fill="#a78bfa" font-size="14" font-weight="800"
         font-family="'Geist Mono', monospace">{calls}</text>
 
       <!-- Footer caption -->
-      <text x={W/2} y={H - 1} text-anchor="middle"
+      <text x={W/2} y={H - 4} text-anchor="middle"
         fill={ret && ret.toVar ? '#4ade80' : ACCENT}
-        font-size="7.5" font-weight="600" font-family="'Geist Mono', monospace">
+        font-size="11" font-weight="600" font-family="'Geist Mono', monospace">
         {ret && ret.toVar
           ? `${ret.fromFn}() returned ${typeof ret.val === 'string' ? '"' + ret.val + '"' : ret.val} → frame popped`
           : stack.length > 1
