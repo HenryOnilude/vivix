@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import TruncText from './TruncText.svelte';
   import ModuleShell from './ModuleShell.svelte';
@@ -135,9 +144,7 @@
               {/if}
             {/each}
           {:else}
-            <!-- Silent skeleton: two ghosted node placeholders mirroring the
-                 .chain-node rhythm. Replaces "No Promises yet" copy which
-                 read as a loading state on step 1. -->
+            <!-- Skeleton shown before first promise. -->
             <div class="chain-skeleton" aria-hidden="true">
               <div class="chain-skeleton-node"></div>
               <div class="chain-skeleton-node"></div>
@@ -294,9 +301,7 @@
     from { transform: scale(0.82); opacity: 0; }
     to   { transform: scale(1);    opacity: 1; }
   }
-  /* Silent skeleton replaces the old "No Promises yet" copy. Two
-     ghosted nodes hint at the chain layout without a loading-state
-     feel on step 1. */
+  /* Skeleton shown before first promise. */
   .chain-skeleton      { display: flex; align-items: center; gap: 4px; padding: 10px 12px; }
   .chain-skeleton-node {
     width: 76px; height: 36px; border-radius: 6px;

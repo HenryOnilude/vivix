@@ -1,4 +1,13 @@
 /**
+ * Vivix — JavaScript Visualizer
+ *
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
+ */
+
+/**
  * AST-based JavaScript interpreter — step-by-step execution tracer.
  *
  * Split into modules:

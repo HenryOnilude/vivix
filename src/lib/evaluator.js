@@ -1,9 +1,13 @@
 /**
- * Evaluator module — AST node evaluation, function/class creation,
- * simple statement execution, and closure detection helpers.
+ * Vivix — JavaScript Visualizer
  *
- * Extracted from interpreter.js for single-responsibility.
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
  */
+
+// AST evaluation, function/class creation, closure detection.
 
 // ── Module-level flag: set to true during interpret() when trackClosures is on ──
 export let _globalTrackClosures = false;

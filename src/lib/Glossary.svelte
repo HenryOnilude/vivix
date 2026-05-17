@@ -1,21 +1,15 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
-  /**
-   * Glossary — hover-only tooltip for technical terms.
-   *
-   * Props:
-   *   term       — canonical term (looked up in glossary.js)
-   *   definition — explicit definition override (optional; falls back to
-   *                the glossary lookup)
-   *
-   * Usage:
-   *   <Glossary term="Heap Memory">Heap Memory</Glossary>
-   *
-   * The term itself is always fully readable without hovering. The
-   * tooltip is a subtle enhancement — it sits above the term with a
-   * small arrow pointer, fades in over 150ms, and disappears when the
-   * cursor leaves. Never rendered on touch devices (where it would be
-   * intrusive without an explicit tap target).
-   */
+  // Hover tooltip for technical terms. Falls back to glossary.js lookup.
+  // Hidden on touch devices (no tap target).
   import { defineTerm } from './glossary.js';
 
   /** @type {{ term?: string, definition?: string, children?: import('svelte').Snippet }} */

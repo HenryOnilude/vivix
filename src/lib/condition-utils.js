@@ -1,4 +1,13 @@
 /**
+ * Vivix — JavaScript Visualizer
+ *
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
+ */
+
+/**
  * Shared utilities for parsing and evaluating conditions.
  * Used by IfGate and potentially future modules (switch, ternary).
  */

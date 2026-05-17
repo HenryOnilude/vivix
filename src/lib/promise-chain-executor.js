@@ -1,4 +1,13 @@
 /**
+ * Vivix — JavaScript Visualizer
+ *
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
+ */
+
+/**
  * promise-chain-executor.js
  *
  * Simulates .then() / .catch() / .finally() promise chains instruction by

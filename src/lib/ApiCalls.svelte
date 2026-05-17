@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import TruncText from './TruncText.svelte';
   import ModuleShell from './ModuleShell.svelte';
@@ -116,25 +125,25 @@
           stroke={col.active ? col.color : '#1a1a2e'}
           stroke-width={col.active ? 1.5 : 1}/>
 
-        <!-- Column header -->
-        <text x={cx + 8} y="44"
+        <!-- Column header — stacked: label above, sub-label below -->
+        <text x={cx + 8} y="40"
           fill={col.active ? col.color : '#cbd5e1'}
           font-size="10" font-weight="800"
           font-family="'Geist Mono', monospace" letter-spacing="0.6">{col.label}</text>
-        <text x={cx + colW - 8} y="44" text-anchor="end"
+        <text x={cx + colW - 8} y="52" text-anchor="end"
           fill="#64748b" font-size="8"
           font-family="'Geist Mono', monospace">{col.sub}</text>
 
         <!-- Items -->
         {#if col.items.length === 0}
-          <text x={cx + colW/2} y="86" text-anchor="middle"
+          <text x={cx + colW/2} y="92" text-anchor="middle"
             fill="#64748b" font-size="10" font-style="italic"
             font-family="'Geist Mono', monospace">empty</text>
         {:else}
           {#each col.items as item, j}
-            <rect x={cx + 4} y={54 + j * 18} width={colW - 8} height={16} rx="2"
+            <rect x={cx + 4} y={60 + j * 18} width={colW - 8} height="16" rx="2"
               fill="#0b0b14" stroke={col.color} stroke-width="0.8" opacity="0.85"/>
-            <text x={cx + 10} y={66 + j * 18}
+            <text x={cx + 10} y={72 + j * 18}
               fill={col.color} font-size="9" font-weight="700"
               font-family="'Geist Mono', monospace">
               {item.length > 18 ? item.slice(0, 17) + '…' : item}
@@ -143,7 +152,7 @@
         {/if}
 
         <!-- Tag -->
-        <text x={cx + colW/2} y="132" text-anchor="middle"
+        <text x={cx + colW/2} y="138" text-anchor="middle"
           fill={col.active ? col.color : '#64748b'} font-size="9" font-weight="600"
           font-family="'Geist Mono', monospace" letter-spacing="0.3">{col.tag}</text>
       {/each}
@@ -236,9 +245,7 @@
           {/each}
         </div>
       {:else}
-        <!-- Silent skeleton: two ghosted request-card placeholders.
-             Replaces "No requests yet" copy which read as a loading
-             state on step 1. -->
+        <!-- Skeleton shown before first request. -->
         <div class="req-skeleton" aria-hidden="true">
           <div class="req-skeleton-card"></div>
           <div class="req-skeleton-card"></div>
@@ -279,9 +286,7 @@
               </div>
             {/each}
           {:else}
-            <!-- Silent skeleton: two faint placeholder rows. Replaces
-                 the previous "No variables yet" copy which read as a
-                 loading state on step 1. -->
+            <!-- Skeleton shown before first heap variable. -->
             <div class="var-skeleton" aria-hidden="true">
               <div class="var-skeleton-row"></div>
               <div class="var-skeleton-row"></div>
@@ -364,8 +369,7 @@
   .requests-panel { background: var(--a11y-surface1); border: 1px solid var(--a11y-border); border-radius:6px; overflow: hidden; flex-shrink: 0; }
   .requests-hdr   { font-size: 0.62rem; color: rgba(255,255,255,0.92); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 5px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .requests-list  { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; }
-  /* Silent skeleton replaces the old "No requests yet" copy. Two
-     ghosted cards mirror the .req-card rhythm. */
+  /* Skeleton shown before first request. */
   .req-skeleton      { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; }
   .req-skeleton-card {
     height: 30px; border-radius: 6px;
@@ -413,9 +417,7 @@
   .var-row.var-flash { background: rgba(187,154,247,0.08); }
   .var-name  { font-size: 0.6rem; font-weight: 700; font-family: var(--font-code); color: #bb9af7; min-width: 40px; }
   .var-value { font-size: 0.6rem; font-family: var(--font-code); color: rgba(255,255,255,0.88); text-align: right; }
-  /* Silent skeleton: two ghosted rows mirroring the .var-row rhythm.
-     No copy text — the faint bars preview where heap variables will
-     appear without the loading-state feel of "No variables yet". */
+  /* Skeleton shown before first heap variable. */
   .var-skeleton     { display: flex; flex-direction: column; gap: 4px; padding: 4px 6px; }
   .var-skeleton-row {
     height: 10px; border-radius: 3px;

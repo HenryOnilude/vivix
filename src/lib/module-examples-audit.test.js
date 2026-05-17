@@ -1,4 +1,13 @@
 /**
+ * Vivix — JavaScript Visualizer
+ *
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
+ */
+
+/**
  * Module examples audit — runs every module's default code through the interpreter
  * and verifies the final variable values match real JavaScript execution.
  * This ensures every example a user sees produces correct results.

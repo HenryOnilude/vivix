@@ -1,12 +1,14 @@
 /**
- * Web Worker for running the interpreter off the main thread.
- * Receives { code, options } messages, returns { steps, error, friendly }.
+ * Vivix — JavaScript Visualizer
  *
- * Performance strategy:
- *   1. Try posting the raw result first (zero-cost fast path).
- *   2. If postMessage throws a DataCloneError (functions, symbols, etc.),
- *      fall back to sanitizing only the offending data.
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
  */
+
+// Worker entry. Tries raw postMessage first; falls back to sanitizing
+// if DataCloneError hits (functions, symbols, etc.).
 import { interpret } from './interpreter.js';
 
 /**
@@ -46,7 +48,11 @@ function sanitize(val, depth) {
   if (val === null || val === undefined) return val;
   const t = typeof val;
   if (t === 'function') {
-    const fname = (val.name && val.name !== 'anonymous') ? val.name : '';
+    // 'fn' is the interpreter wrapper's const-binding name in evaluator.js
+    // (`const fn = function(...args)`), so it leaks through as val.name —
+    // treat it the same as 'anonymous'.
+    const raw = val.name;
+    const fname = (raw && raw !== 'anonymous' && raw !== 'fn') ? raw : '';
     return fname ? `ƒ ${fname}()` : 'ƒ ()';
   }
   if (t === 'symbol')   return val.toString();

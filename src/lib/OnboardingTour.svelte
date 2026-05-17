@@ -1,14 +1,14 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
-  /**
-   * OnboardingTour.svelte
-   *
-   * First-run guided tour overlay. Shows tooltip bubbles pointing at key UI
-   * elements. Persisted in localStorage so it only appears once.
-   *
-   * Usage: <OnboardingTour accent="#38bdf8" />
-   *
-   * Tour steps reference CSS selectors in ModuleShell.svelte.
-   */
+  // First-run tooltip tour. Points at key UI elements, persisted in localStorage.
   import { onMount, onDestroy } from 'svelte';
 
   /** @type {{ accent?: string, active?: boolean }} */
@@ -95,11 +95,9 @@
     }, 100);
   }
 
-  /** Start timer so we don't fire multiple setTimeouts if `active`
-   *  flips more than once. */
+  // Debounce: don't restart the tour if `active` toggles rapidly.
   let startTimer;
-  /** Has the tour already kicked off this session? Prevents re-entry when
-   *  the caller's `active` flag oscillates. */
+  // Guard against double-start within the same session.
   let started = false;
 
   function tryStart() {

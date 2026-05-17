@@ -1,8 +1,13 @@
 /**
- * Brain text generators — human-readable explanations for the CPU brain panel.
+ * Vivix — JavaScript Visualizer
  *
- * Extracted from interpreter.js for single-responsibility.
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
  */
+
+// Human-readable CPU brain-panel text.
 
 import { fv, byteSize, totalBytes } from './utils.js';
 

@@ -1,4 +1,13 @@
 /**
+ * Vivix — JavaScript Visualizer
+ *
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
+ */
+
+/**
  * Pattern Registry — detects high-level JavaScript patterns from AST nodes
  * and maps them to pre-written three-layer brain text explanations.
  *

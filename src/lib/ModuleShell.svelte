@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   /**
    * ModuleShell — shared layout component for all 8 learning modules.
@@ -22,7 +31,7 @@
    *   cpuGauge(sd)      — SVG: bottom-right gauge inside CpuDash
    *   cpuStack(sd)      — SVG: optional stack-visual override inside CpuDash
    */
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { posthog } from './posthog.js';
   import { interpret, parseCode, checkSupported, friendlyError } from './interpreter.js';
   import { fv, tc, tb, COMPLEXITY_BARS, analyzeComplexity } from './utils.js';
@@ -443,6 +452,28 @@
   onMount(() => {
     window.addEventListener('keydown', handleKey);
 
+    // Progression cards: Escape dismisses, Cmd/Ctrl+Enter triggers primary.
+    const _onEsc = (e) => {
+      if (e.key === 'Escape') {
+        if (_level2Visible) { cancelLevel2Countdown(); _level2Visible = false; }
+        else if (_level1Visible) { dismissLevel1(); }
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        if (_level2Visible) { e.preventDefault(); onLevel2Primary(); }
+        else if (_level1Visible) { e.preventDefault(); onLevel1Primary(); }
+      }
+    };
+    document.addEventListener('keydown', _onEsc);
+
+    // Level 2: clicking outside the card cancels the countdown but keeps it visible.
+    const _onOutsideClick = (e) => {
+      if (_level2Visible) {
+        const card = document.querySelector('.level2-card');
+        if (card && !card.contains(e.target)) { cancelLevel2Countdown(); }
+      }
+    };
+    document.addEventListener('pointerdown', _onOutsideClick);
+
     // Restore complexity-card open state from localStorage (default closed).
     try { cxOpen = localStorage.getItem(CX_OPEN_KEY) === '1'; } catch { /* ignore */ }
 
@@ -523,6 +554,8 @@
 
     return () => {
       window.removeEventListener('keydown', handleKey);
+      document.removeEventListener('keydown', _onEsc);
+      document.removeEventListener('pointerdown', _onOutsideClick);
       window.removeEventListener('pagehide', _onPageHide);
       window.removeEventListener('pointerdown', _onUserInteraction);
       window.removeEventListener('wheel',       _onUserInteraction);
@@ -625,15 +658,6 @@
    *  covers the mid-run visualisation). */
   let isComplete = $derived(total > 0 && step === total - 1);
 
-  /** Session-scoped dismissal flag so the banner respects a user's
-   *  "not interested" click until they reload or open a new module. */
-  let _nextDismissed = $state(false);
-  $effect(() => {
-    // Reset dismissal whenever the user switches modules or starts a new run.
-    void routeKey; void total;
-    _nextDismissed = false;
-  });
-
   function openNextModule() {
     if (!nextModule) return;
     try {
@@ -652,6 +676,133 @@
     } catch (_) {}
     // Let the browser follow the hash — no router imports needed.
     window.location.hash = `#/${nextModule.id}`;
+  }
+
+  // ── Two-level progression system ─────────────────────────────────────────
+  // Level 1: example → example (within module). Bottom-right slide-in.
+  // Level 2: module → module (last example only). Centered with countdown.
+  const LEVEL2_COUNTDOWN_MS = 10000;
+
+  let _level1Visible       = $state(false);
+  let _level1Timer         = $state(null);
+  let _level1DismissedFor  = $state(-1); // selEx index
+
+  let _level2Visible       = $state(false);
+  let _level2AutoTimer     = $state(null);
+  let _level2CountInterval = $state(null);
+  let _level2Progress      = $state(1);   // 1 = full, 0 = empty
+  let _level2Cancelled     = $state(false);
+  let _level2DismissedFor  = $state(''); // routeKey
+
+  // NOTE: untrack(...) is critical here. Reading _level1Timer / _level1Visible
+  // / _level2Visible inside an effect would otherwise make them dependencies,
+  // and writing them at the bottom of the same effect would re-trigger it,
+  // killing the 2 s setTimeout the moment it's scheduled.
+  $effect(() => {
+    const onFinal = hasRun && total > 0 && step === total - 1;
+    const exIdx = selEx;
+    const exLen = examples.length;
+    untrack(() => {
+      if (onFinal) {
+        const hasNextEx = exIdx + 1 < exLen;
+        if (hasNextEx && !_level1Visible && !_level1Timer && _level1DismissedFor !== exIdx) {
+          _level1Timer = setTimeout(() => {
+            _level1Visible = true;
+            _level1Timer = null;
+          }, 2000);
+        }
+        if (!hasNextEx && nextModule && !_level2Visible && _level2DismissedFor !== routeKey) {
+          _level2Visible = true;
+          _level2Cancelled = false;
+          _level2Progress = 1;
+          const startAt = Date.now();
+          _level2CountInterval = setInterval(() => {
+            const elapsed = Date.now() - startAt;
+            _level2Progress = Math.max(0, 1 - elapsed / LEVEL2_COUNTDOWN_MS);
+            if (_level2Progress <= 0) {
+              clearInterval(_level2CountInterval);
+              _level2CountInterval = null;
+            }
+          }, 50);
+          _level2AutoTimer = setTimeout(() => {
+            _level2AutoTimer = null;
+            if (!_level2Cancelled && _level2Visible) { onLevel2Primary(); }
+          }, LEVEL2_COUNTDOWN_MS);
+        }
+      } else {
+        if (_level1Timer) { clearTimeout(_level1Timer); _level1Timer = null; }
+        _level1Visible = false;
+      }
+    });
+  });
+
+  $effect(() => {
+    // Reset when module switches or a new run starts. Tracking only routeKey
+    // and total — everything else is read/written via untrack.
+    void routeKey; void total;
+    untrack(() => {
+      if (_level1Timer) { clearTimeout(_level1Timer); _level1Timer = null; }
+      _level1Visible = false;
+      _level1DismissedFor = -1;
+      cancelLevel2Countdown();
+      _level2Visible = false;
+      _level2DismissedFor = '';
+    });
+  });
+
+  function dismissLevel1() {
+    _level1Visible = false;
+    if (_level1Timer) { clearTimeout(_level1Timer); _level1Timer = null; }
+    _level1DismissedFor = selEx;
+  }
+
+  function onLevel1Primary() {
+    dismissLevel1();
+    const target = examples[selEx + 1]?.label || 'next example';
+    try {
+      posthog.capture('navigation_cta_clicked', {
+        source_module: routeKey || 'unknown',
+        target_module: target,
+        level: 1,
+      });
+    } catch (_) {}
+    loadEx(selEx + 1);
+  }
+
+  function onLevel1ForkEdit() {
+    dismissLevel1();
+    editCode();
+  }
+
+  function cancelLevel2Countdown() {
+    _level2Cancelled = true;
+    if (_level2AutoTimer) { clearTimeout(_level2AutoTimer); _level2AutoTimer = null; }
+    if (_level2CountInterval) { clearInterval(_level2CountInterval); _level2CountInterval = null; }
+  }
+
+  function onLevel2Primary() {
+    cancelLevel2Countdown();
+    _level2Visible = false;
+    _level2DismissedFor = routeKey || 'unknown';
+    try {
+      posthog.capture('navigation_cta_clicked', {
+        source_module: routeKey || 'unknown',
+        target_module: nextModule?.id || 'unknown',
+        level: 2,
+      });
+    } catch (_) {}
+    window.location.hash = `#/${nextModule.id}`;
+  }
+
+  function onLevel2Secondary() {
+    cancelLevel2Countdown();
+    _level2Visible = false;
+    _level2DismissedFor = routeKey || 'unknown';
+    const moduleName = routeKey || titlePrefix || 'unknown';
+    try {
+      posthog.capture('module_restarted', { module_name: moduleName });
+    } catch (_) {}
+    _reset();
   }
 
   /** Fork the current editor contents into free-form mode. Bridges the
@@ -705,7 +856,8 @@
 </script>
 
 <div class="mod" role="main" aria-label="{titlePrefix}{titleAccent} learning module"
-     data-pr-step={_prStep}>
+     data-pr-step={_prStep}
+     data-route={routeKey}>
   <!-- Header -->
   <header class="hdr">
     <a href="#/" class="back" aria-label="Back to all modules">← modules</a>
@@ -1004,10 +1156,7 @@
               <div class="out-ln">› {line}</div>
             {/each}
           {:else}
-            <!-- Empty-state skeleton: a ghosted caret + shimmering
-                 bar telegraphs "a console.log line will land here"
-                 without taking up the full 96px reserved height as
-                 dead space. Mirrors the heap-skeleton pattern. -->
+            <!-- Skeleton shown before first console output. -->
             <div class="out-skeleton" aria-hidden="true">
               <span class="out-skeleton-caret">›</span>
               <span class="out-skeleton-bar"></span>
@@ -1080,31 +1229,49 @@
           </div>
         </details>
 
-        <!-- ── Try this next ────────────────────────────────────────────────
-             Appears only on the final step of a completed run. Addresses
-             the <1% multi-module traversal metric surfaced in PostHog:
-             without this prompt, users who finished a module had no
-             in-UI path to the next concept. The secondary "Fork this
-             example" action hands the current code off to free-form so
-             the user can keep tinkering without landing on a blank
-             canvas. Dismissal is session-only so the banner re-offers
-             after a new run or module switch. -->
-        {#if isComplete && nextModule && !_nextDismissed}
-          <aside class="next-card" style="--next: {nextModule.color}" aria-label="Suggested next module">
-            <div class="next-meta">
-              <span class="next-eyebrow">Try this next</span>
-              <span class="next-title">{nextModule.label}</span>
-              <span class="next-desc">{nextModule.desc}</span>
+        <!-- ── Level 1: Example-to-example progression ────────────────────────
+             Bottom-right slide-in. Appears 2 s after a non-final example
+             completes. Primary loads next example; secondary opens editor. -->
+        {#if _level1Visible}
+          <aside class="level1-card" aria-label="Next example">
+            <button type="button" class="level1-close" onclick={dismissLevel1} aria-label="Dismiss">✕</button>
+            <div class="level1-body">
+              <span class="level1-eyebrow">Next up</span>
+              <span class="level1-name">{examples[selEx + 1]?.label}</span>
             </div>
-            <div class="next-actions">
-              <button type="button" class="next-dismiss" onclick={() => _nextDismissed = true} aria-label="Dismiss suggestion">Not now</button>
+            <div class="level1-actions">
+              <button type="button" class="level1-btn level1-btn--primary" onclick={onLevel1Primary}>
+                Next: {examples[selEx + 1]?.label}
+              </button>
+              <button type="button" class="level1-btn level1-btn--secondary" onclick={onLevel1ForkEdit}>
+                Fork & Edit
+              </button>
+            </div>
+          </aside>
+        {/if}
+
+        <!-- ── Level 2: Module-to-module progression ────────────────────────────
+             Centered card with 10 s auto-advance countdown. Appears after
+             the final example completes. Clicking outside cancels countdown
+             but keeps the card visible.                                   -->
+        {#if _level2Visible}
+          <aside class="level2-card" aria-label="Next module">
+            <div class="level2-progress" style="transform: scaleX({_level2Progress})"></div>
+            <div class="level2-body">
+              <span class="level2-title">Module Complete</span>
+              <span class="level2-subtitle">Ready for the next concept?</span>
+            </div>
+            <div class="level2-actions">
               {#if routeKey !== 'free-form'}
-                <button type="button" class="next-fork" onclick={forkToFreeForm} aria-label="Open this example in Free-Form mode">
+                <button type="button" class="level2-btn level2-btn--tertiary" onclick={forkToFreeForm} aria-label="Open this example in Free-Form mode">
                   Fork this example <span aria-hidden="true">→</span>
                 </button>
               {/if}
-              <button type="button" class="next-go" onclick={openNextModule}>
-                Try it <span aria-hidden="true">→</span>
+              <button type="button" class="level2-btn level2-btn--secondary" onclick={onLevel2Secondary}>
+                Review
+              </button>
+              <button type="button" class="level2-btn level2-btn--primary" onclick={onLevel2Primary}>
+                Start {nextModule?.label}
               </button>
             </div>
           </aside>
@@ -1136,7 +1303,7 @@
   /* ── Outer layout ──────────────────────────────────────────────────────── */
   .mod {
     width:100%; height:100%; display:flex; flex-direction:column;
-    padding:14px 18px; gap:10px; overflow:hidden;
+    padding:14px 18px; gap:10px; overflow:hidden; position:relative;
     font-family: var(--font-ui);
     color:var(--a11y-text-sec);
     /* Module-identity atmosphere: accent color orb top-right, subtle opposite corner */
@@ -1387,6 +1554,7 @@
     min-width: 0;
     display:flex; flex-direction:column; gap:8px;
     overflow-y:auto; overflow-x:hidden; padding-right:2px;
+    position:relative;
   }
 
   /* ── Heap memory card ──────────────────────────────────────────────────── */
@@ -1403,11 +1571,7 @@
     min-height: 96px;
     contain: layout paint;
   }
-  /* Silent skeleton placeholder for the pre-execution heap. Three
-     faint box shapes in the same grid rhythm as real heap-box
-     entries, pulsing subtly so the panel feels primed rather than
-     empty. No text — the reserved height is communicated visually,
-     not with a copy string. */
+  /* Skeleton shown before first heap entry. */
   .heap-skeleton {
     display:grid; grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px; padding: 10px 12px; min-height: 56px;
@@ -1488,9 +1652,7 @@
     min-height: 96px;
     contain: layout paint;
   }
-  /* Silent skeleton for the pre-output STDOUT. A caret plus a
-     ghosted bar hint at "a log line will land here" without the
-     former 'awaiting console.log…' copy. */
+  /* Skeleton shown before first console output. */
   .out-skeleton {
     display:flex; align-items:center; gap: 8px;
     padding: 6px 12px; min-height: 28px;
@@ -1526,62 +1688,149 @@
   }
   .out-ln   { padding:4px 12px; font-size:0.78rem; color:#e0e0e0; font-family: var(--font-code); }
 
-  /* ── Try-this-next banner ────────────────────────────────────────────────
-     Subtle card with the destination module's accent colour. Rendered
-     only on the final step of a completed run; hidden mid-run so it
-     never competes with the visualisation. Matches card elevation used
-     by .heap-card / .out-card so it slots naturally into the panel. */
-  .next-card {
-    display: flex; align-items: center; gap: 14px;
+  /* ── Level 1: Example-to-example progression ────────────────────────────
+     Bottom-right slide-in card. Positioned absolutely within .vis-panel
+     so it floats over content without pushing siblings.                */
+  .level1-card {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    z-index: 80;
+    display: flex; align-items: center; gap: 12px;
     padding: 12px 14px;
-    background: color-mix(in srgb, var(--next, var(--acc)) 8%, var(--elevation-surface));
-    border: 1px solid color-mix(in srgb, var(--next, var(--acc)) 40%, rgba(255,255,255,0.06));
-    border-radius:6px; flex-shrink: 0;
+    background: color-mix(in srgb, var(--acc) 5%, var(--elevation-surface));
+    border: 1px solid color-mix(in srgb, var(--acc) 30%, rgba(255,255,255,0.06));
+    border-radius: 8px;
     box-shadow: var(--elevation-shadow-raised);
     contain: layout paint;
-    animation: next-card-in 240ms ease-out both;
+    animation: level1-card-in 300ms ease-out both;
   }
-  @keyframes next-card-in {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
+  @keyframes level1-card-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
   }
-  .next-meta    { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-  .next-eyebrow {
-    font-size: 0.58rem; letter-spacing: 1.2px; text-transform: uppercase;
-    color: var(--next, var(--acc)); font-family: var(--font-code); font-weight: 700;
+  .level1-close {
+    position: absolute;
+    top: 6px; right: 8px;
+    background: transparent; border: none;
+    color: rgba(255,255,255,0.35);
+    font-size: 0.65rem; line-height: 1;
+    cursor: pointer; padding: 2px 4px;
+    transition: color 0.15s;
   }
-  .next-title   { font-size: 0.9rem; color: var(--a11y-text); font-weight: 700; font-family: var(--font-ui); }
-  .next-desc    { font-size: 0.72rem; color: rgba(255,255,255,0.58); line-height: 1.4; font-family: var(--font-ui); }
-  .next-actions { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .next-dismiss {
-    background: transparent; border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.5); padding: 6px 10px; border-radius: 6px;
-    font-size: 0.68rem; font-family: var(--font-ui); cursor: pointer; transition: all 0.18s;
+  .level1-close:hover { color: rgba(255,255,255,0.75); }
+  .level1-body {
+    display: flex; flex-direction: column; gap: 2px;
+    padding-right: 14px; /* room for close button */
   }
-  .next-dismiss:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.2); }
-  /* Secondary action: "Fork this example" opens free-form with the
-     current code. Styled neutral so the primary next-go still carries
-     the destination module's accent as the dominant CTA. */
-  .next-fork {
+  .level1-eyebrow {
+    font-size: 0.58rem; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--acc); font-family: var(--font-code); font-weight: 700;
+  }
+  .level1-name {
+    font-size: 0.82rem; color: var(--a11y-text); font-weight: 700;
+    font-family: var(--font-ui);
+  }
+  .level1-actions {
+    display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  }
+  .level1-btn {
+    border-radius: 6px; font-size: 0.68rem; font-family: var(--font-ui);
+    font-weight: 600; cursor: pointer; transition: all 0.18s; padding: 5px 10px;
+  }
+  .level1-btn--primary {
+    background: color-mix(in srgb, var(--acc) 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--acc) 50%, transparent);
+    color: var(--acc);
+  }
+  .level1-btn--primary:hover {
+    background: color-mix(in srgb, var(--acc) 32%, transparent);
+    transform: translateX(1px);
+  }
+  .level1-btn--secondary {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.78);
+  }
+  .level1-btn--secondary:hover {
+    background: rgba(255,255,255,0.09); color: #fff; border-color: rgba(255,255,255,0.24);
+  }
+  .level1-btn:active { transform: scale(0.97); }
+
+  /* ── Level 2: Module-to-module progression ───────────────────────────────
+     Centered card with 10 s countdown progress bar. Non-modal: clicks
+     outside the card cancel the countdown but stay interactive with
+     the rest of the page.                                              */
+  .level2-card {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 95;
+    width: min(340px, 90vw);
+    display: flex; flex-direction: column; gap: 14px;
+    padding: 20px 22px;
+    background: var(--elevation-surface);
+    border: 1px solid color-mix(in srgb, var(--acc) 35%, rgba(255,255,255,0.06));
+    border-radius: 10px;
+    box-shadow: var(--elevation-shadow-overlay);
+    contain: layout paint;
+    animation: level2-card-in 300ms ease-out both;
+    overflow: hidden; /* clip progress bar to border-radius */
+  }
+  @keyframes level2-card-in {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  .level2-progress {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: color-mix(in srgb, var(--acc) 70%, transparent);
+    transform-origin: left;
+    transition: none; /* updated by JS every 50 ms */
+  }
+  .level2-body {
+    display: flex; flex-direction: column; gap: 4px;
+    text-align: center;
+  }
+  .level2-title {
+    font-size: 1rem; font-weight: 700; color: var(--a11y-text);
+    font-family: var(--font-ui);
+  }
+  .level2-subtitle {
+    font-size: 0.78rem; color: rgba(255,255,255,0.55); line-height: 1.4;
+    font-family: var(--font-ui);
+  }
+  .level2-actions {
+    display: flex; justify-content: center; gap: 10px;
+  }
+  .level2-btn {
+    border-radius: 6px; font-size: 0.76rem; font-family: var(--font-ui);
+    font-weight: 600; cursor: pointer; transition: all 0.18s; padding: 7px 16px;
+  }
+  .level2-btn--primary {
+    background: color-mix(in srgb, var(--acc) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--acc) 55%, transparent);
+    color: var(--acc);
+  }
+  .level2-btn--primary:hover {
+    background: color-mix(in srgb, var(--acc) 35%, transparent);
+    transform: translateY(-1px);
+  }
+  .level2-btn--secondary {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.78);
+  }
+  .level2-btn--secondary:hover {
+    background: rgba(255,255,255,0.09); color: #fff; border-color: rgba(255,255,255,0.24);
+  }
+  .level2-btn:active { transform: scale(0.97); }
+  .level2-btn--tertiary {
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.14);
     color: rgba(255,255,255,0.78);
-    padding: 6px 12px; border-radius: 6px;
-    font-size: 0.72rem; font-weight: 600; font-family: var(--font-ui);
-    cursor: pointer; transition: all 0.18s;
   }
-  .next-fork:hover  { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.24); }
-  .next-fork:active { transform: scale(0.97); }
-  .next-go {
-    background: color-mix(in srgb, var(--next, var(--acc)) 22%, transparent);
-    border: 1px solid color-mix(in srgb, var(--next, var(--acc)) 55%, transparent);
-    color: var(--next, var(--acc));
-    padding: 6px 12px; border-radius: 6px;
-    font-size: 0.72rem; font-weight: 700; font-family: var(--font-ui);
-    cursor: pointer; transition: all 0.18s;
-  }
-  .next-go:hover  { background: color-mix(in srgb, var(--next, var(--acc)) 35%, transparent); transform: translateX(1px); }
-  .next-go:active { transform: translateX(0) scale(0.97); }
+  .level2-btn--tertiary:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.24); }
 
   /* ── Complexity card ─────────────────────────────────────────────────────
      Collapsible <details>. When closed its height is just the summary

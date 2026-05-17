@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import { onDestroy } from 'svelte';
   import * as acorn from 'acorn';
@@ -35,13 +44,14 @@ counter();
 counter();`,
     },
     {
-      label: 'Async fetch',
-      code: `async function getData() {
-  const response = await fetch('https://api.example.com/data');
-  const data = await response.json();
-  return data;
+      label: 'JSON transform',
+      code: `const raw = '{"users": [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]}';
+const data = JSON.parse(raw);
+const names = [];
+for (let i = 0; i < data.users.length; i++) {
+  names.push(data.users[i].name);
 }
-getData();`,
+console.log(names);`,
     },
     {
       label: 'Recursive Fibonacci',

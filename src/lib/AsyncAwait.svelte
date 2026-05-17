@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import TruncText from './TruncText.svelte';
   import ModuleShell from './ModuleShell.svelte';
@@ -465,8 +474,7 @@
   .var-name    { font-size:0.8rem; color:#88aaff; font-weight:600; font-family: var(--font-code); }
   .var-type    { font-size:0.55rem; padding:1px 5px; border-radius:3px; background:#ffffff08; }
   .var-value   { font-size:0.8rem; font-weight:600; font-family: var(--font-code); }
-  /* Silent skeleton replaces the old "No variables yet" copy — two
-     faint animated bars preview where frame variables will appear. */
+  /* Skeleton shown before first frame variable. */
   .var-skeleton     { display:flex; flex-direction:column; gap:6px; padding:10px 4px; }
   .var-skeleton-row {
     height: 10px; border-radius: 3px;

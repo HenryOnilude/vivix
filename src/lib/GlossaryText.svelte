@@ -1,15 +1,14 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
-  /**
-   * GlossaryText — renders a string and automatically wraps every
-   * glossary term it contains with the <Glossary> hover tooltip.
-   *
-   * This makes it trivial to enhance any existing prose (brain text,
-   * CPU labels, memory-map legends) without the call-site needing to
-   * know which words are glossary terms.
-   *
-   * Usage:
-   *   <GlossaryText text={sd.brain} />
-   */
+  // Auto-wraps glossary terms in a string with <Glossary> tooltips.
   import Glossary from './Glossary.svelte';
   import { tokenize } from './glossary.js';
 

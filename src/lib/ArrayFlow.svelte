@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import ModuleShell from './ModuleShell.svelte';
   import { fv, tc, tb } from './utils.js';
@@ -101,10 +110,7 @@
       </text>
 
       {#if visible.length === 0}
-        <!-- Silent skeleton: five faint contiguous cells anticipating
-             the populated memory strip. No "no array declared yet"
-             copy — the dashed outlines telegraph where elements will
-             land without the loading-state feel. -->
+        <!-- Skeleton shown before first array element. -->
         {#each [0,1,2,3,4] as i}
           {@const cx = stripX + i * cellW}
           <rect x={cx} y="46" width={cellW - 4} height="44" rx="3"

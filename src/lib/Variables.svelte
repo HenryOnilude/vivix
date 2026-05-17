@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import ModuleShell from './ModuleShell.svelte';
   import { fv, tc, tb, totalBytes, byteSize, COMPLEXITY_BARS } from './utils.js';
@@ -76,8 +85,8 @@
     {@const entries = Object.entries(sd.vars || {})}
     {@const active  = sd.highlight}
     {@const W = 520}
-    {@const H = 172}
-    {@const boxH = 112}
+    {@const boxH = Math.max(112, entries.length * 30 + 14)}
+    {@const H = boxH + 60}
     {@const stackX = 6}
     {@const stackW = 220}
     {@const heapX  = stackX + stackW + 32}
@@ -105,11 +114,7 @@
         stroke="#334155" stroke-width="1" stroke-dasharray="2 2"/>
 
       {#if entries.length === 0}
-        <!-- Silent skeleton: three faint slot pairs anticipating the
-             populated stack ↔ heap layout below. No copy text — the
-             dashed outlines signal "variables will appear here" without
-             the loading-state feel of a "no variables declared yet"
-             string on a large dark panel. -->
+        <!-- Skeleton shown before first variable declaration. -->
         {#each [0,1,2] as i}
           {@const slotY = 28 + i * 30}
           <rect x={stackX + 8} y={slotY} width={stackW - 16} height="24" rx="3"
@@ -161,10 +166,9 @@
       {/if}
 
       <!-- Active variable's "why" caption — the depth payoff.
-           Sits in the dedicated whitespace band below the boxes. H is
-           sized so there's clear vertical space between the bottom of
-           the boxes and the caption (H = 172, boxes end at 18+boxH=130,
-           caption baseline at H-14=158 — a 28px breathing band). -->
+           Sits in the dedicated whitespace band below the boxes. H and
+           boxH are sized dynamically so there's clear vertical space
+           between the bottom of the boxes and the caption (28px band). -->
       {#if active && sd.vars && active in sd.vars}
         {@const c = classify(sd.vars[active])}
         <text x={W/2} y={H - 14} text-anchor="middle" fill={c.color} font-size="11"

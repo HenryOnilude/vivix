@@ -1,4 +1,13 @@
 /**
+ * Vivix — JavaScript Visualizer
+ *
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
+ */
+
+/**
  * llm-worker.js — Web Worker entry for WebLLM inference.
  *
  * Runs the entire Phi-3.5-mini model off the main thread so the UI

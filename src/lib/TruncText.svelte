@@ -1,24 +1,15 @@
 <!--
-  TruncText — Phase-8 spec: every visible text block ≤ 200 characters,
-  anything longer is hidden behind a "↓ more" inline link.
+  Vivix — JavaScript Visualizer
 
-  Usage:
-    <TruncText text={someLongString} />
-    <TruncText text={someLongString} max={120} />
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
 
-  Props:
-    - text  (string, required): the prose to display.
-    - max   (number, default 200): the visible-when-collapsed cap.
-    - tag   (string, default 'span'): wrapper element.
-    - moreLabel / lessLabel: customise the toggle copy.
-
-  Behaviour:
-    - text length ≤ max → renders inline, no toggle.
-    - text length  > max → shows the first `max - 1` chars + "… [↓ more]".
-      Clicking "more" reveals the rest in place; "↑ less" collapses again.
-    - Word-boundary aware: cut never happens mid-word if a space exists
-      within 30 chars of the hard limit. Falls back to hard-cut otherwise.
-    - Pure CSS / Svelte 5 runes; no GSAP, no JS animation.
+<!--
+  TruncText — hides text > max chars behind a "↓ more" link.
+  Default max is 200.
 -->
 <script>
   let { text = '', max = 200, tag = 'span', moreLabel = '↓ more', lessLabel = '↑ less', class: extraClass = '' } = $props();

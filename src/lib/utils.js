@@ -1,4 +1,13 @@
 /**
+ * Vivix — JavaScript Visualizer
+ *
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
+ */
+
+/**
  * Shared utilities for all visual learning modules.
  * Eliminates duplication of formatting, type-checking, and deep-copy helpers.
  */
@@ -31,7 +40,8 @@ export function fv(val) {
   // dump the runtime wrapper's full source code (interpreter internals)
   // into UI surfaces like the LET memLabel for closure examples.
   if (typeof val === 'function') {
-    const fname = (val.name && val.name !== 'anonymous') ? val.name : '';
+    const raw = val.name;
+    const fname = (raw && raw !== 'anonymous' && raw !== 'fn') ? raw : '';
     return fname ? `ƒ ${fname}()` : 'ƒ ()';
   }
   if (typeof val === 'object') return JSON.stringify(val);

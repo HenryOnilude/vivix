@@ -1,18 +1,17 @@
 /**
- * llm-narrator.js — Main-thread API wrapping the WebLLM engine running in
- * a dedicated Web Worker. Used by Free-Form mode to narrate execution
- * steps that the Pattern Registry cannot classify.
+ * Vivix — JavaScript Visualizer
  *
- * Model: Phi-3.5-mini-instruct (q4f16_1) — chosen for the best quality-
- * to-memory ratio for browser-based inference. Weights (~2GB) are cached
- * in IndexedDB after the first download so subsequent loads take 1–10
- * seconds instead of several minutes.
- *
- * Usage:
- *   const narrator = createNarrator();
- *   await narrator.init(({ progress, text }) => { ... });
- *   await narrator.narrate(ctx, (delta, full) => { ... });
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
  */
+
+// Main-thread API for the WebLLM engine. Used by Free-Form mode when
+// the Pattern Registry can't classify a step.
+//
+// Model: Phi-3.5-mini-instruct (q4f16_1). Weights (~2GB) cached in IndexedDB
+// after first download, so subsequent loads are ~1–10s.
 
 const MODEL_ID = 'Phi-3.5-mini-instruct-q4f16_1-MLC';
 
@@ -25,10 +24,7 @@ async function loadWebLLM() {
   return _CreateWebWorkerMLCEngine;
 }
 
-/**
- * Build the exact prompt specified in the product requirements.
- * Must remain verbatim — templates are tuned for this phrasing.
- */
+// Prompt tuned for the Phi-3.5-mini model. Change with care.
 export function buildPrompt({ nodeType, heapBefore, heapAfter, stack }) {
   return `You are explaining a JavaScript execution step to an intermediate developer. The current AST node is ${nodeType}. The heap state before this step was ${heapBefore}. The heap state after is ${heapAfter}. The call stack is ${stack}. Explain this step in three layers: what happened mechanically, why the V8 engine works this way, and how this connects to the next step. Total response must be 40-60 words. Active voice. No second person. Refer to the engine not the developer.`;
 }

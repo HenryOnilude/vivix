@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import ModuleShell from './ModuleShell.svelte';
   import { fv, tc, tb } from './utils.js';
@@ -83,10 +92,7 @@
       </text>
 
       {#if !objEntry}
-        <!-- Silent skeleton: three faint key-chip slots on the left to
-             preview the populated hash-bucket layout. No "no object
-             declared yet" text — the dashed chips signal where keys
-             will land. -->
+        <!-- Skeleton shown before first object property. -->
         {#each [0,1,2] as i}
           <rect x="14" y={36 + i * 22} width="92" height="18" rx="3"
             fill="#0b0b14" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
@@ -115,7 +121,7 @@
 
         <!-- Buckets in the middle -->
         {@const bucketsX = 188}
-        {@const bucketW = 92}
+        {@const bucketW = 128}
         {@const bucketH = 22}
         {#each [0, 1, 2, 3] as b}
           {@const by = 36 + b * (bucketH + 4)}
@@ -127,10 +133,10 @@
             stroke-width={bucketActive ? 1.5 : 1}/>
           <text x={bucketsX + 6} y={by + 15} fill="#94a3b8" font-size="9"
             font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.5">B{b}</text>
-          <text x={bucketsX + bucketW - 6} y={by + 15} text-anchor="end"
-            fill={bucketActive ? ACCENT : '#cbd5e1'} font-size="10" font-weight="600"
+          <text x={bucketsX + bucketW - 8} y={by + 15} text-anchor="end"
+            fill={bucketActive ? ACCENT : '#cbd5e1'} font-size="8" font-weight="600"
             font-family="'Geist Mono', monospace">
-            {bucketKeys.length === 0 ? '—' : bucketKeys.join(', ').slice(0, 14) + (bucketKeys.join(', ').length > 14 ? '…' : '')}
+            {bucketKeys.length === 0 ? '—' : bucketKeys.join(', ').slice(0, 20) + (bucketKeys.join(', ').length > 20 ? '…' : '')}
           </text>
 
           <!-- Hash arrows from key chip area to bucket -->
@@ -146,12 +152,12 @@
         {/each}
 
         <!-- Hidden-class chain on the right -->
-        {@const hcX = 300}
+        {@const hcX = 320}
         <text x={hcX} y="32" fill="#94a3b8" font-size="9" font-weight="700"
           font-family="'Geist Mono', monospace" letter-spacing="0.8">HIDDEN CLASS</text>
 
         {#each Array(Math.min(keys.length, 4)) as _, i}
-          {@const cx = hcX + i * 54}
+          {@const cx = hcX + i * 51}
           <rect x={cx} y="42" width="46" height="28" rx="3"
             fill={i === keys.length - 1 ? `${ACCENT}1f` : '#0b0b14'}
             stroke={i === keys.length - 1 ? ACCENT : '#334155'}
@@ -161,7 +167,7 @@
             font-size="12" font-weight="700"
             font-family="'Geist Mono', monospace">C{i}</text>
           {#if i < Math.min(keys.length, 4) - 1}
-            <line x1={cx + 46} y1="56" x2={cx + 54} y2="56"
+            <line x1={cx + 46} y1="56" x2={cx + 51} y2="56"
               stroke="#475569" stroke-width="1" marker-end="url(#obj-arrow)"/>
           {/if}
           {#if keys[i]}
@@ -288,67 +294,67 @@
   {#snippet bottomPanel(sd)}
     {@const objs = Object.entries(sd.vars || {}).filter(([, v]) => typeof v === 'object' && v !== null && !Array.isArray(v))}
     {#if objs.length > 0}
-      {#key sd}
-        {#each objs as [objName, objVal]}
-          {@const keys = Object.keys(objVal)}
-          {#if keys.length > 0}
-            <div class="hash-card">
-              <div class="hash-hdr">
-                <svg width="12" height="12" viewBox="0 0 12 12">
-                  <rect x="1" y="1" width="10" height="10" rx="2" fill="none" stroke={ACCENT} stroke-width="1" opacity="0.5"/>
-                  <line x1="4" y1="1" x2="4" y2="11" stroke={ACCENT} stroke-width="0.5" opacity="0.3"/>
-                  <line x1="8" y1="1" x2="8" y2="11" stroke={ACCENT} stroke-width="0.5" opacity="0.3"/>
-                </svg>
-                <span class="hash-title">HASH MAP — {objName}</span>
-                <span class="hash-subtitle">Each key hashes to a bucket in O(1)</span>
-              </div>
-
-              {#key keys.join(',')}
-                {@const layout = bucketLayout(keys)}
-                {@const maxRow = Math.max(...layout.map(l => l.row), 0)}
-                <svg viewBox="0 0 300 {Math.max(60, (maxRow + 1) * 18 + 40)}" class="hash-svg">
-                  <!-- Bucket headers -->
-                  {#each [0,1,2,3] as b}
-                    {@const bx = 6 + b * 73}
-                    <rect x={bx} y="4" width="66" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
-                    <text x={bx + 33} y="15" text-anchor="middle" fill="#333" font-size="6" font-family="'Geist Mono', monospace">bucket {b}</text>
-                  {/each}
-
-                  <!-- Key pills dropped into buckets -->
-                  {#each layout as item}
-                    {@const bx  = 6 + item.bucket * 73}
-                    {@const ky  = 26 + item.row * 18}
-                    {@const isHL = sd.highlightKey === item.key && sd.highlight === objName}
-                    <rect x={bx} y={ky} width="66" height="14" rx="2"
-                      fill={isHL ? ACCENT + '25' : '#0d0d1a'}
-                      stroke={isHL ? ACCENT : '#1a1a2e'}
-                      stroke-width={isHL ? 1 : 0.5}/>
-                    <text x={bx + 5} y={ky + 10} fill={isHL ? ACCENT : '#bbb'} font-size="6" font-family="'Geist Mono', monospace">"{item.key}"</text>
-                    {#if isHL}
-                      <text x={bx + 60} y={ky + 10} text-anchor="end" fill={ACCENT} font-size="5.5" font-family="'Geist Mono', monospace">← hit</text>
-                    {/if}
-                  {/each}
-
-                <!-- Lookup arrows from key to bucket -->
-                {#if sd.highlightKey && sd.highlight === objName && keys.includes(sd.highlightKey)}
-                  {@const hk = sd.highlightKey}
-                  {@const b = hashKey(hk)}
-                  <text x="150" y={Math.max(60, Math.ceil(keys.length / 2) * 22 + 32)} text-anchor="middle"
-                    fill={ACCENT} font-size="6.5" font-family="'Geist Mono', monospace">
-                    hash("{hk}") → bucket {b} → O(1) lookup
-                  </text>
-                {:else}
-                  <text x="150" y={Math.max(60, Math.ceil(keys.length / 2) * 22 + 32)} text-anchor="middle"
-                    fill="#2a2a3e" font-size="6" font-family="'Geist Mono', monospace">
-                    hash(key) → bucket index → O(1) access regardless of object size
-                  </text>
-                {/if}
-                </svg>
-              {/key}
+      {#each objs as [objName, objVal]}
+        {@const keys = Object.keys(objVal)}
+        {#if keys.length > 0}
+          <div class="hash-card">
+            <div class="hash-hdr">
+              <svg width="12" height="12" viewBox="0 0 12 12">
+                <rect x="1" y="1" width="10" height="10" rx="2" fill="none" stroke={ACCENT} stroke-width="1" opacity="0.5"/>
+                <line x1="4" y1="1" x2="4" y2="11" stroke={ACCENT} stroke-width="0.5" opacity="0.3"/>
+                <line x1="8" y1="1" x2="8" y2="11" stroke={ACCENT} stroke-width="0.5" opacity="0.3"/>
+              </svg>
+              <span class="hash-title">HASH MAP — {objName}</span>
+              <span class="hash-subtitle">Each key hashes to a bucket in O(1)</span>
             </div>
-          {/if}
-        {/each}
-      {/key}
+
+            {#key keys.join(',')}
+              {@const layout = bucketLayout(keys)}
+              {@const maxRow = Math.max(...layout.map(l => l.row), 0)}
+              {@const captionY = (maxRow + 1) * 18 + 30}
+              {@const svgH = Math.max(60, captionY + 14)}
+              <svg viewBox="0 0 300 {svgH}" class="hash-svg">
+                <!-- Bucket headers -->
+                {#each [0,1,2,3] as b}
+                  {@const bx = 6 + b * 73}
+                  <rect x={bx} y="4" width="66" height="16" rx="3" fill="#08080e" stroke="#1a1a2e" stroke-width="0.5"/>
+                  <text x={bx + 33} y="15" text-anchor="middle" fill="#333" font-size="6" font-family="'Geist Mono', monospace">bucket {b}</text>
+                {/each}
+
+                <!-- Key pills dropped into buckets -->
+                {#each layout as item}
+                  {@const bx  = 6 + item.bucket * 73}
+                  {@const ky  = 26 + item.row * 18}
+                  {@const isHL = sd.highlightKey === item.key && sd.highlight === objName}
+                  <rect x={bx} y={ky} width="66" height="14" rx="2"
+                    fill={isHL ? ACCENT + '25' : '#0d0d1a'}
+                    stroke={isHL ? ACCENT : '#1a1a2e'}
+                    stroke-width={isHL ? 1 : 0.5}/>
+                  <text x={bx + 5} y={ky + 10} fill={isHL ? ACCENT : '#bbb'} font-size="6" font-family="'Geist Mono', monospace">"{item.key}"</text>
+                  {#if isHL}
+                    <text x={bx + 60} y={ky + 10} text-anchor="end" fill={ACCENT} font-size="5.5" font-family="'Geist Mono', monospace">← hit</text>
+                  {/if}
+                {/each}
+
+              <!-- Lookup arrows from key to bucket -->
+              {#if sd.highlightKey && sd.highlight === objName && keys.includes(sd.highlightKey)}
+                {@const hk = sd.highlightKey}
+                {@const b = hashKey(hk)}
+                <text x="150" y={captionY} text-anchor="middle"
+                  fill={ACCENT} font-size="6.5" font-family="'Geist Mono', monospace">
+                  hash("{hk}") → bucket {b} → O(1) lookup
+                </text>
+              {:else}
+                <text x="150" y={captionY} text-anchor="middle"
+                  fill="#2a2a3e" font-size="6" font-family="'Geist Mono', monospace">
+                  hash(key) → bucket index → O(1) access regardless of object size
+                </text>
+              {/if}
+              </svg>
+            {/key}
+          </div>
+        {/if}
+      {/each}
     {/if}
   {/snippet}
 

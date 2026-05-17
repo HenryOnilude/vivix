@@ -1,14 +1,14 @@
 /**
- * Accessibility theme system.
+ * Vivix — JavaScript Visualizer
  *
- * Provides three themes:
- *   'default'   — current dark theme (no changes)
- *   'comfort'   — reduced contrast for halation-sensitive / astigmatic users
- *   'dyslexia'  — creme background + dark text, validated by eye-tracking research
- *
- * Usage: call setTheme('comfort') to apply. Persisted in localStorage.
- * CSS custom properties are set on <html> and consumed via var(--a11y-bg), etc.
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
  */
+
+// Accessibility themes: default, comfort (reduced contrast), dyslexia.
+// Persisted in localStorage. Custom properties set on <html>.
 
 const STORAGE_KEY = 'vivix-a11y-theme';
 

@@ -1,3 +1,12 @@
+/**
+ * Vivix — JavaScript Visualizer
+ *
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
+ */
+
 /*
  * Entry point. Injects font preload hints *before* importing the rest of
  * the app so the two critical woff2 files start downloading in parallel

@@ -1,19 +1,18 @@
 /**
- * Pure logic extracted from ModuleShell.svelte.
+ * Vivix — JavaScript Visualizer
  *
- * Contains phase-colour mapping, phase-icon mapping, variable-diff
- * computation, timeline helpers, and complexity badge colour lookup.
- * These functions are side-effect-free and easily testable.
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
  */
+
+// Testable helpers split out from ModuleShell.svelte.
 
 import { COMPLEXITY_BARS } from './utils.js';
 
 // ── Phase colour (covers all module phase names) ────────────────────────────
-/**
- * @param {string|null|undefined} ph - Phase name
- * @param {string} accent - Accent colour for module-specific phases
- * @returns {string} CSS colour
- */
+// Colour for a given execution phase.
 export function phColor(ph, accent = '#38bdf8') {
   if (!ph) return '#555';
   if (ph === 'declare')                         return '#4ade80';
@@ -28,10 +27,7 @@ export function phColor(ph, accent = '#38bdf8') {
 }
 
 // ── Phase icon for timeline markers ─────────────────────────────────────────
-/**
- * @param {string|null|undefined} ph - Phase name
- * @returns {string} Icon character
- */
+// Icon character for a given execution phase.
 export function phIcon(ph) {
   if (!ph) return '▶';
   if (ph === 'done')                                    return '✓';
@@ -42,12 +38,7 @@ export function phIcon(ph) {
 }
 
 // ── Variable diff between current and previous step ─────────────────────────
-/**
- * Computes which variables are new, changed, or same between two steps.
- * @param {Record<string,*>} current - Current step vars
- * @param {Record<string,*>} previous - Previous step vars
- * @returns {Record<string, 'new'|'changed'|'same'>}
- */
+// Which variables are new, changed, or unchanged between two steps.
 export function computeVarDiff(current, previous) {
   /** @type {Record<string, 'new'|'changed'|'same'>} */
   const r = {};
@@ -60,31 +51,18 @@ export function computeVarDiff(current, previous) {
 }
 
 // ── Timeline helpers ────────────────────────────────────────────────────────
-/**
- * Marker position as a percentage.
- * @param {number} i - Step index
- * @param {number} total - Total steps
- * @returns {number} Percentage (0–100)
- */
+// Timeline marker position (0–100%).
 export function markerPct(i, total) {
   return total > 1 ? (i / (total - 1)) * 100 : 0;
 }
 
-/**
- * Fill width percentage up to current step.
- * @param {number} step - Current step index
- * @param {number} total - Total steps
- * @returns {number} Percentage (0–100)
- */
+// Timeline fill width up to current step (0–100%).
 export function fillPct(step, total) {
   return total > 1 ? (step / (total - 1)) * 100 : 0;
 }
 
 // ── Complexity badge colour ─────────────────────────────────────────────────
-/**
- * @param {string} label - Complexity label, e.g. 'O(1)', 'O(n)'
- * @returns {string} CSS colour
- */
+// Badge colour for a complexity label.
 export function complexityBadgeColor(label) {
   return COMPLEXITY_BARS.find(b => label.startsWith(b.label.slice(0, 3)))?.color ?? '#4ade80';
 }

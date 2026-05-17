@@ -1,16 +1,14 @@
 /**
- * Wrapper around the interpreter Web Worker.
- * Provides an async `run(code, options)` function that returns the same
- * shape as `interpret()` but executes off the main thread.
+ * Vivix — JavaScript Visualizer
  *
- * Falls back to the synchronous interpreter if Workers are unavailable.
- *
- * Usage:
- *   import { createInterpreterWorker } from './useInterpreterWorker.js';
- *   const worker = createInterpreterWorker();
- *   const { steps, error, friendly } = await worker.run(code, opts);
- *   worker.terminate(); // when done
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
  */
+
+// Wrapper around the interpreter Web Worker.
+// Falls back to synchronous execution if Workers aren't available.
 import { interpret } from './interpreter.js';
 
 /**

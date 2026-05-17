@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   /**
    * CpuDash — reusable CPU dashboard SVG shared by all 12 modules.
@@ -628,20 +637,25 @@
     grid-column: 1 / 5; grid-row: 3 / 4;
     padding-bottom: 9px;
     display: grid;
-    grid-template-columns: 1fr minmax(220px, 360px);
+    grid-template-columns: 1fr minmax(160px, 240px);
     grid-template-rows: auto auto 1fr;
     align-items: start;
     column-gap: 16px;
     row-gap: 2px;
+    min-height: 200px;
   }
   .cell-module > .cell-lbl { grid-column: 1; grid-row: 1; }
   .cell-module > .cell-sub { grid-column: 1; grid-row: 2; }
   .cell-module > .module-visual { grid-column: 1; grid-row: 3; align-self: stretch; margin-top: 8px; }
   .cell-module > .slot-svg { grid-column: 2; grid-row: 1 / 4; align-self: center; }
   .slot-svg    { width:100%; height:auto; display:block; margin-top:4px; max-height:96px; }
-  .cell-module > .slot-svg { margin-top: 0; max-height: 110px; }
+  .cell-module > .slot-svg { margin-top: 0; max-height: 200px; }
   .module-visual { width: 100%; }
-  .module-visual svg { width: 100%; height: auto; display: block; max-height: 220px; }
+
+  /* MODULE header — bigger label + caption for readability */
+  .cell-module > .cell-lbl { font-size: 0.78rem; }
+  .cell-module > .cell-sub { font-size: 0.72rem; color: rgba(255,255,255,0.92); }
+  .module-visual svg { width: 100%; height: auto; display: block; max-height: 520px; }
 
   /* When the module only ships a `cpuModuleVisual` snippet (no registers
      or gauge), there is no right-hand slot SVG — collapse the second
@@ -660,7 +674,7 @@
     /* Soft upper bound on truly massive screens so the diagram doesn't
        dominate the viewport; at its 520:110 viewBox ratio this lets
        widths up to ~1890px render without letterboxing. */
-    max-block-size: 400px;
+    max-block-size: 720px;
   }
 
   /* HINT strip */

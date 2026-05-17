@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import ModuleShell from './ModuleShell.svelte';
   import { fv, tc, tb } from './utils.js';
@@ -52,11 +61,16 @@
   {#snippet cpuModuleVisual(sd)}
     {@const vars = sd.vars || {}}
     {@const arrEntry = Object.entries(vars).find(([, v]) => Array.isArray(v))}
+    {@const mapEntry = !arrEntry ? Object.entries(vars).find(([, v]) => typeof v === 'object' && v !== null && !Array.isArray(v)) : null}
     {@const arrName = arrEntry ? arrEntry[0] : ''}
     {@const arr = arrEntry ? arrEntry[1] : []}
     {@const type = arrName ? dsType(arrName, vars, sd.phase) : 'array'}
     {@const isStack = type === 'stack'}
     {@const isQueue = type === 'queue'}
+    {@const isMap = !!mapEntry}
+    {@const mapName = mapEntry ? mapEntry[0] : ''}
+    {@const mapObj = mapEntry ? mapEntry[1] : {}}
+    {@const mapKeys = Object.keys(mapObj)}
     {@const dsOps = sd.dsOps || 0}
     {@const W = 520}
     {@const H = 160}
@@ -65,17 +79,15 @@
       <!-- Header -->
       <text x="12" y="20" fill="#e2e8f0" font-size="11" font-weight="700"
         font-family="'Geist Mono', monospace" letter-spacing="1">
-        {isStack ? 'STACK · LIFO' : isQueue ? 'QUEUE · FIFO' : 'DATA STRUCTURE'}
+        {isStack ? 'STACK · LIFO' : isQueue ? 'QUEUE · FIFO' : isMap ? 'MAP · HASH' : 'DATA STRUCTURE'}
       </text>
       <text x="510" y="20" text-anchor="end" fill="#94a3b8" font-size="9"
         font-family="'Geist Mono', monospace">
-        {arrName ? `${arrName} · ${arr.length} item${arr.length === 1 ? '' : 's'}` : 'no structure yet'}
+        {arrName ? `${arrName} · ${arr.length} item${arr.length === 1 ? '' : 's'}` : isMap ? `${mapName} · ${mapKeys.length} key${mapKeys.length === 1 ? '' : 's'}` : 'no structure yet'}
       </text>
 
-      {#if !arrEntry}
-        <!-- Silent skeleton: four faint cells anticipating the LIFO/FIFO
-             strip. No copy text — the dashed outlines preview where
-             items will land without a loading-state feel. -->
+      {#if !arrEntry && !isMap}
+        <!-- Skeleton shown before first structure element. -->
         {#each [0,1,2,3] as i}
           {@const cellW = 54}
           {@const cellH = 34}
@@ -84,6 +96,51 @@
           <rect x={stripX + i * (cellW + 4)} y={stripY} width={cellW} height={cellH} rx="3"
             fill="#0b0b14" stroke="#1a1a2e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
         {/each}
+      {:else if isMap}
+        <!-- Map/Set: show key-value entries as a vertical list with hash-bucket hint -->
+        {@const entryList = Object.entries(mapObj).slice(0, 5)}
+        {@const kvX = 60}
+        {@const kvY = 36}
+        {@const kvH = 20}
+
+        {#each entryList as [k, v], i}
+          {@const ey = kvY + i * (kvH + 4)}
+          {@const isHL = sd.highlightKey === k || sd.highlight === k}
+          <rect x={kvX} y={ey} width="180" height={kvH} rx="3"
+            fill={isHL ? `${ACCENT}1f` : '#0b0b14'}
+            stroke={isHL ? ACCENT : '#1a1a2e'}
+            stroke-width={isHL ? 1.5 : 1}/>
+          <text x={kvX + 8} y={ey + 14}
+            fill={isHL ? ACCENT : '#f1f5f9'} font-size="10" font-weight="700"
+            font-family="'Geist Mono', monospace">"{k.length > 8 ? k.slice(0, 7) + '…' : k}"</text>
+          <text x={kvX + 100} y={ey + 14}
+            fill="#64748b" font-size="10"
+            font-family="'Geist Mono', monospace">→</text>
+          <text x={kvX + 115} y={ey + 14}
+            fill={isHL ? ACCENT : '#94a3b8'} font-size="10" font-weight="600"
+            font-family="'Geist Mono', monospace">
+            {typeof v === 'string' ? `"${v.length > 6 ? v.slice(0, 5) + '…' : v}"` : String(v).slice(0, 8)}
+          </text>
+        {/each}
+        {#if mapKeys.length > 5}
+          <text x={kvX + 8} y={kvY + 5 * (kvH + 4) + 14}
+            fill="#64748b" font-size="9"
+            font-family="'Geist Mono', monospace">+{mapKeys.length - 5} more</text>
+        {/if}
+
+        <!-- O(1) access indicator -->
+        <text x="310" y="56" fill="#94a3b8" font-size="9" font-weight="700"
+          font-family="'Geist Mono', monospace" letter-spacing="0.5">ACCESS</text>
+        <text x="310" y="76" fill={ACCENT} font-size="18" font-weight="800"
+          font-family="'Geist Mono', monospace">O(1)</text>
+        <text x="310" y="96" fill="#64748b" font-size="9"
+          font-family="'Geist Mono', monospace">hash lookup</text>
+
+        <!-- Op counter -->
+        <text x="310" y="122" fill="#94a3b8" font-size="9" font-weight="600"
+          font-family="'Geist Mono', monospace" letter-spacing="0.5">DS OPS</text>
+        <text x="310" y="140" fill={ACCENT} font-size="15" font-weight="800"
+          font-family="'Geist Mono', monospace">{dsOps}</text>
       {:else}
         {@const cellW = 54}
         {@const cellH = 34}
@@ -166,13 +223,15 @@
       <text x={W/2} y={H - 8} text-anchor="middle"
         fill={ACCENT} font-size="11" font-weight="600"
         font-family="'Geist Mono', monospace">
-        {!arrEntry
+        {!arrEntry && !isMap
           ? 'awaiting structure declaration'
-          : isStack
-            ? 'last-in · first-out — push/pop both O(1)'
-            : isQueue
-              ? 'first-in · first-out — push O(1), shift O(n) (must re-index)'
-              : 'array operations'}
+          : isMap
+            ? `hash map — O(1) insert/lookup · ${mapKeys.length} entries`
+            : isStack
+              ? 'last-in · first-out — push/pop both O(1)'
+              : isQueue
+                ? 'first-in · first-out — push O(1), shift O(n) (must re-index)'
+                : 'array operations'}
       </text>
 
       <defs>

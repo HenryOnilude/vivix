@@ -1,15 +1,15 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
-  /**
-   * DepthToggle — three-way segmented control for progressive disclosure.
-   *
-   * Shows three options: Learn / Explore / Deep Dive.
-   * Each option carries a prominent label + 12px description beneath,
-   * so the toggle reads like three "zoom levels" of the same map rather
-   * than arbitrary switches. Writes through depth-level.js which sets
-   * `<html data-depth="...">`; CSS rules across the app consume this.
-   *
-   * Usage: <DepthToggle accent={accent} />
-   */
+  // Learn / Explore / Deep Dive toggle. Writes `<html data-depth="...">`
+  // via depth-level.js; CSS rules consume it.
   import { onMount, onDestroy } from 'svelte';
   import { LEVELS, LEVEL_LABELS, LEVEL_DESCRIPTIONS, getLevel, setLevel } from './depth-level.js';
 

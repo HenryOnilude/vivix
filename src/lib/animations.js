@@ -1,4 +1,13 @@
 /**
+ * Vivix — JavaScript Visualizer
+ *
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
+ */
+
+/**
  * Shared GSAP Svelte actions used across all visual learning modules.
  *
  * Each function is a Svelte "use:action" — it receives (node, params) on mount

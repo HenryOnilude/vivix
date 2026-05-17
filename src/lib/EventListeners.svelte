@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import TruncText from './TruncText.svelte';
   import ModuleShell from './ModuleShell.svelte';
@@ -188,9 +197,7 @@
               </div>
             {/each}
           {:else}
-            <!-- Silent skeleton: two ghosted element-card placeholders.
-                 Replaces "No elements yet" copy which read as a loading
-                 state on step 1. -->
+            <!-- Skeleton shown before first event listener. -->
             <div class="el-skeleton" aria-hidden="true">
               <div class="el-skeleton-card"></div>
               <div class="el-skeleton-card"></div>
@@ -428,9 +435,7 @@
   .runtime-hdr  { font-size: 12px; color: rgba(255,255,255,0.65); font-family: var(--font-code); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; padding: 6px 10px; background: var(--a11y-surface2); border-bottom: 1px solid var(--a11y-border); }
   .el-panel     { flex: 1.5; }
   .el-box       { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; min-height: 60px; }
-  /* Silent skeleton replaces the old "No elements yet" copy. Two
-     ghosted cards mirror the .el-card rhythm so step 1 looks primed
-     rather than empty. */
+  /* Skeleton shown before first event listener. */
   .el-skeleton      { display: flex; flex-direction: column; gap: 6px; }
   .el-skeleton-card {
     height: 36px; border-radius: 6px;

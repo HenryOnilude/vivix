@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import ModuleShell from './ModuleShell.svelte';
   import { dc, fv, tc, tb } from './utils.js';
@@ -129,7 +138,7 @@
       <!-- Ground line -->
       <line x1={towerX - 6} y1={groundY} x2={towerX + towerW + 6} y2={groundY}
         stroke="#334155" stroke-width="1.5"/>
-      <text x={towerX + towerW / 2} y={groundY + 13} text-anchor="middle"
+      <text x={towerX + 4} y={groundY + 13} text-anchor="start"
         fill="#64748b" font-size="9" letter-spacing="0.8"
         font-family="'Geist Mono', monospace">STACK BASE</text>
 

@@ -1,9 +1,13 @@
 /**
- * Parser module — Acorn-based parsing, friendly error messages, and
- * unsupported-syntax checking.
+ * Vivix — JavaScript Visualizer
  *
- * Extracted from interpreter.js for single-responsibility.
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
  */
+
+// Acorn parsing, friendly errors, unsupported-syntax check.
 
 import * as acorn from 'acorn';
 

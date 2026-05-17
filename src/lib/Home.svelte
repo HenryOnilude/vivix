@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import { onMount, onDestroy } from 'svelte';
 
@@ -963,11 +972,8 @@
   .stage-wrap {
     width: 100%;
     max-width: 1200px;
-    /* 48px reads as a deliberate beat between stages. Earlier values
-       (120px → 72px) kept stacking with stage padding + action padding
-       into ~130–250px of dead space. Now the wrap gutter carries the
-       full inter-stage rhythm and the stages themselves have zero
-       vertical padding. */
+    /* Tightened from 120px → 48px to avoid stacking into excessive
+       vertical whitespace between stages. */
     margin: 48px auto 0;
     padding: 0 24px;
     position: relative;

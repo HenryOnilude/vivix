@@ -1,10 +1,13 @@
 /**
- * Custom async/await step executor.
- * Parses async function code via regex (not the AST interpreter) and
- * produces step arrays that visualize event loop, call stack, and microtask queue.
+ * Vivix — JavaScript Visualizer
  *
- * Extracted from AsyncAwait.svelte for testability.
+ * @author     Henry Onilude
+ * @copyright  2026 Henry Onilude
+ * @license    MIT
+ * @link       https://github.com/HenryOnilude/vivix
  */
+
+// Regex-based async/await step generator (not the AST interpreter).
 
 import { dc } from './utils.js';
 

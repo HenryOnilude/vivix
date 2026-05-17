@@ -349,6 +349,14 @@ html[data-depth="explore"] .dl-inline-deep {
   display: flex;
   flex-direction: column;
 }
+/* Objects module: topPanel content (object cards) is compact DOM,
+   not a tall SVG — don't force the focal slot to expand; let it hug
+   its content so the hash-map bottomPanel sits directly underneath. */
+.mod[data-route="objects"] .focal-slot--top {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
 .focal-slot--top > * { flex-shrink: 0; }
 /* Engine narrative (whichever class names a module uses) always sinks
    to the bottom of the primary-panel column per spec ("Sits below

@@ -1,3 +1,12 @@
+<!--
+  Vivix — JavaScript Visualizer
+
+  @author     Henry Onilude
+  @copyright  2026 Henry Onilude
+  @license    MIT
+  @link       https://github.com/HenryOnilude/vivix
+-->
+
 <script>
   import ModuleShell from './ModuleShell.svelte';
   import { fv, tc } from './utils.js';
@@ -366,12 +375,17 @@
             </div>
           {/if}
 
-          <!-- ── Loop body code card ──────────────────────────── -->
+          <!-- ── Loop body preview ───────────────────────────────
+               Compact inline preview of the current loop body code.
+               Coloured left border and pill badge make it distinct
+               from the Source Code panel on the left.              -->
           {#if bodyLines.length > 0}
-            <div class="body-card" use:animateBlockReveal={{ taken: phase === 'body', delay: 0 }}>
+            <div class="body-card" class:body-card-active={phase === 'body'} use:animateBlockReveal={{ taken: phase === 'body', delay: 0 }}>
               <div class="body-hdr">
-                <span class="body-label">LOOP BODY</span>
-                <span class="body-phase" style="color:{phase === 'body' ? '#4ade80' : phase === 'done' ? '#f87171' : '#555'}">
+                <span class="body-label">
+                  <span class="body-dot"></span> LOOP BODY
+                </span>
+                <span class="body-phase" class:body-phase-active={phase === 'body'} class:body-phase-done={phase === 'done'}>
                   {phase === 'body' ? '▶ executing' : phase === 'done' ? '■ finished' : '⏸ waiting'}
                 </span>
               </div>
@@ -488,17 +502,59 @@
   .calc-line   { font-size:16px; color:#ffcc66; font-family: var(--font-code); font-weight:700; letter-spacing:0.3px; }
   .calc-change { font-size:12px; color:rgba(255,255,255,0.55); font-family: var(--font-code); }
 
-  /* ── Loop body code card ───────────────────── */
-  .body-card  { margin:0; border-top:1px solid #1a1a2e; overflow:hidden; }
-  .body-hdr   { display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:var(--a11y-bg, #0a0a12); }
-  .body-label { font-size:0.5rem; color:var(--c-text-sec); font-family: var(--font-code); letter-spacing:1px; font-weight:700; }
-  .body-phase { font-size:0.45rem; font-family: var(--font-code); }
-  .body-lines { padding:4px 8px 6px; background:#08080e; }
-  .body-line  { display:flex; align-items:center; gap:8px; padding:2px 4px; border-radius:3px; opacity:0.4; transition:opacity 0.3s, background 0.3s; }
-  .body-line-active { opacity:1; background:#ffcc6608; }
-  .body-ln    { font-size:12px; color:var(--c-text-sec); font-family: var(--font-code); min-width:16px; text-align:right; }
-  .body-code  { font-size:14px; color:#cfcfcf; font-family: var(--font-code); }
-  .body-line-active .body-code { color:#ffcc66; }
+  /* ── Loop body preview ────────────────────────
+     Distinct from the Source Code panel: left accent border,
+     rounded corners, compact inline layout, bright idle text. */
+  .body-card  {
+    margin: 2px 0 0;
+    border-left: 2px solid color-mix(in srgb, var(--acc) 35%, transparent);
+    border-radius: 6px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--acc) 3%, #0c0c18);
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .body-card-active {
+    border-left-color: var(--acc);
+    background: color-mix(in srgb, var(--acc) 6%, #0c0c18);
+  }
+  .body-hdr   {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 3px 8px 2px;
+  }
+  .body-label {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 0.48rem; color: var(--c-text-sec);
+    font-family: var(--font-code); letter-spacing: 1px; font-weight: 700;
+  }
+  .body-dot   {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: color-mix(in srgb, var(--acc) 50%, transparent);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .body-card-active .body-dot {
+    background: var(--acc);
+    box-shadow: 0 0 5px var(--acc);
+  }
+  .body-phase {
+    font-size: 0.46rem; font-family: var(--font-code);
+    color: #94a3b8;
+    padding: 1px 5px; border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    transition: color 0.3s, background 0.3s;
+  }
+  .body-phase-active { color: #4ade80; background: rgba(74,222,128,0.08); }
+  .body-phase-done   { color: #f87171; background: rgba(248,113,113,0.08); }
+  .body-lines { padding: 3px 6px 5px 8px; }
+  .body-line  {
+    display: flex; align-items: center; gap: 6px;
+    padding: 1px 3px; border-radius: 3px;
+    opacity: 0.5;
+    transition: opacity 0.3s, background 0.3s;
+  }
+  .body-line-active { opacity: 1; background: color-mix(in srgb, var(--acc) 7%, transparent); }
+  .body-ln    { font-size: 10px; color: #64748b; font-family: var(--font-code); min-width: 12px; text-align: right; }
+  .body-code  { font-size: 12px; color: #a1a1aa; font-family: var(--font-code); }
+  .body-line-active .body-code { color: #e4e4e7; }
 
   .vis-placeholder { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
   .ph-svg  { width:360px; height:auto; opacity:1; }
