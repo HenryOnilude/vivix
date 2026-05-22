@@ -8,31 +8,14 @@
 -->
 
 <script>
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
+  import HeroDemo from './HeroDemo.svelte';
 
-  // ── Demo simulation ───────────────────────────────────────────────────────
-  const DEMO_LINES = [
-    [{ k: 'kw', v: 'async ' }, { k: 'kw', v: 'function ' }, { k: 'fn', v: 'fetchUser' }, { k: 'op', v: '() {' }],
-    [{ k: 'kw', v: '  const ' }, { k: 'id', v: 'res' }, { k: 'op', v: ' = ' }, { k: 'kw', v: 'await ' }, { k: 'fn', v: 'Promise' }, { k: 'op', v: '.' }, { k: 'fn', v: 'resolve' }, { k: 'op', v: '(' }, { k: 'str', v: '"Alex"' }, { k: 'op', v: ');' }],
-    [{ k: 'kw', v: '  const ' }, { k: 'id', v: 'msg' }, { k: 'op', v: ' = ' }, { k: 'str', v: '"Hello, "' }, { k: 'op', v: ' + ' }, { k: 'id', v: 'res' }, { k: 'op', v: ';' }],
-    [{ k: 'kw', v: '  return ' }, { k: 'id', v: 'msg' }, { k: 'op', v: ';' }],
-    [{ k: 'op', v: '}' }],
-    [{ k: 'fn', v: 'fetchUser' }, { k: 'op', v: '();' }],
-  ];
-
-  const DEMO_STEPS = [
-    { line: 5, pc: 'LINE 6', op: 'START',   stack: 'Global',      writes: 0, vars: [],                                                                                                                                                                                                     out: null,          explain: 'Program starts. fetchUser() is called — a new async frame is pushed onto the call stack.' },
-    { line: 1, pc: 'LINE 2', op: 'AWAIT',   stack: 'fetchUser',   writes: 1, vars: [{ n: 'res', v: 'pending…', c: '#a78bfa', t: 'Promise', bytes: 0 }],                                                                                                                                    out: null,          explain: 'await hit. Promise.resolve("Alex") created. fetchUser suspends — yields to the microtask queue.' },
-    { line: 1, pc: 'LINE 2', op: 'RESOLVE', stack: 'fetchUser',   writes: 2, vars: [{ n: 'res', v: '"Alex"',   c: '#4ade80', t: 'string',  bytes: 4 }],                                                                                                                                    out: null,          explain: 'Microtask fires. Promise resolved — "Alex" written to heap. res now holds 4 bytes.' },
-    { line: 2, pc: 'LINE 3', op: 'DECLARE', stack: 'fetchUser',   writes: 3, vars: [{ n: 'res', v: '"Alex"',   c: '#4ade80', t: 'string',  bytes: 4 }, { n: 'msg', v: '"Hello, Alex"', c: '#38bdf8', t: 'string', bytes: 12 }],                                                           out: null,          explain: '"Hello, " + res evaluated. Result string written to heap as msg — 12 bytes. 3 memory writes.' },
-    { line: 3, pc: 'LINE 4', op: 'RETURN',  stack: 'fetchUser',   writes: 3, vars: [{ n: 'res', v: '"Alex"',   c: '#4ade80', t: 'string',  bytes: 4 }, { n: 'msg', v: '"Hello, Alex"', c: '#38bdf8', t: 'string', bytes: 12 }],                                                           out: null,          explain: 'return msg. fetchUser resolves its outer Promise with "Hello, Alex". Frame about to pop.' },
-    { line: 5, pc: 'END',    op: 'DONE',    stack: 'Global',      writes: 3, vars: [{ n: 'res', v: '"Alex"',   c: '#4ade80', t: 'string',  bytes: 4 }, { n: 'msg', v: '"Hello, Alex"', c: '#38bdf8', t: 'string', bytes: 12 }],                                                           out: '"Hello, Alex"', explain: 'fetchUser frame popped. Promise resolved with "Hello, Alex". 3 writes, 1 microtask.' },
-  ];
-
-  let demoStep = $state(0);
-  let demoTimer;
-
-  const currentStep = $derived(DEMO_STEPS[demoStep]);
+  // ── Hero contextual CTAs: revealed after the live demo finishes one full
+  //    loop, so the call-to-action lands once the user has actually seen
+  //    the product execute.
+  let firstLoopDone = $state(false);
+  function onHeroLoopComplete() { firstLoopDone = true; }
 
   // ── Scrollytelling: GSAP context holder (torn down on unmount) ────────────
   /** @type {any} */
@@ -83,11 +66,6 @@
     rafHandle = requestAnimationFrame(pumpGlow);
 
     window.addEventListener('mousemove', onMove, { passive: true });
-
-    // Auto-advance demo — pause at end before looping
-    demoTimer = setInterval(() => {
-      demoStep = (demoStep + 1) % DEMO_STEPS.length;
-    }, 1600);
 
     // ── Scrollytelling ─────────────────────────────────────────────────────
     // Gate all scroll-scrubbed work behind prefers-reduced-motion. Stages
@@ -226,7 +204,6 @@
     return () => {
       cancelled = true;
       window.removeEventListener('mousemove', onMove);
-      clearInterval(demoTimer);
       if (rafHandle) cancelAnimationFrame(rafHandle);
       if (scrollCtx) scrollCtx.revert();
     };
@@ -348,205 +325,41 @@
         Vivix makes the invisible visible — step through every instruction and watch the JavaScript engine think.
       </p>
 
-      <!-- Stage 1 artefact: the "confusing" async snippet. Purely static —
-           it sets up the question that stages 2–3 answer. -->
-      <pre class="hero-snippet" aria-label="Example asynchronous JavaScript"><span class="tok-fn">console</span><span class="tok-op">.</span><span class="tok-fn">log</span><span class="tok-op">(</span><span class="tok-str">'1'</span><span class="tok-op">);</span>
-<span class="tok-fn">setTimeout</span><span class="tok-op">(() =&gt; </span><span class="tok-fn">console</span><span class="tok-op">.</span><span class="tok-fn">log</span><span class="tok-op">(</span><span class="tok-str">'2'</span><span class="tok-op">), </span><span class="tok-num">0</span><span class="tok-op">);</span>
-<span class="tok-fn">Promise</span><span class="tok-op">.</span><span class="tok-fn">resolve</span><span class="tok-op">().</span><span class="tok-fn">then</span><span class="tok-op">(() =&gt; </span><span class="tok-fn">console</span><span class="tok-op">.</span><span class="tok-fn">log</span><span class="tok-op">(</span><span class="tok-str">'3'</span><span class="tok-op">));</span>
-<span class="tok-fn">console</span><span class="tok-op">.</span><span class="tok-fn">log</span><span class="tok-op">(</span><span class="tok-str">'4'</span><span class="tok-op">);</span></pre>
+      <!-- Live, auto-playing visualizer embed. Replaces the previous
+           static snippet + mocked-up demo shell. The HeroDemo component
+           drives the real interpreter via the existing Web Worker, and
+           fires `onHeroLoopComplete` once it finishes its first lap so
+           the contextual CTAs below can fade in. -->
+      <HeroDemo onLoopComplete={onHeroLoopComplete} />
 
-      <div class="hero-ctas">
-        <!-- Primary CTA matches the async/microtask snippet rendered just
-             above (Promise.resolve().then, setTimeout). Pointing this at
-             the async module closes the message-mismatch between the
-             hero artefact and the first module a visitor lands on. -->
-        <a href="#/async" class="cta-primary">
+      <!-- Contextual CTAs — hidden until the live demo finishes a full
+           loop, so the call-to-action lands after the visitor has
+           actually seen JavaScript execute. -->
+      <div class="hero-cta-contextual" class:visible={firstLoopDone} aria-hidden={!firstLoopDone}>
+        <a href="#/variables" class="cta-context cta-context-primary">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2l10 6-10 6V2z" fill="currentColor"/></svg>
-          Try it now
+          Step through this yourself
         </a>
-        <button class="cta-ghost" onclick={() => document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' })}>See all 12 modules</button>
-        <a href="#/free-form" class="cta-freeform" aria-label="Free-form mode: paste any JavaScript">
+        <a href="#/async" class="cta-context">Try async/await</a>
+        <a href="#/free-form" class="cta-context cta-context-freeform" aria-label="Free-form mode: paste any JavaScript">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M3 3h10v10H3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
             <path d="M5.5 6.5h5M5.5 9h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
           </svg>
-          Free-Form
+          Paste your own code
         </a>
       </div>
+
+      <!-- Quiet escape hatch back to the module grid for users who want
+           to browse rather than dive into a single module. -->
+      <a class="hero-see-all" href="#modules"
+        onclick={(e) => { e.preventDefault(); document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' }); }}>
+        ↓ See all 12 modules
+      </a>
 
       <p class="hero-hint">No account. No install. Free and open source.</p>
     </div>
 
-    <!-- Product preview: the star of the hero -->
-    <div class="demo-shell" aria-hidden="true">
-
-      <!-- macOS window chrome -->
-      <div class="demo-bar">
-        <span class="demo-dot" style="background:#ff5f57"></span>
-        <span class="demo-dot" style="background:#febc2e"></span>
-        <span class="demo-dot" style="background:#28c840"></span>
-        <span class="demo-title">async.js</span>
-        <span class="demo-concept-tag">Async / Await</span>
-        <span class="demo-badge">● LIVE</span>
-      </div>
-
-      <!-- Main body: code left, viz right -->
-      <div class="demo-body">
-
-        <!-- Code panel -->
-        <div class="demo-code">
-          {#each DEMO_LINES as tokens, i}
-            <div class="demo-line" class:demo-line-active={currentStep.line === i}>
-              <span class="demo-ln">{i + 1}</span>
-              <span class="demo-arrow">{currentStep.line === i ? '▶' : ' '}</span>
-              <span class="demo-tokens">
-                {#each tokens as tok}
-                  <span class="tok-{tok.k}">{tok.v}</span>
-                {/each}
-              </span>
-            </div>
-          {/each}
-        </div>
-
-        <!-- Viz panel — the real unique parts -->
-        <div class="demo-viz">
-
-          <!-- CPU dashboard row -->
-          <div class="demo-cpu">
-            <!-- Circular step gauge -->
-            <div class="demo-gauge">
-              <svg viewBox="0 0 52 52" width="52" height="52">
-                <circle cx="26" cy="26" r="22" fill="none" stroke="#1a1a2e" stroke-width="4"/>
-                <circle cx="26" cy="26" r="22" fill="none" stroke="#4ade80" stroke-width="3.5"
-                  stroke-dasharray="{(demoStep / (DEMO_STEPS.length - 1)) * 138} 138"
-                  stroke-linecap="round"
-                  transform="rotate(-90 26 26)"
-                  style="transition: stroke-dasharray 0.5s ease"/>
-                <text x="26" y="24" text-anchor="middle" fill="#fff" font-size="11" font-weight="800" font-family="'Geist Mono', monospace">{demoStep + 1}</text>
-                <text x="26" y="34" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="6.5" font-family="'Geist Mono', monospace">/{DEMO_STEPS.length}</text>
-              </svg>
-            </div>
-
-            <!-- CPU chip icon -->
-            <div class="demo-chip" class:demo-chip-active={currentStep.op !== 'DONE'}>
-              <svg viewBox="0 0 36 36" width="36" height="36">
-                <rect x="8" y="8" width="20" height="20" rx="3" fill="#0d0d1a" stroke="#4ade80" stroke-width="1.5"/>
-                <rect x="12" y="12" width="12" height="12" rx="2" fill="#4ade8015" stroke="#4ade80" stroke-width="1"/>
-                {#if currentStep.op !== 'DONE'}
-                  <circle cx="18" cy="18" r="2.5" fill="#4ade80" opacity="0.9"/>
-                {:else}
-                  <path d="M14 18 l3 3 l6-6" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round"/>
-                {/if}
-              </svg>
-            </div>
-
-            <!-- Registers -->
-            <div class="demo-registers">
-              <div class="demo-reg">
-                <span class="demo-reg-label">PC</span>
-                <span class="demo-reg-val">{currentStep.pc}</span>
-              </div>
-              <div class="demo-reg">
-                <span class="demo-reg-label">OP</span>
-                <span class="demo-reg-val demo-reg-op" class:op-done={currentStep.op === 'DONE'}>{currentStep.op}</span>
-              </div>
-              <div class="demo-reg">
-                <span class="demo-reg-label">WRITES</span>
-                <span class="demo-reg-val" style="color:#fbbf24">{currentStep.writes}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Call stack -->
-          <div class="demo-stack-row">
-            <span class="demo-stack-label">STACK</span>
-            <span class="demo-stack-frame" class:frame-call={currentStep.stack !== 'Global'}>{currentStep.stack}</span>
-          </div>
-
-          <!-- Heap memory -->
-          <div class="demo-heap">
-            <div class="demo-heap-hdr">HEAP MEMORY</div>
-            <div class="demo-heap-vars">
-              {#each currentStep.vars as v (v.n)}
-                <div class="demo-heap-var" style="--vc: {v.c}">
-                  <div class="demo-heap-top">
-                    <span class="demo-heap-name">{v.n}</span>
-                    <span class="demo-heap-type">{v.t}</span>
-                  </div>
-                  <span class="demo-heap-val" style="color:{v.c}">{v.v}</span>
-                  {#if v.bytes}
-                    <div class="demo-heap-bytes">
-                      {#each Array(Math.min(v.bytes, 8)) as _}
-                        <span class="demo-byte" style="background:{v.c}"></span>
-                      {/each}
-                    </div>
-                  {/if}
-                </div>
-              {/each}
-              {#if currentStep.vars.length === 0}
-                <span class="demo-heap-empty">no variables yet…</span>
-              {/if}
-            </div>
-            {#if currentStep.out}
-              <div class="demo-stdout">
-                <span class="demo-stdout-label">› console.log</span>
-                <span class="demo-stdout-val">{currentStep.out}</span>
-              </div>
-            {/if}
-          </div>
-
-          <!-- Memory map — matches the real module view -->
-          {#if currentStep.vars.length > 0}
-            <div class="demo-memmap">
-              <div class="demo-memmap-hdr">
-                <span class="demo-memmap-icon">⣿</span>
-                <span class="demo-memmap-title">MEMORY MAP</span>
-                <span class="demo-memmap-usage">~{currentStep.vars.reduce((s, v) => s + (v.bytes || 0), 0)}B used</span>
-              </div>
-              <div class="demo-memmap-rows">
-                {#each currentStep.vars as v (v.n)}
-                  <div class="demo-memmap-row">
-                    <span class="demo-memmap-name">{v.n}</span>
-                    <span class="demo-memmap-type">{v.t}</span>
-                    <div class="demo-memmap-bar">
-                      {#each Array(Math.min(v.bytes || 1, 8)) as _}
-                        <span class="demo-memmap-byte" style="background:{v.c}"></span>
-                      {/each}
-                    </div>
-                    <span class="demo-memmap-size">{v.bytes || 0}B</span>
-                  </div>
-                {/each}
-              </div>
-            </div>
-          {/if}
-
-          <!-- Status row — shows completion stats like real module -->
-          {#if currentStep.op === 'DONE'}
-            <div class="demo-status">
-              <span class="demo-status-check">✓</span>
-              <span class="demo-status-label">Program Complete</span>
-              <span class="demo-status-stats">{currentStep.vars.length} vars · {currentStep.writes} writes</span>
-            </div>
-          {/if}
-
-        </div>
-      </div>
-
-      <!-- Explanation strip -->
-      <div class="demo-explain">
-        <span class="demo-explain-icon">◈</span>
-        <span class="demo-explain-text">{currentStep.explain}</span>
-      </div>
-
-      <!-- Progress bar -->
-      <div class="demo-footer">
-        <div class="demo-progress-track">
-          <div class="demo-progress-fill" style="width: {((demoStep + 1) / DEMO_STEPS.length) * 100}%"></div>
-        </div>
-        <span class="demo-step-counter">step {demoStep + 1} / {DEMO_STEPS.length}</span>
-      </div>
-
-    </div>
 
     <!-- Feature highlights — below the demo -->
     <div class="hero-highlights">
@@ -945,28 +758,6 @@
     will-change: background;
   }
   .hero > *:not(.hero-glow) { position: relative; z-index: 1; }
-
-  /* ─── Hero static confusing snippet ───────────────────────────────── */
-  .hero-snippet {
-    margin: 24px auto 8px;
-    padding: 14px 18px;
-    max-width: 560px;
-    width: 100%;
-    background: rgba(9, 9, 11, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius:6px;
-    backdrop-filter: blur(10px) saturate(130%);
-    -webkit-backdrop-filter: blur(10px) saturate(130%);
-    font-family: var(--font-code);
-    font-size: 0.78rem;
-    line-height: 1.7;
-    color: rgba(255, 255, 255, 0.78);
-    text-align: left;
-    white-space: pre;
-    overflow-x: auto;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
-    animation: hero-fade-in 0.9s ease 0.2s both;
-  }
 
   /* ─── Common stage wrappers ───────────────────────────────────────── */
   .stage-wrap {
@@ -1484,15 +1275,6 @@
        Hide it — the highlighted lines + stack-frame chip tell the story. */
     .sr-token     { display: none !important; }
 
-    /* Hero snippet — cap width, let it scroll rather than hard-clip. */
-    .hero-snippet {
-      font-size: 0.66rem;
-      line-height: 1.65;
-      padding: 12px 14px;
-      max-width: 100%;
-      overflow-x: auto;
-    }
-
     /* Code blocks inside the Stage 2 & 3 window-chromes must scroll
        horizontally rather than being hard-clipped by the shell. The
        shell itself has overflow:hidden for its rounded corners, so we
@@ -1694,81 +1476,88 @@
     max-width: 560px;
   }
 
-  .hero-ctas {
+  /* ─── Contextual CTAs (revealed after first demo loop) ────────────── */
+  .hero-cta-contextual {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
-    margin-top: 32px;
+    margin-top: 22px;
     flex-wrap: wrap;
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .hero-cta-contextual.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
   }
 
-  .cta-primary {
+  .cta-context {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: linear-gradient(135deg, var(--accent), var(--accent));
-    color: #051715;
     font-family: var(--font-ui);
-    font-size: 0.92rem;
-    font-weight: 700;
-    padding: 11px 24px;
-    border-radius:6px;
-    text-decoration: none;
-    letter-spacing: -0.1px;
-    transition: filter 0.2s ease, transform 0.2s ease;
-    box-shadow: 0 0 24px var(--accent-glow), 0 4px 14px rgba(0,0,0,0.45);
-  }
-
-  .cta-primary:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-  }
-
-  .cta-ghost {
-    display: inline-flex;
-    align-items: center;
-    font-family: var(--font-ui);
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: rgba(255,255,255,0.58);
-    text-decoration: none;
-    padding: 11px 20px;
-    border-radius:6px;
-    border: 1px solid rgba(255,255,255,0.12);
-    transition: all 0.2s ease;
-    background: rgba(255,255,255,0.03);
-    cursor: pointer;
-  }
-
-  .cta-ghost:hover {
-    color: rgba(255,255,255,0.88);
-    border-color: rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.06);
-  }
-
-  /* Free-Form CTA — teal to match the existing freeform-card identity
-     so users recognise the "paste any JS" entry point in both places. */
-  .cta-freeform {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--font-code);
-    font-size: 0.86rem;
+    font-size: 0.82rem;
     font-weight: 600;
-    color: #00FFD1;
     text-decoration: none;
-    padding: 11px 18px;
-    border-radius:6px;
-    border: 1px solid rgba(0,255,209,0.35);
-    background: rgba(0,255,209,0.06);
-    transition: all 0.2s ease;
+    padding: 9px 16px;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: filter 0.2s ease, transform 0.2s ease,
+                background 0.2s ease, border-color 0.2s ease,
+                color 0.2s ease;
     letter-spacing: 0.1px;
   }
-
-  .cta-freeform:hover {
-    background: rgba(0,255,209,0.12);
-    border-color: rgba(0,255,209,0.6);
+  .cta-context:hover {
+    color: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.26);
+    background: rgba(255, 255, 255, 0.06);
     transform: translateY(-1px);
+  }
+
+  .cta-context-primary {
+    color: var(--a11y-bg, #0a0a0f);
+    background: #4ade80;
+    border-color: transparent;
+    box-shadow: 0 0 24px rgba(74, 222, 128, 0.35), 0 4px 14px rgba(0, 0, 0, 0.45);
+  }
+  .cta-context-primary:hover {
+    color: var(--a11y-bg, #0a0a0f);
+    background: #4ade80;
+    border-color: transparent;
+    filter: brightness(1.08);
+  }
+
+  .cta-context-freeform {
+    color: #00FFD1;
+    border-color: rgba(0, 255, 209, 0.35);
+    background: rgba(0, 255, 209, 0.06);
+  }
+  .cta-context-freeform:hover {
+    color: #00FFD1;
+    border-color: rgba(0, 255, 209, 0.6);
+    background: rgba(0, 255, 209, 0.12);
+  }
+
+  /* Quiet escape hatch back to the modules grid. */
+  .hero-see-all {
+    display: inline-block;
+    margin-top: 14px;
+    font-family: var(--font-ui);
+    font-size: 0.74rem;
+    color: rgba(255, 255, 255, 0.42);
+    text-decoration: none;
+    letter-spacing: 0.2px;
+    transition: color 0.2s ease;
+  }
+  .hero-see-all:hover {
+    color: rgba(255, 255, 255, 0.75);
   }
 
   .hero-hint {
@@ -1779,590 +1568,6 @@
     letter-spacing: 0.1px;
   }
 
-
-  /* ── Demo shell: full-width product preview ── */
-  .demo-shell {
-    width: 100%;
-    max-width: 860px;
-    margin-top: 40px;
-    background: var(--a11y-surface3, #0c0c18);
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,0.04),
-      0 24px 64px rgba(0,0,0,0.6),
-      0 8px 24px rgba(0,0,0,0.4),
-      inset 0 1px 0 rgba(255,255,255,0.06);
-    animation: demo-rise 0.9s ease 0.15s both;
-  }
-
-  @keyframes demo-rise {
-    from { opacity: 0; transform: translateY(28px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  /* ── Feature highlights strip ── */
-  .hero-highlights {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    width: 100%;
-    max-width: 860px;
-    margin-top: 36px;
-    animation: hero-fade-in 0.8s ease 0.4s both;
-  }
-
-  .highlight {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 16px;
-    border-radius:6px;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.06);
-    transition: border-color 0.2s, background 0.2s;
-  }
-
-  .highlight:hover {
-    border-color: rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.04);
-  }
-
-  .hl-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
-    border-radius: 9px;
-    color: var(--fc);
-    background: color-mix(in srgb, var(--fc) 10%, transparent);
-    border: 1px solid color-mix(in srgb, var(--fc) 18%, transparent);
-  }
-
-  .hl-text {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-  }
-
-  .hl-text strong {
-    font-family: var(--font-ui);
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: rgba(255,255,255,0.88);
-  }
-
-  .hl-text span {
-    font-family: var(--font-ui);
-    font-size: 0.72rem;
-    color: rgba(255,255,255,0.40);
-    line-height: 1.5;
-  }
-
-  .demo-bar {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 14px;
-    background: #111120;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-  }
-
-  .demo-dot {
-    width: 11px;
-    height: 11px;
-    border-radius: 50%;
-    opacity: 0.85;
-  }
-
-  .demo-title {
-    font-family: var(--font-code);
-    font-size: 0.68rem;
-    color: rgba(255,255,255,0.35);
-    margin-left: 8px;
-  }
-
-  .demo-concept-tag {
-    font-family: var(--font-code);
-    font-size: 0.6rem;
-    color: rgba(74,222,128,0.7);
-    background: rgba(74,222,128,0.08);
-    border: 1px solid rgba(74,222,128,0.18);
-    border-radius: 4px;
-    padding: 1px 7px;
-    margin-left: 6px;
-    flex: 1;
-    width: fit-content;
-  }
-
-  .demo-badge {
-    font-family: var(--font-code);
-    font-size: 0.58rem;
-    color: #4ade80;
-    letter-spacing: 0.5px;
-    animation: badge-pulse 1.4s ease-in-out infinite;
-  }
-
-  .demo-body {
-    display: flex;
-    min-height: 200px;
-  }
-
-  /* Code side */
-  .demo-code {
-    flex: 1;
-    padding: 14px 0;
-    border-right: 1px solid rgba(255,255,255,0.06);
-    min-width: 0;
-  }
-
-  .demo-line {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    padding: 3px 14px 3px 0;
-    min-height: 28px;
-    transition: background 0.3s ease;
-    border-left: 2px solid transparent;
-  }
-
-  .demo-line-active {
-    background: rgba(74,222,128,0.07);
-    border-left-color: #4ade80;
-  }
-
-  .demo-ln {
-    width: 32px;
-    text-align: right;
-    font-family: var(--font-code);
-    font-size: 0.65rem;
-    color: rgba(255,255,255,0.18);
-    padding-right: 8px;
-    flex-shrink: 0;
-    user-select: none;
-  }
-
-  .demo-arrow {
-    width: 16px;
-    font-size: 0.6rem;
-    color: #4ade80;
-    flex-shrink: 0;
-    transition: opacity 0.2s;
-  }
-
-  .demo-tokens {
-    font-family: var(--font-code);
-    font-size: 0.78rem;
-    white-space: pre;
-    line-height: 1.5;
-  }
-
-  /* Token colours */
-  .tok-kw  { color: #c084fc; }
-  .tok-id  { color: #e2e8f0; }
-  .tok-str { color: #4ade80; }
-  .tok-num { color: #38bdf8; }
-  .tok-op  { color: rgba(255,255,255,0.35); }
-  .tok-fn  { color: #fbbf24; }
-
-  /* ── Viz panel (right side) ── */
-  .demo-viz {
-    width: 220px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    background: #0a0a15;
-    overflow: hidden;
-  }
-
-  /* CPU dashboard row */
-  .demo-cpu {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 10px 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    background: #09090f;
-  }
-
-  .demo-gauge { flex-shrink: 0; }
-
-  .demo-chip {
-    flex-shrink: 0;
-    opacity: 0.6;
-    transition: opacity 0.3s;
-  }
-  .demo-chip-active { opacity: 1; }
-
-  .demo-registers {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-  }
-
-  .demo-reg {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .demo-reg-label {
-    font-family: var(--font-code);
-    font-size: 0.45rem;
-    color: rgba(255,255,255,0.28);
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    min-width: 36px;
-    flex-shrink: 0;
-  }
-
-  .demo-reg-val {
-    font-family: var(--font-code);
-    font-size: 0.65rem;
-    font-weight: 800;
-    color: #fff;
-    white-space: nowrap;
-  }
-
-  .demo-reg-op { color: #38bdf8; }
-  .op-done { color: #4ade80; }
-
-  /* Call stack row */
-  .demo-stack-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    background: #08080e;
-  }
-
-  .demo-stack-label {
-    font-family: var(--font-code);
-    font-size: 0.45rem;
-    color: rgba(255,255,255,0.28);
-    letter-spacing: 1px;
-  }
-
-  .demo-stack-frame {
-    font-family: var(--font-code);
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: rgba(255,255,255,0.72);
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 3px;
-    padding: 1px 6px;
-    transition: all 0.3s;
-  }
-
-  .frame-call {
-    color: #fbbf24;
-    background: rgba(251,191,36,0.10);
-    border-color: rgba(251,191,36,0.25);
-  }
-
-  /* Heap memory */
-  .demo-heap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .demo-heap-hdr {
-    font-family: var(--font-code);
-    font-size: 0.45rem;
-    color: rgba(255,255,255,0.28);
-    letter-spacing: 1.5px;
-    padding: 6px 10px 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-
-  .demo-heap-vars {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding: 6px 8px;
-    overflow: hidden;
-  }
-
-  .demo-heap-empty {
-    font-family: var(--font-code);
-    font-size: 0.58rem;
-    color: rgba(255,255,255,0.15);
-    font-style: italic;
-    padding: 4px 2px;
-  }
-
-  .demo-heap-var {
-    background: color-mix(in srgb, var(--vc) 8%, var(--a11y-surface3, #0c0c18));
-    border: 1px solid color-mix(in srgb, var(--vc) 22%, rgba(255,255,255,0.05));
-    border-radius: 6px;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    animation: var-appear 0.25s ease;
-  }
-
-  @keyframes var-appear {
-    from { opacity: 0; transform: translateY(4px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .demo-heap-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .demo-heap-name {
-    font-family: var(--font-code);
-    font-size: 0.72rem;
-    color: rgba(255,255,255,0.88);
-    font-weight: 700;
-  }
-
-  .demo-heap-type {
-    font-family: var(--font-code);
-    font-size: 0.42rem;
-    color: rgba(255,255,255,0.30);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-  }
-
-  .demo-heap-val {
-    font-family: var(--font-code);
-    font-size: 0.88rem;
-    font-weight: 800;
-  }
-
-  .demo-heap-bytes {
-    display: flex;
-    gap: 1.5px;
-    margin-top: 2px;
-  }
-
-  .demo-byte {
-    width: 7px;
-    height: 7px;
-    border-radius: 1.5px;
-    opacity: 0.5;
-  }
-
-  .demo-stdout {
-    border-top: 1px solid rgba(74,222,128,0.15);
-    padding: 6px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    background: rgba(74,222,128,0.06);
-  }
-
-  .demo-stdout-label {
-    font-family: var(--font-code);
-    font-size: 0.42rem;
-    color: rgba(74,222,128,0.6);
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-  }
-
-  .demo-stdout-val {
-    font-family: var(--font-code);
-    font-size: 0.68rem;
-    color: #4ade80;
-    font-weight: 700;
-    animation: var-appear 0.25s ease;
-  }
-
-  /* Memory map */
-  .demo-memmap {
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding: 8px 10px;
-    background: rgba(255,255,255,0.015);
-    animation: var-appear 0.25s ease;
-  }
-
-  .demo-memmap-hdr {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-
-  .demo-memmap-icon {
-    font-size: 0.55rem;
-    color: rgba(56,189,248,0.5);
-  }
-
-  .demo-memmap-title {
-    font-family: var(--font-code);
-    font-size: 0.45rem;
-    color: rgba(255,255,255,0.30);
-    letter-spacing: 1.5px;
-    flex: 1;
-  }
-
-  .demo-memmap-usage {
-    font-family: var(--font-code);
-    font-size: 0.45rem;
-    color: rgba(56,189,248,0.60);
-    letter-spacing: 0.5px;
-  }
-
-  .demo-memmap-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .demo-memmap-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 2px 0;
-  }
-
-  .demo-memmap-name {
-    font-family: var(--font-code);
-    font-size: 0.58rem;
-    font-weight: 700;
-    color: rgba(255,255,255,0.75);
-    min-width: 38px;
-  }
-
-  .demo-memmap-type {
-    font-family: var(--font-code);
-    font-size: 0.40rem;
-    color: rgba(255,255,255,0.22);
-    min-width: 32px;
-  }
-
-  .demo-memmap-bar {
-    display: flex;
-    gap: 1.5px;
-    flex: 1;
-  }
-
-  .demo-memmap-byte {
-    width: 8px;
-    height: 8px;
-    border-radius: 1.5px;
-    opacity: 0.50;
-  }
-
-  .demo-memmap-size {
-    font-family: var(--font-code);
-    font-size: 0.45rem;
-    color: rgba(255,255,255,0.28);
-    min-width: 20px;
-    text-align: right;
-  }
-
-  /* Status row */
-  .demo-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border-top: 1px solid rgba(74,222,128,0.15);
-    background: rgba(74,222,128,0.05);
-    animation: var-appear 0.3s ease;
-  }
-
-  .demo-status-check {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    background: rgba(74,222,128,0.18);
-    color: #4ade80;
-    font-size: 0.6rem;
-    font-weight: 800;
-  }
-
-  .demo-status-label {
-    font-family: var(--font-ui);
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: #4ade80;
-  }
-
-  .demo-status-stats {
-    font-family: var(--font-code);
-    font-size: 0.52rem;
-    color: rgba(255,255,255,0.35);
-    margin-left: auto;
-  }
-
-  /* Explanation strip */
-  .demo-explain {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 10px 14px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    background: rgba(74,222,128,0.04);
-    min-height: 48px;
-  }
-
-  .demo-explain-icon {
-    font-size: 0.7rem;
-    color: #4ade80;
-    opacity: 0.7;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  .demo-explain-text {
-    font-family: var(--font-ui);
-    font-size: 0.72rem;
-    color: rgba(255,255,255,0.62);
-    line-height: 1.55;
-    transition: opacity 0.3s ease;
-  }
-
-  /* Progress bar + step counter */
-  .demo-footer {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    border-top: 1px solid rgba(255,255,255,0.05);
-  }
-
-  .demo-progress-track {
-    flex: 1;
-    height: 3px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .demo-progress-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    transition: width 0.5s ease;
-  }
-
-  .demo-step-counter {
-    font-family: var(--font-code);
-    font-size: 0.58rem;
-    color: rgba(255,255,255,0.28);
-    white-space: nowrap;
-    letter-spacing: 0.3px;
-  }
 
   /* ── Section divider ── */
   .section-divider {
@@ -2663,14 +1868,13 @@
       text-wrap: balance;
     }
 
-    .hero-ctas {
+    .hero-cta-contextual {
       flex-direction: column;
       align-items: stretch;
       gap: 10px;
       flex-wrap: nowrap;
     }
-    .cta-primary,
-    .cta-ghost {
+    .cta-context {
       width: 100%;
       justify-content: center;
       box-sizing: border-box;
@@ -2685,18 +1889,9 @@
 
     .hero-title { font-size: clamp(1.5rem, 6vw, 2rem); }
     .hero-sub { font-size: 0.88rem; }
-    .cta-primary, .cta-ghost { font-size: 0.82rem; padding: 10px 18px; }
+    .cta-context { font-size: 0.82rem; padding: 10px 18px; }
     .hero-highlights { grid-template-columns: 1fr; gap: 10px; margin-top: 24px; }
     .hl-icon { width: 32px; height: 32px; }
-    .demo-shell { margin-top: 28px; }
-    .demo-body { flex-direction: column; }
-
-    /* Desktop fixes .demo-viz at 220px (right rail). Once .demo-body
-       flips to column the viz panel is still 220px wide — so the heap
-       memory cards (res, msg) render left-aligned against a much wider
-       parent. Stretch the viz to the full column width so its children
-       (heap cards, CPU row, stack) centre naturally within the shell. */
-    .demo-viz { width: 100%; }
 
     .modules-grid {
       grid-template-columns: 1fr;
@@ -2717,7 +1912,7 @@
     .home { padding: 12px 8px; gap: 12px; }
     .hero-title { font-size: clamp(1.3rem, 5.5vw, 1.7rem); }
     .hero-sub { font-size: 0.82rem; }
-    .cta-primary, .cta-ghost { font-size: 0.78rem; padding: 9px 14px; }
+    .cta-context { font-size: 0.78rem; padding: 9px 14px; }
     .card-hero { width: 72px; padding: 12px; }
     .hero-svg { max-width: 52px; }
     .card-text { padding: 10px 12px 10px 0; }
