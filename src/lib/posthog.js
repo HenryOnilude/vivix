@@ -100,6 +100,7 @@ async function _load() {
       ui_host: 'https://eu.posthog.com',
       capture_pageview: true,
       autocapture: false,
+      opt_in_site_apps: true,
       session_recording: { maskAllInputs: true },
       // Global hook: runs on every event (including auto-captured $pageview)
       // before it's sent. Guarantees no code query param ever leaves the
