@@ -11,11 +11,9 @@
   import { onMount } from 'svelte';
   import HeroDemo from './HeroDemo.svelte';
 
-  // ── Hero contextual CTAs: revealed after the live demo finishes one full
-  //    loop, so the call-to-action lands once the user has actually seen
-  //    the product execute.
-  let firstLoopDone = $state(false);
-  function onHeroLoopComplete() { firstLoopDone = true; }
+  // ── Hero contextual CTAs are always visible so the primary action is
+  //    discoverable the moment the visitor lands, regardless of where the
+  //    auto-playing demo is in its loop.
 
   // ── Scrollytelling: GSAP context holder (torn down on unmount) ────────────
   /** @type {any} */
@@ -327,15 +325,12 @@
 
       <!-- Live, auto-playing visualizer embed. Replaces the previous
            static snippet + mocked-up demo shell. The HeroDemo component
-           drives the real interpreter via the existing Web Worker, and
-           fires `onHeroLoopComplete` once it finishes its first lap so
-           the contextual CTAs below can fade in. -->
-      <HeroDemo onLoopComplete={onHeroLoopComplete} />
+           drives the real interpreter via the existing Web Worker. -->
+      <HeroDemo />
 
-      <!-- Contextual CTAs — hidden until the live demo finishes a full
-           loop, so the call-to-action lands after the visitor has
-           actually seen JavaScript execute. -->
-      <div class="hero-cta-contextual" class:visible={firstLoopDone} aria-hidden={!firstLoopDone}>
+      <!-- Contextual CTAs are always visible so the visitor can act the
+           moment they decide they're interested, not after a full demo loop. -->
+      <div class="hero-cta-contextual visible">
         <a href="#/variables" class="cta-context cta-context-primary">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2l10 6-10 6V2z" fill="currentColor"/></svg>
           Step through this yourself
