@@ -8,7 +8,7 @@
 -->
 
 <script>
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
 
   let {
     value = $bindable(''),
@@ -223,10 +223,12 @@
     const current = view.state.doc.toString();
     if (v !== current) {
       updating = true;
-      view.dispatch({
-        changes: { from: 0, to: current.length, insert: v },
+      tick().then(() => {
+        view.dispatch({
+          changes: { from: 0, to: current.length, insert: v },
+        });
+        updating = false;
       });
-      updating = false;
     }
   });
 
@@ -236,7 +238,9 @@
     const ln = activeLine;
     const isLoaded = loaded;
     if (!isLoaded || !view || !setActiveLineEffect || !EditorViewRef) return;
-    view.dispatch({ effects: setActiveLineEffect.of(ln) });
+    tick().then(() => {
+      view.dispatch({ effects: setActiveLineEffect.of(ln) });
+    });
     if (ln == null || ln < 0) return;
     const clamped = Math.min(Math.max(ln + 1, 1), view.state.doc.lines);
     const linePos = view.state.doc.line(clamped).from;
@@ -249,7 +253,9 @@
         const rect = view.scrollDOM.getBoundingClientRect();
         const outOfView = coords.top < rect.top + 20 || coords.bottom > rect.bottom - 20;
         if (outOfView) {
-          view.dispatch({ effects: EditorViewRef.scrollIntoView(linePos, { y: 'center' }) });
+          tick().then(() => {
+            view.dispatch({ effects: EditorViewRef.scrollIntoView(linePos, { y: 'center' }) });
+          });
         }
         return null;
       },
