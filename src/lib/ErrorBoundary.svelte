@@ -61,7 +61,7 @@
       {/if}
       <div class="error-actions">
         <button onclick={reset}>Try again</button>
-        <a href="#/">← Back to home</a>
+        <a href="/">← Back to home</a>
       </div>
     </div>
   </div>

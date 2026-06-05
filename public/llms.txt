@@ -1,0 +1,33 @@
+# Vivix
+
+> A free, open-source JavaScript execution visualiser that runs entirely in the browser. No install. No account required.
+
+Vivix shows how JavaScript executes step by step — the call stack growing and shrinking frame by frame, heap memory mutating as objects are allocated, and async/await suspending a function mid-execution and reconstructing it after the microtask queue resolves.
+
+Built for developers and educators who need to see beyond what standard debuggers show.
+
+## Modules
+
+- [Variables & Memory](https://vivix.dev/variables)
+- [Functions](https://vivix.dev/function)
+- [Conditionals](https://vivix.dev/if-gate)
+- [For Loops](https://vivix.dev/for-loop)
+- [Closures & Scope](https://vivix.dev/closures)
+- [Async / Await](https://vivix.dev/async)
+- [Promise Methods](https://vivix.dev/promise-chain)
+- [DOM Events](https://vivix.dev/event-listeners)
+- [Array Methods](https://vivix.dev/array)
+- [Objects & Hash Maps](https://vivix.dev/objects)
+- [Data Structures](https://vivix.dev/data-structures)
+- [HTTP & Fetch](https://vivix.dev/api-calls)
+
+## Technical details
+
+- Stack: Svelte 5, Vite, TypeScript, Acorn AST, CodeMirror 6, GSAP, Web Worker interpreter
+- Licence: MIT
+- Source: https://github.com/HenryOnilude/vivix
+- Live: https://vivix.dev
+
+## Positioning
+
+Python Tutor shows WHAT. Loupe shows WHEN. Vivix shows HOW.

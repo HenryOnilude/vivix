@@ -3,12 +3,13 @@
  * generate-seo-pages.js
  *
  * Run after `vite build` to create:
- *   - dist/<module>/index.html  (one per module, SEO-rich, redirects to SPA)
+ *   - dist/<module>/index.html  (one per module, SEO-rich, boots SPA)
  *   - dist/sitemap.xml
  *
  * Each landing page has unique <title>, <meta description>, structured data,
  * and a noscript fallback with real text content for crawlers.
- * On load it redirects to the hash-routed SPA: /#/<module>
+ * For real browsers the page injects the built SPA so the app mounts directly
+ * at the canonical URL (History API routing, no hash, no redirect loop).
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from 'fs';
@@ -176,6 +177,14 @@ const MODULES = [
   },
 ];
 
+// ── Extract SPA assets from the built index.html ────────────────────────────
+// These are injected into every landing page so the SPA mounts directly at
+// the canonical URL (progressive enhancement: crawlers see SEO HTML, browsers
+// boot the app over the same URL without a redirect).
+const indexHtml = readFileSync(join(DIST, 'index.html'), 'utf-8');
+const STYLE_TAG = (indexHtml.match(/<link rel="stylesheet"[^>]*>/) || [''])[0];
+const SCRIPT_TAG = (indexHtml.match(/<script type="module"[^>]*><\/script>/) || [''])[0];
+
 function buildLandingPage(mod) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -185,12 +194,12 @@ function buildLandingPage(mod) {
   <title>${mod.title} | ${SITE_NAME}</title>
   <meta name="description" content="${mod.description}"/>
   <meta name="keywords" content="${mod.keywords}"/>
-  <link rel="canonical" href="${BASE_URL}/${mod.slug}/"/>
+  <link rel="canonical" href="${BASE_URL}/${mod.slug}"/>
   <!-- Open Graph -->
   <meta property="og:title" content="${mod.title}"/>
   <meta property="og:description" content="${mod.description}"/>
   <meta property="og:type" content="website"/>
-  <meta property="og:url" content="${BASE_URL}/${mod.slug}/"/>
+  <meta property="og:url" content="${BASE_URL}/${mod.slug}"/>
   <meta property="og:site_name" content="${SITE_NAME}"/>
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image"/>
@@ -203,12 +212,13 @@ function buildLandingPage(mod) {
     "@type": "WebApplication",
     "name": "${mod.title}",
     "description": "${mod.description}",
-    "url": "${BASE_URL}/${mod.slug}/",
+    "url": "${BASE_URL}/${mod.slug}",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "Web",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" }
   }
   </script>
+  ${STYLE_TAG}
   <style>
     body{font-family:system-ui,-apple-system,sans-serif;max-width:680px;margin:40px auto;padding:0 20px;color:#e0e0e0;background:#0a0a0f;line-height:1.7}
     h1{font-size:1.8rem;color:#fff;margin-bottom:8px}
@@ -219,22 +229,29 @@ function buildLandingPage(mod) {
     ul{padding-left:20px}li{margin-bottom:6px}
     .back{font-size:0.85rem;color:#888;margin-bottom:24px;display:block}
     noscript{display:block;margin-top:16px;padding:12px;background:#1a1a2e;border-radius:8px;font-size:0.85rem}
+    .seo-content{display:block}
+    .seo-content.vivix-hidden{display:none}
   </style>
 </head>
 <body>
-  <a href="/" class="back">&larr; Vivix Home</a>
-  <h1>${mod.h1}</h1>
-  ${mod.body}
-  <a href="/#/${mod.slug}" class="cta">&#9654; Open Interactive Visualizer</a>
-  <noscript>
-    <p>This interactive visualizer requires JavaScript to run. Please enable JavaScript in your browser to use Vivix.</p>
-  </noscript>
+  <div class="seo-content" id="seo">
+    <a href="/" class="back">&larr; Vivix Home</a>
+    <h1>${mod.h1}</h1>
+    ${mod.body}
+    <a href="/${mod.slug}" class="cta">&#9654; Open Interactive Visualizer</a>
+    <noscript>
+      <p>This interactive visualizer requires JavaScript to run. Please enable JavaScript in your browser to use Vivix.</p>
+    </noscript>
+  </div>
+  <div id="app"></div>
   <script>
-    // Redirect browsers (not crawlers) to the SPA hash route
+    // Progressive enhancement: hide SEO HTML and let the SPA take over
+    // when the app bundle loads. Crawlers without JS still see the content.
     if (!/bot|crawl|spider|slurp|archive/i.test(navigator.userAgent)) {
-      window.location.replace('/#/${mod.slug}');
+      document.getElementById('seo').classList.add('vivix-hidden');
     }
   </script>
+  ${SCRIPT_TAG}
 </body>
 </html>`;
 }
@@ -244,7 +261,7 @@ function buildSitemap() {
   const urls = [
     `  <url><loc>${BASE_URL}/</loc><changefreq>weekly</changefreq><priority>1.0</priority><lastmod>${now}</lastmod></url>`,
     ...MODULES.map(m =>
-      `  <url><loc>${BASE_URL}/${m.slug}/</loc><changefreq>monthly</changefreq><priority>0.8</priority><lastmod>${now}</lastmod></url>`
+      `  <url><loc>${BASE_URL}/${m.slug}</loc><changefreq>monthly</changefreq><priority>0.8</priority><lastmod>${now}</lastmod></url>`
     ),
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -255,6 +272,33 @@ ${urls.join('\n')}
 
 function buildRobotsTxt() {
   return `User-agent: *
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
 Allow: /
 
 Sitemap: ${BASE_URL}/sitemap.xml
@@ -277,8 +321,7 @@ console.log('  ✓ sitemap.xml');
 writeFileSync(join(DIST, 'robots.txt'), buildRobotsTxt());
 console.log('  ✓ robots.txt');
 
-// SPA fallback: copy index.html → 404.html (GitHub Pages serves this for unknown routes)
-const indexHtml = readFileSync(join(DIST, 'index.html'), 'utf-8');
+// SPA fallback: copy index.html → 404.html (Cloudflare Pages serves this for unknown routes)
 writeFileSync(join(DIST, '404.html'), indexHtml);
 console.log('  ✓ 404.html (SPA fallback)');
 

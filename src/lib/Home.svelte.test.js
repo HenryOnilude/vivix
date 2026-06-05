@@ -50,19 +50,19 @@ describe('Home.svelte', () => {
     expect(screen.getByText('closureScope')).toBeTruthy();
   });
 
-  it('each card links to the correct hash route', () => {
+  it('each card links to the correct path route', () => {
     render(Home);
     const links = screen.getAllByRole('link');
     const hrefs = links.map(l => l.getAttribute('href'));
-    expect(hrefs).toContain('#/variables');
-    expect(hrefs).toContain('#/if-gate');
-    expect(hrefs).toContain('#/for-loop');
-    expect(hrefs).toContain('#/function');
-    expect(hrefs).toContain('#/array');
-    expect(hrefs).toContain('#/objects');
-    expect(hrefs).toContain('#/data-structures');
-    expect(hrefs).toContain('#/async');
-    expect(hrefs).toContain('#/closures');
+    expect(hrefs).toContain('/variables');
+    expect(hrefs).toContain('/if-gate');
+    expect(hrefs).toContain('/for-loop');
+    expect(hrefs).toContain('/function');
+    expect(hrefs).toContain('/array');
+    expect(hrefs).toContain('/objects');
+    expect(hrefs).toContain('/data-structures');
+    expect(hrefs).toContain('/async');
+    expect(hrefs).toContain('/closures');
   });
 
   it('renders the demo progress bar', () => {

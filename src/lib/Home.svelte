@@ -331,12 +331,12 @@
       <!-- Contextual CTAs are always visible so the visitor can act the
            moment they decide they're interested, not after a full demo loop. -->
       <div class="hero-cta-contextual visible">
-        <a href="#/variables" class="cta-context cta-context-primary">
+        <a href="/variables" class="cta-context cta-context-primary">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2l10 6-10 6V2z" fill="currentColor"/></svg>
           Step through this yourself
         </a>
-        <a href="#/async" class="cta-context">Try async/await</a>
-        <a href="#/free-form" class="cta-context cta-context-freeform" aria-label="Free-form mode: paste any JavaScript">
+        <a href="/async" class="cta-context">Try async/await</a>
+        <a href="/free-form" class="cta-context cta-context-freeform" aria-label="Free-form mode: paste any JavaScript">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M3 3h10v10H3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
             <path d="M5.5 6.5h5M5.5 9h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
@@ -540,7 +540,7 @@
            visual promise of what the visualiser looks like. -->
       <div class="stage-action-cta">
         <div class="stage-action-copy">Now try it with your own code.</div>
-        <a href="#/free-form" class="stage-action-ide" aria-label="Launch Visualizer">
+        <a href="/free-form" class="stage-action-ide" aria-label="Launch Visualizer">
           <div class="stage-action-ide-bar">
             <span class="demo-dot" style="background:#ff5f57"></span>
             <span class="demo-dot" style="background:#febc2e"></span>
@@ -561,7 +561,7 @@
   </section>
 
   <!-- ── Free-form mode entry ── -->
-  <a href="#/free-form" class="freeform-card" aria-label="Free-form mode: paste any JavaScript and see it visualized">
+  <a href="/free-form" class="freeform-card" aria-label="Free-form mode: paste any JavaScript and see it visualized">
     <div class="freeform-icon">
       <svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true">
         <rect x="6" y="6" width="36" height="36" rx="8" fill="#00FFD112" stroke="#00FFD1" stroke-width="1.5"/>
@@ -586,7 +586,7 @@
   <ul class="modules-grid" aria-label="Learning modules">
     {#each modules as mod}
       <li class="module-card-wrap">
-      <a href="#/{mod.id}" class="module-card" style="--c: {mod.color}" aria-label="{mod.subtitle}: {mod.desc}">
+      <a href="/{mod.id}" class="module-card" style="--c: {mod.color}" aria-label="{mod.subtitle}: {mod.desc}">
 
         <!-- Hero illustration area -->
         <div class="card-hero">

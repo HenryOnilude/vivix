@@ -9,7 +9,7 @@
 
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { encodeCode, decodeCode, parseHashState, buildShareUrl } from './url-state.js';
+import { encodeCode, decodeCode, parseUrlState, buildShareUrl } from './url-state.js';
 
 describe('encodeCode / decodeCode', () => {
   it('round-trips simple ASCII code', () => {
@@ -32,13 +32,9 @@ describe('encodeCode / decodeCode', () => {
   });
 });
 
-describe('parseHashState', () => {
-  const originalHash = window.location.hash;
-  afterEach(() => { window.location.hash = originalHash; });
-
-  it('returns home route for empty hash', () => {
-    window.location.hash = '';
-    const result = parseHashState();
+describe('parseUrlState', () => {
+  it('returns home route for empty / root path', () => {
+    const result = parseUrlState('/', '');
     expect(result.route).toBe('home');
     expect(result.ex).toBeNull();
     expect(result.step).toBeNull();
@@ -46,22 +42,19 @@ describe('parseHashState', () => {
   });
 
   it('parses route without params', () => {
-    window.location.hash = '#/variables';
-    const result = parseHashState();
+    const result = parseUrlState('/variables', '');
     expect(result.route).toBe('variables');
     expect(result.ex).toBeNull();
   });
 
   it('parses route with ex param', () => {
-    window.location.hash = '#/closures?ex=3';
-    const result = parseHashState();
+    const result = parseUrlState('/closures', '?ex=3');
     expect(result.route).toBe('closures');
     expect(result.ex).toBe(3);
   });
 
   it('parses route with ex and step params', () => {
-    window.location.hash = '#/if-gate?ex=1&step=5';
-    const result = parseHashState();
+    const result = parseUrlState('/if-gate', '?ex=1&step=5');
     expect(result.route).toBe('if-gate');
     expect(result.ex).toBe(1);
     expect(result.step).toBe(5);
@@ -70,8 +63,7 @@ describe('parseHashState', () => {
   it('parses route with code param', () => {
     const code = 'let a = 1;';
     const encoded = encodeCode(code);
-    window.location.hash = `#/variables?code=${encoded}`;
-    const result = parseHashState();
+    const result = parseUrlState('/variables', `?code=${encoded}`);
     expect(result.route).toBe('variables');
     expect(result.code).toBe(code);
   });
@@ -79,8 +71,7 @@ describe('parseHashState', () => {
   it('parses route with all params', () => {
     const code = 'let x = 10;\nx = x + 5;';
     const encoded = encodeCode(code);
-    window.location.hash = `#/for-loop?ex=2&step=7&code=${encoded}`;
-    const result = parseHashState();
+    const result = parseUrlState('/for-loop', `?ex=2&step=7&code=${encoded}`);
     expect(result.route).toBe('for-loop');
     expect(result.ex).toBe(2);
     expect(result.step).toBe(7);
@@ -88,28 +79,23 @@ describe('parseHashState', () => {
   });
 
   it('ignores invalid ex values', () => {
-    window.location.hash = '#/variables?ex=abc';
-    expect(parseHashState().ex).toBeNull();
-
-    window.location.hash = '#/variables?ex=-1';
-    expect(parseHashState().ex).toBeNull();
+    expect(parseUrlState('/variables', '?ex=abc').ex).toBeNull();
+    expect(parseUrlState('/variables', '?ex=-1').ex).toBeNull();
   });
 
   it('ignores invalid step values', () => {
-    window.location.hash = '#/variables?step=xyz';
-    expect(parseHashState().step).toBeNull();
+    expect(parseUrlState('/variables', '?step=xyz').step).toBeNull();
   });
 
   it('allows step=-1', () => {
-    window.location.hash = '#/variables?step=-1';
-    expect(parseHashState().step).toBe(-1);
+    expect(parseUrlState('/variables', '?step=-1').step).toBe(-1);
   });
 });
 
 describe('buildShareUrl', () => {
   it('builds basic URL with just route', () => {
     const url = buildShareUrl({ route: 'variables', ex: 0, step: -1, code: '', exampleCode: '' });
-    expect(url).toContain('#/variables');
+    expect(url).toContain('/variables');
     expect(url).not.toContain('?');
   });
 
@@ -148,10 +134,9 @@ describe('buildShareUrl', () => {
     const customCode = 'for (let i = 0; i < 10; i++) {\n  console.log(i);\n}';
     const url = buildShareUrl({ route: 'for-loop', ex: 0, step: 3, code: customCode, exampleCode: 'different' });
 
-    // Extract the code param and decode it
-    const hashPart = url.split('#/')[1];
-    const queryPart = hashPart.split('?')[1];
-    const params = new URLSearchParams(queryPart);
+    // Extract the code param and decode it from the path-based URL
+    const u = new URL(url);
+    const params = new URLSearchParams(u.search);
     const decoded = decodeCode(params.get('code'));
     expect(decoded).toBe(customCode);
   });

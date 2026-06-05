@@ -13,7 +13,7 @@
   import ErrorBoundary from './lib/ErrorBoundary.svelte';
   import { initTheme } from './lib/a11y-theme.js';
   import { initDepthLevel } from './lib/depth-level.js';
-  import { parseHashState } from './lib/url-state.js';
+  import { parseUrlState, navigate } from './lib/url-state.js';
 
   // Initialize accessibility theme + progressive-disclosure depth
   initTheme();
@@ -43,7 +43,7 @@
   let loading = $state(false);
 
   function getRoute() {
-    const parsed = parseHashState();
+    const parsed = parseUrlState();
     return parsed.route;
   }
 
@@ -77,9 +77,27 @@
   $effect(() => { loadRoute(route); });
 
   onMount(() => {
-    const handler = () => { route = getRoute(); };
-    window.addEventListener('hashchange', handler);
-    return () => window.removeEventListener('hashchange', handler);
+    // ── Popstate — back/forward buttons and pushState navigation ─────────────
+    const popHandler = () => { route = getRoute(); };
+    window.addEventListener('popstate', popHandler);
+
+    // ── Click interception — internal links → pushState SPA navigation ───────
+    const clickHandler = (e) => {
+      const a = e.composedPath().find(el => el instanceof HTMLAnchorElement);
+      if (!a) return;
+      const href = a.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('#')) return;
+      if (href.startsWith('/')) {
+        e.preventDefault();
+        navigate(href);
+      }
+    };
+    document.addEventListener('click', clickHandler);
+
+    return () => {
+      window.removeEventListener('popstate', popHandler);
+      document.removeEventListener('click', clickHandler);
+    };
   });
 </script>
 
@@ -95,20 +113,20 @@
     {:else if loadError === 'not-found'}
       <div class="not-found">
         <p>Module not found</p>
-        <a href="#/">← back to modules</a>
+        <a href="/">← back to modules</a>
       </div>
     {:else if loadError}
       <div class="not-found">
         <p>Failed to load module</p>
         <p class="error-detail">{loadError}</p>
-        <a href="#/">← back to modules</a>
+        <a href="/">← back to modules</a>
       </div>
     {:else if LazyComponent}
       <LazyComponent />
     {:else}
       <div class="not-found">
         <p>Module not found</p>
-        <a href="#/">← back to modules</a>
+        <a href="/">← back to modules</a>
       </div>
     {/if}
   </div>

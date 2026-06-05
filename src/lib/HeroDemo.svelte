@@ -41,13 +41,15 @@ console.log(result);`;
   const useTokens = $derived(code.trim() === DEFAULT_CODE.trim());
   const codeLines = $derived(code.split('\n'));
 
-  // Step-interval per the design brief — fast enough to feel alive, slow
-  // enough to read each transition.
-  const STEP_INTERVAL = 900;
+  // Step-interval per the design brief — slow enough to read each transition
+  // and process every frame before the next one fires.
+  const STEP_INTERVAL = 1800;
   const PAUSE_AT_END = 1000;
   const FIRST_PLAY_DELAY = 1500;
 
-  let steps    = $state([]);
+  // Replaced wholesale per run and never mutated in place — `$state.raw`
+  // avoids deep-proxying every step snapshot.
+  let steps    = $state.raw([]);
   let total    = $state(0);
   let step     = $state(0);
   let playing  = $state(false);

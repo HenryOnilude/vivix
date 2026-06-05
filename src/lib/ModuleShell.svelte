@@ -42,7 +42,7 @@
   import CpuDash from './CpuDash.svelte';
   import TapTooltip from './TapTooltip.svelte';
   import DepthToggle from './DepthToggle.svelte';
-  import { parseHashState, updateUrlSilent, buildShareUrl } from './url-state.js';
+  import { parseUrlState, updateUrlSilent, buildShareUrl, navigate } from './url-state.js';
   import OnboardingTour from './OnboardingTour.svelte';
 
 
@@ -139,7 +139,10 @@
   let codeSnapshot = $state('');
   let step     = $state(-1);
   let total    = $state(0);
-  let steps    = $state([]);
+  // Snapshot array is produced once per run and replaced wholesale (never
+  // mutated in place), so `$state.raw` skips deep-proxying every step/vars
+  // snapshot — scrubbing the timeline stays a constant-time array index read.
+  let steps    = $state.raw([]);
   let playing  = $state(false);
   let timer    = $state(null);
   let hasRun   = $state(false);
@@ -322,10 +325,9 @@
       codeSnapshot = codeText;
       if (typeof onSteps === 'function') onSteps(steps);
       mobileTab = 'visual'; // Auto-switch to visual tab on mobile after running
-      // Auto-start playback
+      // Land on step 1, paused — the user presses play to begin auto-play.
+      // (Default state is paused; we never auto-start execution here.)
       if (playing) { clearInterval(timer); timer = null; playing = false; }
-      playing = true;
-      _startTimer(interval);
     } catch (e) {
       err = e.message;
       if (!errFriendly) errFriendly = friendlyError(e.message, codeText);
@@ -365,6 +367,39 @@
       if (step < total - 1) _advanceStep(step + 1, 'auto');
       else                  _advanceStep(0,        'auto');
     }, ms);
+  }
+
+  /** One-shot auto-play used by the on-load auto-advance: play through the
+   *  steps once at the normal interval so the user sees the visualization is
+   *  alive. After holding on the final step for one interval, it RESETS to
+   *  step 1 and stays paused (no loop, no continued playback) so the user
+   *  lands back at the start ready to step through it themselves.
+   *  Self-terminates the moment the user takes control (any interaction sets
+   *  `_autoAdvanceCancelled`), which hands playback over where they are. */
+  function _startAutoPlayOnce() {
+    if (total <= 1) return;
+    playing = true;
+    // Advance the first step right away so the visualization visibly comes
+    // alive the moment the pass begins (no dead time), then settle into the
+    // normal interval cadence.
+    _advanceStep(step + 1, 'auto');
+    if (_autoAdvanceCancelled) { playing = false; return; }
+    timer = setInterval(() => {
+      // User took control mid-pass — stop where they are, no reset.
+      if (_autoAdvanceCancelled) {
+        clearInterval(timer); timer = null; playing = false;
+        return;
+      }
+      // Reached the final step (held for one interval): reset to step 1 and
+      // stay paused. Never loops or keeps playing.
+      if (step >= total - 1) {
+        clearInterval(timer); timer = null;
+        step = 0;
+        playing = false;
+        return;
+      }
+      _advanceStep(step + 1, 'auto');
+    }, interval);
   }
 
   function toggleAuto() {
@@ -495,7 +530,7 @@
     // Read URL params and apply initial state
     if (!_urlApplied) {
       _urlApplied = true;
-      const parsed = parseHashState();
+      const parsed = parseUrlState();
 
       // Apply example selection from URL
       if (parsed.ex != null && parsed.ex >= 0 && parsed.ex < examples.length) {
@@ -521,8 +556,9 @@
       } else {
         // ── Phase-5 auto-advance ─────────────────────────────────────
         // No URL deep-link: schedule a 1.5s timer that auto-runs the
-        // visualization and seeks to step 3 (index 2). Cancelled by any
-        // user interaction with the module.
+        // visualization, then plays through ONCE so the user sees it's alive
+        // and stops at the final step (no loop). Any user interaction with
+        // the module cancels the pass and hands over control immediately.
         _autoAdvancePending = true;
         _autoAdvanceTimer = setTimeout(() => {
           _autoAdvanceTimer = null;
@@ -530,26 +566,21 @@
           if (_autoAdvanceCancelled || hasRun) return;
           _runCode().then(() => {
             if (_autoAdvanceCancelled) return;
-            // Seek to user-facing step 3 (= index 2). If the program is
-            // shorter than 3 steps, clamp to the final step so we don't
-            // overshoot. Pause playback so the user lands on a held frame.
-            const target = Math.min(2, Math.max(0, steps.length - 1));
-            if (target > 0) step = target;
-            if (playing) { clearInterval(timer); timer = null; playing = false; }
+            // One auto-play pass from step 1, then stop at the last step.
+            _startAutoPlayOnce();
           }).catch(() => { /* swallow — _runCode handles its own errors */ });
         }, 1500);
       }
     }
 
-    // Cancel auto-advance on any deliberate user interaction. We listen
-    // on the window so a click anywhere in the module (or any keydown,
-    // wheel, touch) aborts the pending run.
+    // Cancel auto-advance on a deliberate user interaction (a click or a
+    // key press). We intentionally do NOT cancel on scroll (`wheel` /
+    // `touchstart`) so reading the page by scrolling doesn't freeze the
+    // auto-play pass.
     const _onUserInteraction = () => {
       if (!_autoAdvanceCancelled) _cancelAutoAdvance();
     };
     window.addEventListener('pointerdown', _onUserInteraction, { passive: true, once: true });
-    window.addEventListener('wheel',       _onUserInteraction, { passive: true, once: true });
-    window.addEventListener('touchstart',  _onUserInteraction, { passive: true, once: true });
     window.addEventListener('keydown',     _onUserInteraction, { once: true });
 
     return () => {
@@ -558,8 +589,6 @@
       document.removeEventListener('pointerdown', _onOutsideClick);
       window.removeEventListener('pagehide', _onPageHide);
       window.removeEventListener('pointerdown', _onUserInteraction);
-      window.removeEventListener('wheel',       _onUserInteraction);
-      window.removeEventListener('touchstart',  _onUserInteraction);
       window.removeEventListener('keydown',     _onUserInteraction);
       _cancelAutoAdvance();
       // Component is unmounting (route change, parent unmount, etc.) —
@@ -674,8 +703,7 @@
         target_module: nextModule.id,
       });
     } catch (_) {}
-    // Let the browser follow the hash — no router imports needed.
-    window.location.hash = `#/${nextModule.id}`;
+    navigate(`/${nextModule.id}`);
   }
 
   // ── Two-level progression system ─────────────────────────────────────────
@@ -791,7 +819,7 @@
         level: 2,
       });
     } catch (_) {}
-    window.location.hash = `#/${nextModule.id}`;
+    navigate(`/${nextModule.id}`);
   }
 
   function onLevel2Secondary() {
@@ -833,7 +861,7 @@
       // exampleCode — free-form's starters are unrelated to this snippet.
       exampleCode: '',
     });
-    window.location.href = url;
+    navigate(url);
   }
 
   // ── Share button handler ──────────────────────────────────────────────────
@@ -860,7 +888,7 @@
      data-route={routeKey}>
   <!-- Header -->
   <header class="hdr">
-    <a href="#/" class="back" aria-label="Back to all modules">← modules</a>
+    <a href="/" class="back" aria-label="Back to all modules">← modules</a>
     <div class="title-group">
       <h2>{titlePrefix}<span class="ac" style="color:{accent}">{titleAccent}</span>
         <span class="sub">{subtitle}</span></h2>
