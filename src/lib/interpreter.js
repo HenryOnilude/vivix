@@ -737,6 +737,21 @@ function walkForStatement(stmt, nextLi, vars, output, lines, steps, state, optio
     if (d.id && d.id.type === 'Identifier') counterName = d.id.name;
   }
 
+  // ── Per-iteration binding (ES2015 `let` / `const` semantics) ──
+  // When the loop initialiser is a lexical declaration, each iteration runs
+  // against a fresh snapshot of the loop bindings. Closures created inside the
+  // body capture that iteration's snapshot rather than the shared `vars`
+  // object, so the classic closure-in-loop example returns [0,1,2] — matching
+  // how real JavaScript engines create a fresh binding per iteration. `var`
+  // loops keep the historical flat-scope behaviour (single shared binding).
+  const isLexical = !!(stmt.init && stmt.init.type === 'VariableDeclaration'
+    && (stmt.init.kind === 'let' || stmt.init.kind === 'const'));
+  const loopBindings = isLexical
+    ? stmt.init.declarations
+        .filter(d => d.id && d.id.type === 'Identifier')
+        .map(d => d.id.name)
+    : [];
+
   // Init
   if (stmt.init) {
     if (stmt.init.type === 'VariableDeclaration') {
@@ -783,19 +798,32 @@ function walkForStatement(stmt, nextLi, vars, output, lines, steps, state, optio
       if (!testVal) break;
     }
 
-    // Body
+    // Body — for lexical loops, runs against a fresh per-iteration scope so
+    // any closures created here capture this iteration's binding values.
+    const iterScope = isLexical ? { ...vars } : vars;
     const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
     let hitBreak = false;
     let hitContinue = false;
     for (let i = 0; i < body.length; i++) {
       try {
-        walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+        walkStatement(body[i], body[i+1] || null, iterScope, output, lines, steps, state, options, depth + 1);
       } catch (sig) {
         if (sig instanceof BreakSignal) { hitBreak = true; break; }
         if (sig instanceof ContinueSignal) { hitContinue = true; break; }
         throw sig;
       }
     }
+
+    // Propagate body-driven mutations of non-loop bindings back to the shared
+    // scope. The loop binding(s) stay frozen in the snapshot the closures
+    // captured, while everything else (accumulators, outer vars, leaked
+    // block-locals) carries forward exactly as before.
+    if (isLexical) {
+      for (const key of Object.keys(iterScope)) {
+        if (!loopBindings.includes(key)) vars[key] = iterScope[key];
+      }
+    }
+
     if (hitBreak) break;
 
     // Update

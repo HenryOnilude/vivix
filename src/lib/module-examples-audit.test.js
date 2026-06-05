@@ -320,13 +320,21 @@ describe('Module: Closures', () => {
     expect(vars.r2).toBe(36);   // 6+10+20
   });
 
-  it('Closure loop trap: all closures share same i (flat scope), all return 3', () => {
+  it('Closure loop trap: let creates a fresh binding per iteration → 0,1,2', () => {
     const { vars } = run('let funcs = [];\n\nfor (let i = 0; i < 3; i++) {\n  funcs[i] = function() {\n    return i;\n  };\n}\n\nlet r0 = funcs[0]();\nlet r1 = funcs[1]();\nlet r2 = funcs[2]();', { trackCalls: true, trackClosures: true });
-    // Known simplification: flat scope means all closures share the final i=3
-    // (In real JS with let, each iteration creates a fresh binding)
-    expect(vars.r0).toBe(3);
-    expect(vars.r1).toBe(3);
-    expect(vars.r2).toBe(3);
+    // ES2015 `let` semantics: each iteration captures its own binding.
+    expect(vars.r0).toBe(0);
+    expect(vars.r1).toBe(1);
+    expect(vars.r2).toBe(2);
+  });
+
+  it('let in a for-loop creates a fresh binding per iteration (regression)', () => {
+    // Regression for the classic closure-in-loop example: closures pushed
+    // inside the loop must each capture their own `i`, so mapping the calls
+    // returns [0, 1, 2] (real-engine behaviour), not [3, 3, 3].
+    const { vars, output } = run('const fns = [];\nfor (let i = 0; i < 3; i++) {\n  fns.push(() => i);\n}\nconsole.log(fns.map(f => f()));', { trackCalls: true, trackClosures: true });
+    expect(vars.fns.map(f => f())).toEqual([0, 1, 2]);
+    expect(output[output.length - 1]).toBe('[0,1,2]');
   });
 });
 

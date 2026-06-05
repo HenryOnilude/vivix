@@ -106,6 +106,10 @@
     cpuGauge     = undefined,
     cpuStack     = undefined,
     cpuModuleVisual = undefined,
+    /** Optional informational note rendered near the top of the module,
+     *  just under the header. Purely additive — modules that don't pass it
+     *  see no change. Used for subtle module-level caveats/explanations. */
+    headerNote = undefined,
     /** Plain-English caption describing what the MODULE cell shows for this
      *  specific module (e.g. "the variable being written, the last condition's
      *  boolean, and total comparisons"). Replaces the generic
@@ -903,6 +907,11 @@
       <div class="share-toast" style="--acc:{accent}">{shareToast}</div>
     {/if}
   </header>
+
+  <!-- Optional module-level informational note (purely additive) -->
+  {#if headerNote}
+    {@render headerNote()}
+  {/if}
 
   <!-- First-run hint (suppressed when runHint is empty, e.g. free-form mode) -->
   {#if !hasRun && runHint}
