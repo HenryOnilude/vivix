@@ -880,11 +880,11 @@ describe('brain-text.js — forLoop brain text', () => {
     expect(text).toContain('on-stack replacement');
   });
 
-  it('buildLoopTestBrain (hot, TRUE) mentions TurboFan, counter mutation, and flat-scope note', () => {
+  it('buildLoopTestBrain (hot, TRUE) mentions TurboFan, counter mutation, and lexical-environment note', () => {
     const text = buildLoopTestBrain(true, 4, 'i', 4, 3);
     expect(text).toContain('TurboFan');
     expect(text).toContain('mutates from');
-    expect(text).toContain('outer scope in this visualiser');
+    expect(text).toContain('fresh lexical environment');
   });
 
   it('buildLoopTestBrain (cold, TRUE) mentions Ignition and FeedbackVector', () => {
@@ -899,10 +899,10 @@ describe('brain-text.js — forLoop brain text', () => {
     expect(text).toContain('iteration one');
   });
 
-  it('buildWhileTestBrain (hot) mentions TurboFan and flat-scope note', () => {
+  it('buildWhileTestBrain (hot) mentions TurboFan and lexical-environment note', () => {
     const text = buildWhileTestBrain(true, 4);
     expect(text).toContain('TurboFan');
-    expect(text).toContain('outer scope in this visualiser');
+    expect(text).toContain('fresh lexical environment');
   });
 
   it('buildDoWhileTestBrain mentions body-first execution trait', () => {
@@ -954,12 +954,12 @@ describe('ForLoop brain text integration', () => {
     expect(hotStep).toBeTruthy();
   });
 
-  it('loop-test step includes flat-scope disclaimer', () => {
+  it('loop-test step includes lexical-environment note', () => {
     const code = 'let sum = 0;\nfor (let i = 1; i <= 3; i++) {\n  sum = sum + i;\n}';
     const { steps } = run(code, { trackLoops: true });
     const loopStep = steps.find(s => s.phase === 'loop-test' && s.brain.includes('TRUE'));
     expect(loopStep).toBeTruthy();
-    expect(loopStep.brain).toContain('outer scope in this visualiser');
+    expect(loopStep.brain).toContain('fresh lexical environment');
   });
 
   it('loop-test tracks counter mutation', () => {

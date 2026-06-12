@@ -6,7 +6,7 @@ https://github.com/user-attachments/assets/e62a0f8f-b508-4d1d-be6a-222cc9136fdd
 Instruction-level JavaScript execution visualizer mapping the call stack, heap memory, and event loop in real time.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-490%20passing-blue)](https://github.com/HenryOnilude/vivix)
+[![Tests](https://img.shields.io/badge/tests-498%20passing-blue)](https://github.com/HenryOnilude/vivix)
 [![Built with Svelte 5](https://img.shields.io/badge/built%20with-Svelte%205-orange)](https://svelte.dev)
 [![Open Source](https://img.shields.io/badge/open%20source-heart-red)](https://github.com/HenryOnilude/vivix)
 
@@ -99,7 +99,7 @@ Two smaller decisions fell out of this shape:
 
 ## Testing
 
-- 490 tests passing
+- 498 tests passing
 - Tests cover AST walker logic, async/await step execution, and shared shell utilities.
 - Run tests locally using: `npm run test`
 
@@ -107,7 +107,6 @@ Two smaller decisions fell out of this shape:
 
 Vivix is an educational interpreter, not a full JavaScript engine. These trade-offs keep visualizations clear and focused on the concepts that matter most for learning.
 
-- **Flat scope** — `let`/`const` inside blocks (if, for, while) share the outer scope. The classic "closure in a loop with `let`" pattern behaves like `var`.
 - **No `this` in standalone functions** — `this` is only supported for class method calls, not general `this` binding.
 - **Limited built-ins** — supports core methods (`push`, `pop`, `map`, `filter`, `reduce`, `Object.keys`, `Math.*`) but not the full standard library.
 - **No prototypes or `new` outside classes** — use class syntax instead of constructor functions with `new`.

@@ -82,6 +82,69 @@ class BreakSignal { }
 class ContinueSignal { }
 
 // ═══════════════════════════════════════════════════════
+// BLOCK SCOPING
+// let/const (and class) declarations are scoped to the block
+// they appear in. A block containing lexical declarations runs
+// against a copied scope; on exit every binding EXCEPT the
+// block-locals is merged back into the outer scope. `var`
+// declarations propagate (function/global-scoped) — matching
+// real JavaScript semantics. Mirrors the per-iteration snapshot
+// approach used by walkForStatement's lexical loop bindings.
+// ═══════════════════════════════════════════════════════
+
+// Names declared with let/const (or class) directly in a statement list.
+function collectLexicalNames(stmts) {
+  const names = [];
+  for (const s of stmts) {
+    if (!s) continue;
+    if (s.type === 'VariableDeclaration' && (s.kind === 'let' || s.kind === 'const')) {
+      for (const d of s.declarations) {
+        if (!d.id) continue;
+        if (d.id.type === 'Identifier') {
+          names.push(d.id.name);
+        } else if (d.id.type === 'ObjectPattern') {
+          for (const p of d.id.properties) {
+            const local = p.value && p.value.type === 'Identifier' ? p.value.name
+              : (p.key && p.key.type === 'Identifier' ? p.key.name : null);
+            if (local) names.push(local);
+          }
+        } else if (d.id.type === 'ArrayPattern') {
+          for (const el of d.id.elements) {
+            if (el && el.type === 'Identifier') names.push(el.name);
+          }
+        }
+      }
+    } else if (s.type === 'ClassDeclaration' && s.id) {
+      names.push(s.id.name);
+    }
+  }
+  return names;
+}
+
+// Copy every binding except the block-scoped names back into the outer scope.
+function mergeScope(scope, outerVars, scopedNames) {
+  for (const key of Object.keys(scope)) {
+    if (!scopedNames.includes(key)) outerVars[key] = scope[key];
+  }
+}
+
+// Walk a block's statement list with proper lexical scoping. If the block
+// declares let/const/class bindings, statements run against a copied scope
+// and outer bindings are merged back on exit (including via break/continue/
+// throw, so mutations made before the jump persist — like real JS).
+function walkBlockBody(stmts, fallbackNext, vars, output, lines, steps, state, options, depth) {
+  const scopedNames = collectLexicalNames(stmts);
+  const scope = scopedNames.length ? { ...vars } : vars;
+  try {
+    for (let i = 0; i < stmts.length; i++) {
+      walkStatement(stmts[i], stmts[i + 1] || fallbackNext, scope, output, lines, steps, state, options, depth);
+    }
+  } finally {
+    if (scope !== vars) mergeScope(scope, vars, scopedNames);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 // STEP-BY-STEP INTERPRETER
 // This is what modules call. It walks the AST and produces
 // an array of step objects for visualization.
@@ -256,9 +319,7 @@ function walkStatement(stmt, nextStmt, vars, output, lines, steps, state, option
       break;
 
     case 'BlockStatement':
-      for (let i = 0; i < stmt.body.length; i++) {
-        walkStatement(stmt.body[i], stmt.body[i+1] || nextStmt, vars, output, lines, steps, state, options, depth);
-      }
+      walkBlockBody(stmt.body, nextStmt, vars, output, lines, steps, state, options, depth);
       break;
 
     case 'BreakStatement':
@@ -677,9 +738,7 @@ function walkIfStatement(stmt, nextLi, vars, output, lines, steps, state, option
   if (condVal) {
     const block = stmt.consequent;
     if (block.type === 'BlockStatement') {
-      for (let i = 0; i < block.body.length; i++) {
-        walkStatement(block.body[i], block.body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
-      }
+      walkBlockBody(block.body, null, vars, output, lines, steps, state, options, depth + 1);
     } else {
       walkStatement(block, null, vars, output, lines, steps, state, options, depth + 1);
     }
@@ -715,9 +774,7 @@ function walkIfStatement(stmt, nextLi, vars, output, lines, steps, state, option
           elseEnterBrain,
           'ENTER: else block', state, options));
         if (stmt.alternate.type === 'BlockStatement') {
-          for (let i = 0; i < stmt.alternate.body.length; i++) {
-            walkStatement(stmt.alternate.body[i], stmt.alternate.body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
-          }
+          walkBlockBody(stmt.alternate.body, null, vars, output, lines, steps, state, options, depth + 1);
         } else {
           walkStatement(stmt.alternate, null, vars, output, lines, steps, state, options, depth + 1);
         }
@@ -800,18 +857,15 @@ function walkForStatement(stmt, nextLi, vars, output, lines, steps, state, optio
 
     // Body — for lexical loops, runs against a fresh per-iteration scope so
     // any closures created here capture this iteration's binding values.
+    // walkBlockBody additionally scopes let/const declared in the body itself.
     const iterScope = isLexical ? { ...vars } : vars;
     const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
     let hitBreak = false;
-    let hitContinue = false;
-    for (let i = 0; i < body.length; i++) {
-      try {
-        walkStatement(body[i], body[i+1] || null, iterScope, output, lines, steps, state, options, depth + 1);
-      } catch (sig) {
-        if (sig instanceof BreakSignal) { hitBreak = true; break; }
-        if (sig instanceof ContinueSignal) { hitContinue = true; break; }
-        throw sig;
-      }
+    try {
+      walkBlockBody(body, null, iterScope, output, lines, steps, state, options, depth + 1);
+    } catch (sig) {
+      if (sig instanceof BreakSignal) hitBreak = true;
+      else if (!(sig instanceof ContinueSignal)) throw sig;
     }
 
     // Propagate body-driven mutations of non-loop bindings back to the shared
@@ -834,6 +888,13 @@ function walkForStatement(stmt, nextLi, vars, output, lines, steps, state, optio
       evalNode(stmt.update, vars);
       if (updateName) state.memOps++;
     }
+  }
+
+  // Lexical loop bindings are scoped to the loop — remove them so they
+  // don't leak into statements after the loop (real let/const semantics).
+  // Closures captured per-iteration snapshots, so they're unaffected.
+  if (isLexical) {
+    for (const b of loopBindings) delete vars[b];
   }
 }
 
@@ -860,14 +921,11 @@ function walkWhileStatement(stmt, nextLi, vars, output, lines, steps, state, opt
 
     const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
     let hitBreak = false;
-    for (let i = 0; i < body.length; i++) {
-      try {
-        walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
-      } catch (sig) {
-        if (sig instanceof BreakSignal) { hitBreak = true; break; }
-        if (sig instanceof ContinueSignal) break;
-        throw sig;
-      }
+    try {
+      walkBlockBody(body, null, vars, output, lines, steps, state, options, depth + 1);
+    } catch (sig) {
+      if (sig instanceof BreakSignal) hitBreak = true;
+      else if (!(sig instanceof ContinueSignal)) throw sig;
     }
     if (hitBreak) break;
   }
@@ -949,50 +1007,61 @@ function walkSwitchStatement(stmt, nextLi, vars, output, lines, steps, state, op
     `SWITCH: evaluating discriminant → ${fv(disc)}\n\nV8 Internal — Jump Tables:\nFor switch statements with integer cases, V8 can compile a jump table — a direct array of code addresses indexed by the case value. This is O(1) dispatch, much faster than chained if/else comparisons.\n\nFor non-integer or sparse cases, V8 falls back to sequential comparison (like if/else if chains).`,
     `SWITCH: ${fv(disc)}`, state, options));
 
+  // The entire switch body is ONE block scope in real JS — let/const declared
+  // in any case is scoped to the switch and shared across cases.
+  const allCaseStmts = [];
+  for (const c of stmt.cases) allCaseStmts.push(...c.consequent);
+  const swLexicals = collectLexicalNames(allCaseStmts);
+  const swScope = swLexicals.length ? { ...vars } : vars;
+
   let matched = false;
   let fell = false;
-  for (const c of stmt.cases) {
-    if (c.test) {
-      const caseVal = evalNode(c.test, vars);
-      state.comps++;
-      if (!matched && !fell) {
-        if (disc === caseVal) {
+  try {
+    for (const c of stmt.cases) {
+      if (c.test) {
+        const caseVal = evalNode(c.test, swScope);
+        state.comps++;
+        if (!matched && !fell) {
+          if (disc === caseVal) {
+            matched = true;
+            const caseLi = nodeLine(c);
+            steps.push(makeStep(caseLi, null, swScope, output, null, 'switch-case',
+              `CASE ${fv(caseVal)}: MATCH — executing this branch.`,
+              `CASE: ${fv(caseVal)} ✓`, state, options));
+          } else {
+            const caseLi = nodeLine(c);
+            steps.push(makeStep(caseLi, null, swScope, output, null, 'skip',
+              `CASE ${fv(caseVal)}: no match (${fv(disc)} !== ${fv(caseVal)}). Skipping.`,
+              `CASE: ${fv(caseVal)} ✗`, state, options));
+            continue;
+          }
+        }
+      } else {
+        // default case
+        if (!matched) {
           matched = true;
           const caseLi = nodeLine(c);
-          steps.push(makeStep(caseLi, null, vars, output, null, 'switch-case',
-            `CASE ${fv(caseVal)}: MATCH — executing this branch.`,
-            `CASE: ${fv(caseVal)} ✓`, state, options));
-        } else {
-          const caseLi = nodeLine(c);
-          steps.push(makeStep(caseLi, null, vars, output, null, 'skip',
-            `CASE ${fv(caseVal)}: no match (${fv(disc)} !== ${fv(caseVal)}). Skipping.`,
-            `CASE: ${fv(caseVal)} ✗`, state, options));
-          continue;
+          steps.push(makeStep(caseLi, null, swScope, output, null, 'switch-default',
+            `DEFAULT: No case matched — executing default branch.`,
+            `DEFAULT`, state, options));
         }
       }
-    } else {
-      // default case
-      if (!matched) {
-        matched = true;
-        const caseLi = nodeLine(c);
-        steps.push(makeStep(caseLi, null, vars, output, null, 'switch-default',
-          `DEFAULT: No case matched — executing default branch.`,
-          `DEFAULT`, state, options));
-      }
-    }
-    if (matched) {
-      let hitBreak = false;
-      for (const s of c.consequent) {
-        try {
-          walkStatement(s, null, vars, output, lines, steps, state, options, depth + 1);
-        } catch (sig) {
-          if (sig instanceof BreakSignal) { hitBreak = true; break; }
-          throw sig;
+      if (matched) {
+        let hitBreak = false;
+        for (const s of c.consequent) {
+          try {
+            walkStatement(s, null, swScope, output, lines, steps, state, options, depth + 1);
+          } catch (sig) {
+            if (sig instanceof BreakSignal) { hitBreak = true; break; }
+            throw sig;
+          }
         }
+        if (hitBreak) break;
+        fell = true; // fall-through to next case
       }
-      if (hitBreak) break;
-      fell = true; // fall-through to next case
     }
+  } finally {
+    if (swScope !== vars) mergeScope(swScope, vars, swLexicals);
   }
 }
 
@@ -1006,6 +1075,12 @@ function walkForOfStatement(stmt, nextLi, vars, output, lines, steps, state, opt
     ? stmt.left.declarations[0].id.name
     : (stmt.left.type === 'Identifier' ? stmt.left.name : '_');
 
+  // let/const loop bindings are scoped to the loop — fresh per iteration,
+  // gone after the loop ends. `var` (or plain identifier) keeps writing to
+  // the outer scope, matching real JS.
+  const isLexical = !!(stmt.left.type === 'VariableDeclaration'
+    && (stmt.left.kind === 'let' || stmt.left.kind === 'const'));
+
   const initBrain = options.trackLoops
     ? buildForOfInitBrain(isForIn, iterable)
     : `${isForIn ? 'FOR...IN' : 'FOR...OF'}: iterating over ${fv(iterable)}\n\n${isForIn ? 'for...in iterates over enumerable property KEYS (strings).' : 'for...of iterates over iterable VALUES (arrays, strings, Maps, Sets).'}\n\n` +
@@ -1017,7 +1092,8 @@ function walkForOfStatement(stmt, nextLi, vars, output, lines, steps, state, opt
   let guard = 0;
   for (const item of items) {
     if (guard++ > 500) break;
-    vars[varName] = item;
+    const iterScope = isLexical ? { ...vars } : vars;
+    iterScope[varName] = item;
     state.memOps++;
     if (options.trackLoops) state.extra.loopIters++;
 
@@ -1026,22 +1102,22 @@ function walkForOfStatement(stmt, nextLi, vars, output, lines, steps, state, opt
       ? buildForOfIterBrain(isForIn, varName, item, iterNum)
       : `${isForIn ? 'FOR...IN' : 'FOR...OF'} iteration ${iterNum}: ${varName} = ${fv(item)}` +
         `\n\nV8 Internal — ${iterNum >= 3 ? 'HOT LOOP → TurboFan JIT via OSR.' : 'Ignition collecting type feedback.'}`;
-    steps.push(makeStep(li, null, vars, output, varName, 'loop-test',
+    steps.push(makeStep(li, null, iterScope, output, varName, 'loop-test',
       forOfBrain,
       `${isForIn ? 'FOR-IN' : 'FOR-OF'}: ${varName}=${fv(item)}`, state, options,
       false, { loopIter: iterNum }));
 
     const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
     let hitBreak = false;
-    for (let i = 0; i < body.length; i++) {
-      try {
-        walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
-      } catch (sig) {
-        if (sig instanceof BreakSignal) { hitBreak = true; break; }
-        if (sig instanceof ContinueSignal) break;
-        throw sig;
-      }
+    try {
+      walkBlockBody(body, null, iterScope, output, lines, steps, state, options, depth + 1);
+    } catch (sig) {
+      if (sig instanceof BreakSignal) hitBreak = true;
+      else if (!(sig instanceof ContinueSignal)) throw sig;
     }
+    // Carry body mutations of non-loop bindings back to the outer scope;
+    // the loop binding itself stays scoped to this iteration.
+    if (isLexical) mergeScope(iterScope, vars, [varName]);
     if (hitBreak) break;
   }
 }
@@ -1054,14 +1130,11 @@ function walkDoWhileStatement(stmt, nextLi, vars, output, lines, steps, state, o
     // Execute body first
     const body = stmt.body.type === 'BlockStatement' ? stmt.body.body : [stmt.body];
     let hitBreak = false;
-    for (let i = 0; i < body.length; i++) {
-      try {
-        walkStatement(body[i], body[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
-      } catch (sig) {
-        if (sig instanceof BreakSignal) { hitBreak = true; break; }
-        if (sig instanceof ContinueSignal) break;
-        throw sig;
-      }
+    try {
+      walkBlockBody(body, null, vars, output, lines, steps, state, options, depth + 1);
+    } catch (sig) {
+      if (sig instanceof BreakSignal) hitBreak = true;
+      else if (!(sig instanceof ContinueSignal)) throw sig;
     }
     if (hitBreak) break;
     // Then test
@@ -1091,28 +1164,29 @@ function walkTryStatement(stmt, nextLi, vars, output, lines, steps, state, optio
 
   let caught = false;
   try {
-    const tryBody = stmt.block.body;
-    for (let i = 0; i < tryBody.length; i++) {
-      walkStatement(tryBody[i], tryBody[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
-    }
+    walkBlockBody(stmt.block.body, null, vars, output, lines, steps, state, options, depth + 1);
   } catch (e) {
     caught = true;
     if (stmt.handler) {
       const catchLi = nodeLine(stmt.handler);
       const errVal = e && e._thrownValue !== undefined ? e._thrownValue : (e ? e.message : 'unknown error');
+      // The catch parameter is scoped to the catch block — it must not leak.
+      let paramName = null;
+      const catchScope = stmt.handler.param ? { ...vars } : vars;
       if (stmt.handler.param) {
-        const paramName = stmt.handler.param.type === 'Identifier' ? stmt.handler.param.name : 'err';
-        vars[paramName] = errVal;
+        paramName = stmt.handler.param.type === 'Identifier' ? stmt.handler.param.name : 'err';
+        catchScope[paramName] = errVal;
         state.memOps++;
       }
 
-      steps.push(makeStep(catchLi, null, vars, output, null, 'catch-enter',
+      steps.push(makeStep(catchLi, null, catchScope, output, null, 'catch-enter',
         `CATCH: Exception caught → ${fv(errVal)}\n\nV8 Internal — Stack Unwinding:\nV8 unwound the call stack from the throw point to this catch handler. All intermediate stack frames were discarded. The Error object contains a .stack property with the full call trace — V8 captures this lazily (only formatted when .stack is actually read).`,
         `CATCH: ${fv(errVal)}`, state, options));
 
-      const catchBody = stmt.handler.body.body;
-      for (let i = 0; i < catchBody.length; i++) {
-        walkStatement(catchBody[i], catchBody[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
+      try {
+        walkBlockBody(stmt.handler.body.body, null, catchScope, output, lines, steps, state, options, depth + 1);
+      } finally {
+        if (catchScope !== vars) mergeScope(catchScope, vars, [paramName]);
       }
     }
   }
@@ -1123,10 +1197,7 @@ function walkTryStatement(stmt, nextLi, vars, output, lines, steps, state, optio
       `FINALLY: This block ALWAYS runs — whether an exception was thrown or not.\n\nV8 Internal:\nFinally blocks are compiled as a separate code path that both the normal and exceptional control flows jump to. V8 ensures this block runs even if a return statement was executed inside try or catch.`,
       `FINALLY`, state, options));
 
-    const finBody = stmt.finalizer.body;
-    for (let i = 0; i < finBody.length; i++) {
-      walkStatement(finBody[i], finBody[i+1] || null, vars, output, lines, steps, state, options, depth + 1);
-    }
+    walkBlockBody(stmt.finalizer.body, null, vars, output, lines, steps, state, options, depth + 1);
   }
 }
 

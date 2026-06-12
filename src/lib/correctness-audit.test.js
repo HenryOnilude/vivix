@@ -140,22 +140,58 @@ describe('Comparison edge cases', () => {
 });
 
 // ═══════════════════════════════════════
-// 4. Variable scoping (flat scope model)
+// 4. Variable scoping (block-scoped let/const)
 // ═══════════════════════════════════════
 describe('Scoping behavior', () => {
-  it('variable declared in if-block leaks to outer scope (flat model)', () => {
-    // Our interpreter uses a flat vars object — let inside if-block IS visible outside
-    // This differs from real JS (let is block-scoped). This is a KNOWN simplification.
+  it('let declared in if-block does NOT leak to outer scope', () => {
     const { vars } = run('let x = 1;\nif (true) {\n  let y = 2;\n}');
-    // In real JS, y would be undefined here. In our interpreter, y leaks.
-    // This is a documented simplification — we should note it.
-    expect(vars.y).toBe(2); // Our behavior (flat scope)
+    expect('y' in vars).toBe(false);
+    expect(vars.x).toBe(1);
   });
 
-  it('for loop variable is accessible after loop (flat model)', () => {
-    const { vars } = run('for (let i = 0; i < 3; i++) {}\nlet x = i;');
-    // In real JS, i would be undefined. In our interpreter, it persists.
-    expect(vars.x).toBe(3); // Our behavior (flat scope)
+  it('var declared in if-block DOES leak (function/global-scoped)', () => {
+    const { vars } = run('let x = 1;\nif (true) {\n  var y = 2;\n}');
+    expect(vars.y).toBe(2);
+  });
+
+  it('inner let shadows the outer binding without overwriting it', () => {
+    const { vars } = run('let x = 1;\nif (true) {\n  let x = 2;\n}');
+    expect(vars.x).toBe(1);
+  });
+
+  it('assignment to an outer variable inside a block persists', () => {
+    const { vars } = run('let x = 1;\nif (true) {\n  x = 5;\n}');
+    expect(vars.x).toBe(5);
+  });
+
+  it('for-loop let counter is NOT accessible after the loop', () => {
+    const { vars } = run('let sum = 0;\nfor (let i = 0; i < 3; i++) {\n  sum = sum + i;\n}');
+    expect('i' in vars).toBe(false);
+    expect(vars.sum).toBe(3);
+  });
+
+  it('let declared in a while-body stays scoped to the body', () => {
+    const { vars } = run('let n = 0;\nwhile (n < 2) {\n  let tmp = n * 10;\n  n = n + 1;\n}');
+    expect('tmp' in vars).toBe(false);
+    expect(vars.n).toBe(2);
+  });
+
+  it('for-of const binding is NOT accessible after the loop', () => {
+    const { vars } = run('let sum = 0;\nfor (const v of [1, 2, 3]) {\n  sum = sum + v;\n}');
+    expect('v' in vars).toBe(false);
+    expect(vars.sum).toBe(6);
+  });
+
+  it('catch parameter stays scoped to the catch block', () => {
+    const { vars } = run('let msg = "";\ntry {\n  throw "boom";\n} catch (e) {\n  msg = e;\n}');
+    expect('e' in vars).toBe(false);
+    expect(vars.msg).toBe('boom');
+  });
+
+  it('let declared in an else-block stays scoped to it', () => {
+    const { vars } = run('let x = 1;\nif (false) {\n  let a = 1;\n} else {\n  let b = 2;\n  x = b;\n}');
+    expect('b' in vars).toBe(false);
+    expect(vars.x).toBe(2);
   });
 });
 

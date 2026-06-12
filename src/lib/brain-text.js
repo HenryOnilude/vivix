@@ -210,9 +210,9 @@ export function buildLoopTestBrain(testVal, iterNum, counterName, counterVal, pr
     return `The engine evaluates the condition as FALSE and exits after ${iterNum} iteration${iterNum !== 1 ? 's' : ''}${counterStr}. ${isHot ? 'TurboFan compiled this loop into optimised machine code after detecting consistent types across iterations — the compiled code is now discarded as the loop ends.' : 'Ignition interpreted every iteration as bytecode; the loop never became hot enough for TurboFan to compile.'} The counter\'s final value connects back to the initial value set in iteration one.`;
   }
   if (isHot) {
-    return `The engine evaluates the condition as TRUE and enters iteration ${iterNum}${counterStr}. Because the type has not changed across iterations, TurboFan marks this loop as hot and compiles it into optimised machine code via on-stack replacement. Note: let/const inside this loop block shares the outer scope in this visualiser — the real engine creates a fresh lexical environment per iteration.`;
+    return `The engine evaluates the condition as TRUE and enters iteration ${iterNum}${counterStr}. Because the type has not changed across iterations, TurboFan marks this loop as hot and compiles it into optimised machine code via on-stack replacement. Note: let/const declared inside this loop block get a fresh lexical environment each iteration and stay scoped to the block — matching the real engine.`;
   }
-  return `The engine evaluates the condition as TRUE and enters iteration ${iterNum}${counterStr}. Ignition is still interpreting as bytecode and collecting type feedback into the FeedbackVector — after enough consistent iterations TurboFan will compile this hot path into optimised machine code. Note: let/const inside this loop block shares the outer scope in this visualiser — the real engine creates a fresh lexical environment per iteration.`;
+  return `The engine evaluates the condition as TRUE and enters iteration ${iterNum}${counterStr}. Ignition is still interpreting as bytecode and collecting type feedback into the FeedbackVector — after enough consistent iterations TurboFan will compile this hot path into optimised machine code. Note: let/const declared inside this loop block get a fresh lexical environment each iteration and stay scoped to the block — matching the real engine.`;
 }
 
 /**
@@ -226,9 +226,9 @@ export function buildWhileTestBrain(testVal, iterNum) {
     return `The engine evaluates the while-condition as FALSE and exits after ${iterNum} iteration${iterNum !== 1 ? 's' : ''}. ${isHot ? 'TurboFan had compiled this loop into optimised machine code after detecting type-consistent iterations — that compiled code is now discarded.' : 'The loop never reached the hot threshold for TurboFan compilation; Ignition interpreted every iteration as bytecode.'} Execution resumes at the statement following the loop, connecting back to the state before iteration one.`;
   }
   if (isHot) {
-    return `The engine evaluates the while-condition as TRUE and enters iteration ${iterNum}. Consistent types across iterations caused TurboFan to mark this loop as hot and compile it into optimised machine code via on-stack replacement — the bytecode is swapped out mid-execution. Note: let/const inside this block shares the outer scope in this visualiser; the real engine creates a fresh lexical environment per iteration.`;
+    return `The engine evaluates the while-condition as TRUE and enters iteration ${iterNum}. Consistent types across iterations caused TurboFan to mark this loop as hot and compile it into optimised machine code via on-stack replacement — the bytecode is swapped out mid-execution. Note: let/const declared inside this block get a fresh lexical environment each iteration and stay scoped to the block — matching the real engine.`;
   }
-  return `The engine evaluates the while-condition as TRUE and enters iteration ${iterNum}. Ignition is interpreting as bytecode and collecting type feedback — TurboFan will compile this loop into optimised machine code once the types stay consistent across enough iterations. Note: let/const inside this block shares the outer scope in this visualiser; the real engine creates a fresh lexical environment per iteration.`;
+  return `The engine evaluates the while-condition as TRUE and enters iteration ${iterNum}. Ignition is interpreting as bytecode and collecting type feedback — TurboFan will compile this loop into optimised machine code once the types stay consistent across enough iterations. Note: let/const declared inside this block get a fresh lexical environment each iteration and stay scoped to the block — matching the real engine.`;
 }
 
 /**
@@ -242,9 +242,9 @@ export function buildDoWhileTestBrain(testVal, iterNum) {
     return `The engine evaluates the do-while condition as FALSE and exits after ${iterNum} iteration${iterNum !== 1 ? 's' : ''}. The body always executed at least once before this check — that is the key difference from a standard while loop. ${isHot ? 'TurboFan had compiled the hot path; that machine code is now discarded.' : 'Ignition interpreted every iteration as bytecode.'} The final state connects back to the values set during the first unconditional pass.`;
   }
   if (isHot) {
-    return `The engine evaluates the do-while condition as TRUE and repeats the body — iteration ${iterNum}. The body executed before this check, which is the defining trait of do-while. TurboFan has compiled this loop into optimised machine code via on-stack replacement after detecting consistent types. Note: let/const inside this block shares the outer scope in this visualiser; the real engine creates a fresh lexical environment per iteration.`;
+    return `The engine evaluates the do-while condition as TRUE and repeats the body — iteration ${iterNum}. The body executed before this check, which is the defining trait of do-while. TurboFan has compiled this loop into optimised machine code via on-stack replacement after detecting consistent types. Note: let/const declared inside this block get a fresh lexical environment each iteration and stay scoped to the block — matching the real engine.`;
   }
-  return `The engine evaluates the do-while condition as TRUE and repeats the body — iteration ${iterNum}. The body executed before this check, which is the defining trait of do-while. Ignition is collecting type feedback; TurboFan will compile once the types stay consistent across enough iterations. Note: let/const inside this block shares the outer scope in this visualiser; the real engine creates a fresh lexical environment per iteration.`;
+  return `The engine evaluates the do-while condition as TRUE and repeats the body — iteration ${iterNum}. The body executed before this check, which is the defining trait of do-while. Ignition is collecting type feedback; TurboFan will compile once the types stay consistent across enough iterations. Note: let/const declared inside this block get a fresh lexical environment each iteration and stay scoped to the block — matching the real engine.`;
 }
 
 /**
@@ -254,9 +254,9 @@ export function buildDoWhileTestBrain(testVal, iterNum) {
  */
 export function buildForOfInitBrain(isForIn, iterable) {
   if (isForIn) {
-    return `The engine begins a for-in loop over ${fv(iterable)}, collecting enumerable keys from the object. The iterator walks property keys as strings — the engine bets on type consistency (all strings) and will trigger TurboFan if the loop becomes hot. Note: let/const inside this block shares the outer scope in this visualiser; the real engine creates a fresh lexical environment per iteration.`;
+    return `The engine begins a for-in loop over ${fv(iterable)}, collecting enumerable keys from the object. The iterator walks property keys as strings — the engine bets on type consistency (all strings) and will trigger TurboFan if the loop becomes hot. Note: let/const declared inside this block get a fresh lexical environment each iteration and stay scoped to the block — matching the real engine.`;
   }
-  return `The engine begins a for-of loop over ${fv(iterable)}, calling [Symbol.iterator]() to obtain an iterator. Each iteration calls .next() and extracts the value — the engine bets on type consistency across values and will trigger TurboFan if the loop becomes hot. Note: let/const inside this block shares the outer scope in this visualiser; the real engine creates a fresh lexical environment per iteration.`;
+  return `The engine begins a for-of loop over ${fv(iterable)}, calling [Symbol.iterator]() to obtain an iterator. Each iteration calls .next() and extracts the value — the engine bets on type consistency across values and will trigger TurboFan if the loop becomes hot. Note: let/const declared inside this block get a fresh lexical environment each iteration and stay scoped to the block — matching the real engine.`;
 }
 
 /**
