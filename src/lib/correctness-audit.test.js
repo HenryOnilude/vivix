@@ -13,7 +13,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import { interpret } from './interpreter.js';
-import { byteSize } from './utils.js';
+import { byteSize, fv } from './utils.js';
+import { createFuncFromNode } from './evaluator.js';
 
 function run(code, opts = {}) {
   const result = interpret(code, opts);
@@ -504,5 +505,66 @@ describe('Console output', () => {
   it('console.log with template literal', () => {
     const { output } = run('let name = "World";\nconsole.log(`Hello, ${name}!`);');
     expect(output).toContain('Hello, World!');
+  });
+});
+
+// ═══════════════════════════════════════
+// Function display (minification-safety)
+// ═══════════════════════════════════════
+// Regression: production Rollup build renames `const fn = function(...)` to
+// `const a = function(...)`, so `fn.name` becomes 'a' and leaks into the UI.
+// createFuncFromNode must stamp _sourceName from the AST id, and fv/sanitize
+// must prefer that over val.name.
+describe('Function display (minification-safe)', () => {
+  const namedNode = {
+    type: 'FunctionDeclaration',
+    id: { name: 'makeCounter' },
+    params: [],
+    body: { type: 'BlockStatement', body: [] },
+  };
+  const anonymousNode = {
+    type: 'FunctionExpression',
+    id: null,
+    params: [],
+    body: { type: 'BlockStatement', body: [] },
+  };
+
+  it('named function carries _sourceName from AST', () => {
+    const fn = createFuncFromNode(namedNode, {});
+    expect(fn._isInterpreted).toBe(true);
+    expect(fn._sourceName).toBe('makeCounter');
+  });
+
+  it('anonymous function carries _sourceName = null', () => {
+    const fn = createFuncFromNode(anonymousNode, {});
+    expect(fn._isInterpreted).toBe(true);
+    expect(fn._sourceName).toBeNull();
+  });
+
+  it('fv shows ƒ name() for named interpreted function regardless of val.name', () => {
+    const fn = createFuncFromNode(namedNode, {});
+    // Simulate minification: override the runtime .name with a single letter
+    Object.defineProperty(fn, 'name', { value: 'a', configurable: true });
+    expect(fv(fn)).toBe('ƒ makeCounter()');
+  });
+
+  it('fv shows ƒ () for anonymous interpreted function regardless of val.name', () => {
+    const fn = createFuncFromNode(anonymousNode, {});
+    Object.defineProperty(fn, 'name', { value: 'a', configurable: true });
+    expect(fv(fn)).toBe('ƒ ()');
+  });
+
+  it('closure counter: counter and makeCounter display correctly', () => {
+    const { vars } = run(
+      'function makeCounter() {\n' +
+      '  let count = 0;\n' +
+      '  return function() { count++; return count; }\n' +
+      '}\n' +
+      'const counter = makeCounter();\n' +
+      'counter();\n' +
+      'counter();'
+    );
+    expect(fv(vars.makeCounter)).toBe('ƒ makeCounter()');
+    expect(fv(vars.counter)).toBe('ƒ ()');
   });
 });

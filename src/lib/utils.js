@@ -39,9 +39,11 @@ export function fv(val) {
   // Functions render as `ƒ name()` — otherwise `String(val)` below would
   // dump the runtime wrapper's full source code (interpreter internals)
   // into UI surfaces like the LET memLabel for closure examples.
+  // Use _sourceName (AST node id, minification-safe) when available.
   if (typeof val === 'function') {
-    const raw = val.name;
-    const fname = (raw && raw !== 'anonymous' && raw !== 'fn') ? raw : '';
+    const fname = val._isInterpreted
+      ? (val._sourceName || '')
+      : (val.name && val.name !== 'anonymous' && val.name !== 'fn') ? val.name : '';
     return fname ? `ƒ ${fname}()` : 'ƒ ()';
   }
   if (typeof val === 'object') return JSON.stringify(val);

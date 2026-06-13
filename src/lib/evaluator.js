@@ -381,6 +381,9 @@ export function createFuncFromNode(node, outerVars) {
     return returnVal;
   };
   fn._isInterpreted = true;
+  // Source name from the AST — immune to minifier renaming.
+  // Named functions: node.id.name ('makeCounter'); anonymous: null → 'ƒ ()'
+  fn._sourceName = node.id ? node.id.name : null;
   // Attach AST node and outer scope reference for closure detection
   if (_globalTrackClosures) {
     fn._astNode = node;

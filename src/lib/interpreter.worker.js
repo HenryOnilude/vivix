@@ -48,11 +48,12 @@ function sanitize(val, depth) {
   if (val === null || val === undefined) return val;
   const t = typeof val;
   if (t === 'function') {
-    // 'fn' is the interpreter wrapper's const-binding name in evaluator.js
-    // (`const fn = function(...args)`), so it leaks through as val.name —
-    // treat it the same as 'anonymous'.
-    const raw = val.name;
-    const fname = (raw && raw !== 'anonymous' && raw !== 'fn') ? raw : '';
+    // Prefer _sourceName stamped from the AST node id (minification-safe).
+    // val.name is unreliable in production — Rollup renames the wrapper
+    // variable (const fn = ...) to a single letter like 'a'.
+    const fname = val._isInterpreted
+      ? (val._sourceName || '')   // null/empty → anonymous 'ƒ ()'; string → 'ƒ name()'
+      : (val.name && val.name !== 'anonymous' && val.name !== 'fn') ? val.name : '';
     return fname ? `ƒ ${fname}()` : 'ƒ ()';
   }
   if (t === 'symbol')   return val.toString();
