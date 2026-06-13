@@ -135,6 +135,52 @@ describe('computeVarDiff', () => {
     );
     expect(diff).toEqual({ obj: 'changed' });
   });
+
+  it('treats objects with same keys in different insertion order as same', () => {
+    const prev = { a: 1, b: 2 };
+    const curr = Object.assign(Object.create(null), { b: 2, a: 1 });
+    curr.__proto__ = null;
+    // Reconstruct with different key order to simulate worker postMessage rebuild
+    const reordered = JSON.parse(JSON.stringify({ b: 2, a: 1 }));
+    const diff = computeVarDiff({ obj: reordered }, { obj: prev });
+    expect(diff).toEqual({ obj: 'same' });
+  });
+
+  it('treats null values as same', () => {
+    const diff = computeVarDiff({ x: null }, { x: null });
+    expect(diff).toEqual({ x: 'same' });
+  });
+
+  it('marks null vs non-null as changed', () => {
+    const diff = computeVarDiff({ x: null }, { x: 1 });
+    expect(diff).toEqual({ x: 'changed' });
+  });
+
+  it('treats function-placeholder strings as same when identical', () => {
+    const diff = computeVarDiff({ fn: 'ƒ add()' }, { fn: 'ƒ add()' });
+    expect(diff).toEqual({ fn: 'same' });
+  });
+
+  it('marks function-placeholder strings as changed when different', () => {
+    const diff = computeVarDiff({ fn: 'ƒ add()' }, { fn: 'ƒ sub()' });
+    expect(diff).toEqual({ fn: 'changed' });
+  });
+
+  it('treats deeply nested identical objects as same', () => {
+    const deep = { a: { b: { c: [1, 2, 3] } } };
+    const diff = computeVarDiff({ x: deep }, { x: JSON.parse(JSON.stringify(deep)) });
+    expect(diff).toEqual({ x: 'same' });
+  });
+
+  it('marks arrays with different lengths as changed', () => {
+    const diff = computeVarDiff({ arr: [1, 2, 3] }, { arr: [1, 2] });
+    expect(diff).toEqual({ arr: 'changed' });
+  });
+
+  it('marks objects with different key counts as changed', () => {
+    const diff = computeVarDiff({ obj: { a: 1, b: 2 } }, { obj: { a: 1 } });
+    expect(diff).toEqual({ obj: 'changed' });
+  });
 });
 
 // ── markerPct ───────────────────────────────────────────────────────────────

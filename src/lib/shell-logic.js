@@ -37,15 +37,45 @@ export function phIcon(ph) {
   return '▶';
 }
 
+// ── Structural equality ───────────────────────────────────────────────────────
+// Deep value comparison for sanitized step data (primitives, arrays, plain
+// objects, function-placeholder strings). Key-order independent for objects.
+// Exits on first mismatch — unchanged vars pay near-zero cost per step.
+function structuralEq(a, b) {
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== 'object') return false;
+
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+
+  if (Array.isArray(a)) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!structuralEq(a[i], b[i])) return false;
+    }
+    return true;
+  }
+
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const k of aKeys) {
+    if (!Object.prototype.hasOwnProperty.call(b, k)) return false;
+    if (!structuralEq(a[k], b[k])) return false;
+  }
+  return true;
+}
+
 // ── Variable diff between current and previous step ─────────────────────────
 // Which variables are new, changed, or unchanged between two steps.
 export function computeVarDiff(current, previous) {
   /** @type {Record<string, 'new'|'changed'|'same'>} */
   const r = {};
   for (const k of Object.keys(current)) {
-    if (!(k in previous))                                          r[k] = 'new';
-    else if (JSON.stringify(previous[k]) !== JSON.stringify(current[k])) r[k] = 'changed';
-    else                                                            r[k] = 'same';
+    if (!(k in previous))                          r[k] = 'new';
+    else if (!structuralEq(previous[k], current[k])) r[k] = 'changed';
+    else                                            r[k] = 'same';
   }
   return r;
 }
