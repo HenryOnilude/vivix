@@ -59,6 +59,18 @@ export function friendlyError(raw, code = '', line = '?') {
     };
   }
 
+  // ── import / export (parse fails before the checkSupported guard) ───────
+  // Acorn parses with sourceType: 'script', so top-level module syntax throws
+  // here rather than reaching checkSupported. Map it to the same helpful
+  // guidance instead of falling through to the generic bracket-matching hint.
+  if (/sourceType: module/i.test(msg) || /['"]import['"] and ['"]export['"] may appear/i.test(msg)) {
+    return {
+      friendly: 'This visualizer can\'t run import or export statements.',
+      hint: 'Vivix runs a single self-contained script — it doesn\'t support ES modules (import/export).\n\nTo visualize your code:\n• Remove the import and export lines\n• Paste just the function or logic you want to see, written in one block\n\nFor example, instead of:\n  import { useState } from "react";\n  export function Counter() { ... }\n\nPaste the plain logic:\n  let count = 0;\n  count++;',
+      raw
+    };
+  }
+
   if (/Missing initializer in const/i.test(msg)) {
     return {
       friendly: 'A `const` variable must be given a value when it\'s declared.',

@@ -618,6 +618,23 @@ describe('parser.js — friendlyError', () => {
     expect(fe.friendly).toContain('Something went wrong');
     expect(fe.raw).toBe('some random weird error');
   });
+
+  it('handles top-level import/export sourceType errors', () => {
+    const fe = friendlyError(
+      "'import' and 'export' may appear only with 'sourceType: module' (1:0)",
+      "import { useState } from 'react';\nexport function Counter() {}"
+    );
+    expect(fe.friendly).toContain('import or export');
+    expect(fe.hint).toContain('one block');
+    // Must NOT fall through to the generic bracket-matching fallback
+    expect(fe.friendly).not.toContain('Something went wrong');
+  });
+
+  it('maps import/export parse error through parseCode', () => {
+    const result = parseCodeDirect("import x from 'y';");
+    expect(result.error).toBeTruthy();
+    expect(result.friendly.friendly).toContain('import or export');
+  });
 });
 
 describe('parser.js — checkSupported', () => {
