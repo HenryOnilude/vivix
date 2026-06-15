@@ -104,6 +104,8 @@ export function buildShareUrl({ route, ex, step, code, exampleCode }) {
   const isCustom = code && exampleCode && code !== exampleCode;
   if (isCustom) params.set('code', encodeCode(code));
 
+  // Share attribution so inbound traffic can be traced
+  params.set('utm_source', 'share');
   const query = params.toString();
   const base = window.location.origin;
   return `${base}/${route}${query ? '?' + query : ''}`;

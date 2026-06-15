@@ -167,8 +167,13 @@
    *  power users open it once and stay open across visits. */
   const CX_OPEN_KEY = 'vivix-cx-open';
   let cxOpen = $state(false);
+  let _cxSkipNext = false;
   $effect(() => {
     try { localStorage.setItem(CX_OPEN_KEY, cxOpen ? '1' : '0'); } catch { /* ignore */ }
+    if (cxOpen && !_cxSkipNext) {
+      try { posthog.capture('complexity_card_opened', { module: routeKey || titlePrefix || 'unknown' }); } catch (_) {}
+    }
+    _cxSkipNext = false;
   });
 
   // ── Web Worker for off-main-thread interpretation ──
@@ -269,7 +274,7 @@
     const moduleName = routeKey || titlePrefix || 'unknown';
     try {
       posthog.capture('visualizer_step_triggered', {
-        module_name:    moduleName,
+        module:         moduleName,
         step_index:     newStep,
         dwell_time_ms:  dwell,
         trigger_source: source,
@@ -431,6 +436,13 @@
     selEx    = idx;
     codeText = examples[idx].code;
     _reset();
+    try {
+      posthog.capture('example_selected', {
+        module: routeKey,
+        example_index: idx,
+        example_label: examples[idx].label,
+      });
+    } catch (_) { /* analytics must never break example loading */ }
   }
 
   function _reset() {
@@ -514,12 +526,29 @@
     document.addEventListener('pointerdown', _onOutsideClick);
 
     // Restore complexity-card open state from localStorage (default closed).
-    try { cxOpen = localStorage.getItem(CX_OPEN_KEY) === '1'; } catch { /* ignore */ }
+    try { 
+      cxOpen = localStorage.getItem(CX_OPEN_KEY) === '1'; 
+      _cxSkipNext = cxOpen;
+    } catch { /* ignore */ }
 
     // Analytics: record that this module was opened. We only send the
     // identifier (never code), and guard against missing routeKey.
     const moduleName = routeKey || titlePrefix || 'unknown';
-    try { posthog.capture('module_opened', { module: moduleName }); } catch (_) {}
+    try { posthog.capture('module_opened', {
+      module: moduleName,
+      $set_once: {
+        first_module_ever: moduleName,
+        first_visit_source: document.referrer || 'direct',
+        first_visit_date: new Date().toISOString(),
+      },
+    }); } catch (_) {}
+    // Detect inbound share links
+    try {
+      const inboundParams = new URLSearchParams(window.location.search);
+      if (inboundParams.get('utm_source') === 'share') {
+        posthog.capture('share_link_opened', { module: moduleName });
+      }
+    } catch (_) {}
     // Stash the open timestamp so module_exit_early can report
     // time_on_module_ms when the user leaves without completing.
     _openedAt  = (typeof performance !== 'undefined' && performance.now)
@@ -621,7 +650,7 @@
     const moduleName = routeKey || titlePrefix || 'unknown';
     try {
       posthog.capture('module_exit_early', {
-        module_name:       moduleName,
+        module:            moduleName,
         last_step_reached: step,
         time_on_module_ms: Math.max(0, Math.round(now - _openedAt)),
       });
@@ -880,10 +909,17 @@
     try {
       await navigator.clipboard.writeText(url);
       shareToast = 'Link copied!';
+      posthog.capture('share_link_copied', { module: routeKey, has_custom_code: isCustomCode });
     } catch (e) {
       shareToast = 'Copy failed';
     }
     setTimeout(() => { shareToast = ''; }, 2200);
+  }
+
+  function toggleExplainMode() {
+    const newMode = explainMode === 'simple' ? 'advanced' : 'simple';
+    explainMode = newMode;
+    posthog.capture('explain_mode_toggled', { module: routeKey || titlePrefix || 'unknown', mode: newMode });
   }
 </script>
 
@@ -1080,7 +1116,7 @@
           <CpuDash
             {sd} {step} {total} {accent} {phColor}
             {explainMode}
-            onToggleMode={() => { explainMode = explainMode === 'simple' ? 'advanced' : 'simple'; }}
+            onToggleMode={toggleExplainMode}
             registers={cpuRegisters}
             gauge={cpuGauge}
             stack={cpuStack}

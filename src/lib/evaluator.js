@@ -13,6 +13,8 @@
 export let _globalTrackClosures = false;
 export function setGlobalTrackClosures(val) { _globalTrackClosures = val; }
 
+import { TDZ } from './utils.js';
+
 // ── Map AST node to source line (0-indexed) ──
 export function nodeLine(node) {
   return node && node.loc ? node.loc.start.line - 1 : -1;
@@ -36,7 +38,15 @@ export function evalNode(node, vars) {
       return node.value;
 
     case 'Identifier':
-      if (node.name in vars) return vars[node.name];
+      if (node.name in vars) {
+        if (vars[node.name] === TDZ) {
+          const err = new Error(`Cannot access '${node.name}' before initialization`);
+          err.name = 'ReferenceError';
+          err._thrownValue = { name: 'ReferenceError' };
+          throw err;
+        }
+        return vars[node.name];
+      }
       // Built-in constants
       if (node.name === 'undefined') return undefined;
       if (node.name === 'true') return true;
@@ -437,6 +447,43 @@ const _CLOSURE_BUILTINS = new Set([
 ]);
 
 /** Returns the set of variable names captured from outer scope by a function node. */
+// ── Seed TDZ markers for let/const declared in a statement list ───────────
+export function seedTDZ(stmts, vars) {
+  for (const s of stmts) {
+    if (s.type === 'VariableDeclaration' && (s.kind === 'let' || s.kind === 'const')) {
+      for (const d of s.declarations) {
+        if (d.id && d.id.type === 'Identifier') vars[d.id.name] = TDZ;
+      }
+    }
+  }
+}
+
+// ── Collect let/const/class names declared directly in a statement list ──
+function collectLexicalNames(stmts) {
+  const names = [];
+  for (const s of stmts) {
+    if (!s) continue;
+    if (s.type === 'VariableDeclaration' && (s.kind === 'let' || s.kind === 'const')) {
+      for (const d of s.declarations) {
+        if (!d.id) continue;
+        if (d.id.type === 'Identifier') names.push(d.id.name);
+        else if (d.id.type === 'ObjectPattern') {
+          for (const p of d.id.properties) {
+            const local = p.value && p.value.type === 'Identifier' ? p.value.name
+              : (p.key && p.key.type === 'Identifier' ? p.key.name : null);
+            if (local) names.push(local);
+          }
+        } else if (d.id.type === 'ArrayPattern') {
+          for (const el of d.id.elements) {
+            if (el && el.type === 'Identifier') names.push(el.name);
+          }
+        }
+      }
+    }
+  }
+  return names;
+}
+
 export function detectClosureVarNames(funcNode, outerVarNames) {
   if (!funcNode || !funcNode.body) return new Set();
   const refs = collectIdentifierRefs(funcNode.body);
@@ -650,10 +697,13 @@ export function execStmtSimple(stmt, vars) {
       return null;
     }
     case 'TryStatement': {
+      // Defer any return from try/catch so the finalizer ALWAYS runs first
+      // (matching JS semantics). A return in finally overrides the deferred one.
+      let pending = null;
       try {
         for (const s of stmt.block.body) {
           const r = execStmtSimple(s, vars);
-          if (r && r.__return__) return r;
+          if (r && r.__return__) { pending = r; break; }
         }
       } catch (e) {
         if (stmt.handler) {
@@ -663,7 +713,7 @@ export function execStmtSimple(stmt, vars) {
           }
           for (const s of stmt.handler.body.body) {
             const r = execStmtSimple(s, vars);
-            if (r && r.__return__) return r;
+            if (r && r.__return__) { pending = r; break; }
           }
         }
       }
@@ -673,7 +723,7 @@ export function execStmtSimple(stmt, vars) {
           if (r && r.__return__) return r;
         }
       }
-      return null;
+      return pending;
     }
     case 'ThrowStatement': {
       const val = evalNode(stmt.argument, vars);
@@ -693,9 +743,23 @@ export function execStmtSimple(stmt, vars) {
       return null;
     }
     case 'BlockStatement': {
+      const scopedNames = collectLexicalNames(stmt.body);
+      const scope = scopedNames.length ? { ...vars } : vars;
       for (const s of stmt.body) {
-        const r = execStmtSimple(s, vars);
-        if (r && r.__return__) return r;
+        const r = execStmtSimple(s, scope);
+        if (r && r.__return__) {
+          if (scope !== vars) {
+            for (const k of Object.keys(scope)) {
+              if (!scopedNames.includes(k)) vars[k] = scope[k];
+            }
+          }
+          return r;
+        }
+      }
+      if (scope !== vars) {
+        for (const k of Object.keys(scope)) {
+          if (!scopedNames.includes(k)) vars[k] = scope[k];
+        }
       }
       return null;
     }

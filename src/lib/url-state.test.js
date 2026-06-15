@@ -96,7 +96,7 @@ describe('buildShareUrl', () => {
   it('builds basic URL with just route', () => {
     const url = buildShareUrl({ route: 'variables', ex: 0, step: -1, code: '', exampleCode: '' });
     expect(url).toContain('/variables');
-    expect(url).not.toContain('?');
+    expect(url).toContain('utm_source=share');
   });
 
   it('includes ex param when > 0', () => {

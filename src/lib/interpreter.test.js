@@ -1515,3 +1515,69 @@ describe('Step limit', () => {
     expect(last.phase).toBe('done');
   });
 });
+
+// ═══════════════════════════════════════
+// Differential harness regression cases
+// ═══════════════════════════════════════
+describe('Differential harness — execStmtSimple fixes', () => {
+  it('try/finally return override: finally return wins over try return', () => {
+    const code = `function f() {
+  try {
+    return 'try';
+  } finally {
+    return 'finally';
+  }
+}
+const result = f();`;
+    const { steps } = run(code);
+    const last = steps[steps.length - 1];
+    expect(last.vars.result).toBe('finally');
+  });
+
+  it('finally side-effect runs even when try returns', () => {
+    const code = `let log = [];
+function f() {
+  try {
+    return 'try';
+  } finally {
+    log.push('finally');
+  }
+}
+const result = f();`;
+    const { steps } = run(code);
+    const last = steps[steps.length - 1];
+    expect(last.vars.result).toBe('try');
+    expect(last.vars.log).toEqual(['finally']);
+  });
+
+  it('temporal dead zone: reading let before declaration throws ReferenceError', () => {
+    const code = `let result;
+try {
+  result = value;
+} catch (e) {
+  result = 'threw ' + e.name;
+}
+let value = 42;`;
+    const { steps } = run(code);
+    const last = steps[steps.length - 1];
+    expect(last.vars.result).toBe('threw ReferenceError');
+  });
+
+  it('block shadowing inside function: inner let does not overwrite outer binding', () => {
+    const code = `function f() {
+  let x = 1;
+  const out = {};
+  {
+    let x = 2;
+    out.inner = x;
+  }
+  out.outer = x;
+  return out;
+}
+const result = f();`;
+    const { steps } = run(code);
+    const last = steps[steps.length - 1];
+    expect(last.vars.result.inner).toBe(2);
+    expect(last.vars.result.outer).toBe(1);
+  });
+});

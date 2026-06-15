@@ -11,6 +11,7 @@
   // Learn / Explore / Deep Dive toggle. Writes `<html data-depth="...">`
   // via depth-level.js; CSS rules consume it.
   import { onMount, onDestroy } from 'svelte';
+  import { posthog } from './posthog.js';
   import { LEVELS, LEVEL_LABELS, LEVEL_DESCRIPTIONS, getLevel, setLevel } from './depth-level.js';
 
   /** @type {{ accent?: string }} */
@@ -19,7 +20,9 @@
   let current = $state(getLevel());
 
   function onChange(lvl) {
+    const old = current;
     current = setLevel(lvl);
+    posthog.capture('depth_changed', { from: old, to: lvl });
   }
 
   // Stay in sync if another component / tab changes the level.

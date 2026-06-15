@@ -12,6 +12,12 @@
  * Eliminates duplication of formatting, type-checking, and deep-copy helpers.
  */
 
+// ── Temporal Dead Zone sentinel ──
+// Marks a let/const binding that has been hoisted into scope but not yet
+// initialized. Reading it (in evaluator.js) throws ReferenceError, matching JS.
+// dc() drops sentinel-valued keys so they never appear in step snapshots.
+export const TDZ = Symbol('tdz');
+
 // ── Deep clone ──
 // Handles functions (by reference), arrays, plain objects, and all primitives.
 // Uses structuredClone for non-function values where possible.
@@ -21,6 +27,7 @@ export function dc(o) {
   const out = {};
   for (const k of Object.keys(o)) {
     const v = o[k];
+    if (v === TDZ) continue;                        // uninitialized binding: hide
     if (typeof v === 'function') out[k] = v;        // functions: keep by reference
     else if (v === null || typeof v !== 'object') out[k] = v;  // primitives
     else if (Array.isArray(v)) out[k] = v.map(dc);  // arrays

@@ -50,14 +50,14 @@ import { dc, fv, byteSize, totalBytes } from './utils.js';
 
 // ── Re-export public APIs from split modules so existing imports still work ──
 export { parseCode, friendlyError, checkSupported } from './parser.js';
-export { evalNode, createFuncFromNode, createClassFromNode, detectClosureVarNames } from './evaluator.js';
+export { evalNode, createFuncFromNode, createClassFromNode, detectClosureVarNames, seedTDZ } from './evaluator.js';
 
 // ── Internal imports from split modules ──
 import { parseCode, friendlyError } from './parser.js';
 import {
   evalNode, evalCall, createFuncFromNode, createClassFromNode,
   detectClosureVarNames, isConsoleLog, detectPhase,
-  nodeLine, findNextLine, setGlobalTrackClosures
+  nodeLine, findNextLine, setGlobalTrackClosures, seedTDZ
 } from './evaluator.js';
 import { buildDeclBrain, buildDoneBrain, buildClosureStartBrain, buildClosureFnDeclareBrain, buildClosureCreateBrain, buildClosureCallBrain, buildClosureDoneBrain, buildFnCallStartBrain, buildFnCallFnDeclareBrain, buildFnCallCallBrain, buildFnCallReturnBrain, buildFnCallDoneBrain, buildLoopStartBrain, buildLoopTestBrain, buildWhileTestBrain, buildDoWhileTestBrain, buildForOfInitBrain, buildForOfIterBrain, buildLoopDoneBrain, buildArrayStartBrain, buildArrayDeclareBrain, buildArrayPushBrain, buildArrayPopBrain, buildArrayShiftBrain, buildArraySortBrain, buildArraySetBrain, buildArrayDoneBrain, buildObjStartBrain, buildObjDeclareBrain, buildObjSetBrain, buildObjDestructBrain, buildObjMethodBrain, buildObjDoneBrain, buildDSStartBrain, buildDSDeclareBrain, buildDSPushBrain, buildDSPopBrain, buildDSDequeueBrain, buildDSSortBrain, buildDSDoneBrain, buildIfStartBrain, buildIfConditionBrain, buildIfSkipBrain, buildIfElseEnterBrain, buildIfDoneBrain, buildVarStartBrain, buildVarDeclareBrain, buildVarAssignBrain, buildVarUpdateBrain, buildVarDoneBrain } from './brain-text.js';
 
@@ -161,6 +161,7 @@ export function interpret(code, options = {}) {
 
   const steps = [];
   const vars = {};
+  seedTDZ(ast.body, vars);
   const output = [];
   const state = { memOps: 0, comps: 0, extra: {}, _stepCount: 0, _maxSteps: options.maxSteps ?? MAX_STEPS };
 

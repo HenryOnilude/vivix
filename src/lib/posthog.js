@@ -89,6 +89,20 @@ function _flush() {
   }
 }
 
+const PH_ANON_KEY = 'vivix-ph-anon-id';
+
+function _getAnonId() {
+  if (typeof window === 'undefined') return null;
+  try {
+    let id = localStorage.getItem(PH_ANON_KEY);
+    if (!id) {
+      id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem(PH_ANON_KEY, id);
+    }
+    return id;
+  } catch (_) { return null; }
+}
+
 async function _load() {
   if (_ph || _loading || typeof window === 'undefined') return;
   _loading = true;
@@ -108,6 +122,8 @@ async function _load() {
       sanitize_properties: sanitizeProperties,
     });
     _ph = ph;
+    const anonId = _getAnonId();
+    if (anonId) ph.identify(anonId);
     _flush();
   } catch (err) {
     // Silently swallow — analytics must never break the app.
