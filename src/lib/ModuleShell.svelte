@@ -332,7 +332,7 @@
       // Snapshot the exact code that produced `steps` — any subsequent edit
       // makes `codeDirty` true and surfaces the "click Visualize to re-run" hint.
       codeSnapshot = codeText;
-      if (typeof onSteps === 'function') onSteps(steps);
+      if (typeof onSteps === 'function') onSteps(steps, codeSnapshot);
       mobileTab = 'visual'; // Auto-switch to visual tab on mobile after running
       // Land on step 1, paused — the user presses play to begin auto-play.
       // (Default state is paused; we never auto-start execution here.)
@@ -652,6 +652,7 @@
       posthog.capture('module_exit_early', {
         module:            moduleName,
         last_step_reached: step,
+        total_steps:       total,
         time_on_module_ms: Math.max(0, Math.round(now - _openedAt)),
       });
     } catch (_) { /* swallow */ }

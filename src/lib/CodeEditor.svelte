@@ -242,23 +242,26 @@
       view.dispatch({ effects: setActiveLineEffect.of(ln) });
     });
     if (ln == null || ln < 0) return;
-    const clamped = Math.min(Math.max(ln + 1, 1), view.state.doc.lines);
-    const linePos = view.state.doc.line(clamped).from;
     // Only scroll if the line is actually out of view — avoids yanking the
     // editor around while the user is scrolling manually.
-    view.requestMeasure({
-      read: () => {
-        const coords = view.coordsAtPos(linePos);
-        if (!coords) return null;
-        const rect = view.scrollDOM.getBoundingClientRect();
-        const outOfView = coords.top < rect.top + 20 || coords.bottom > rect.bottom - 20;
-        if (outOfView) {
-          tick().then(() => {
-            view.dispatch({ effects: EditorViewRef.scrollIntoView(linePos, { y: 'center' }) });
-          });
-        }
-        return null;
-      },
+    //
+    // Defer the read + dispatch to requestAnimationFrame, which runs AFTER
+    // CodeMirror's current measure/scroll pass. Previously this ran inside
+    // view.requestMeasure({ read }) and dispatched via tick().then(), which
+    // could land an EditorView.update while an update was still in progress
+    // ("Calls to EditorView.update are not allowed while an update is in
+    // progress" — seen on the homepage editor during onScroll/measure).
+    requestAnimationFrame(() => {
+      if (!view || !EditorViewRef) return;
+      const clamped = Math.min(Math.max(ln + 1, 1), view.state.doc.lines);
+      const linePos = view.state.doc.line(clamped).from;
+      const coords = view.coordsAtPos(linePos);
+      if (!coords) return;
+      const rect = view.scrollDOM.getBoundingClientRect();
+      const outOfView = coords.top < rect.top + 20 || coords.bottom > rect.bottom - 20;
+      if (outOfView) {
+        view.dispatch({ effects: EditorViewRef.scrollIntoView(linePos, { y: 'center' }) });
+      }
     });
   });
 </script>

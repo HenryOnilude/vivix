@@ -282,7 +282,7 @@ const sum = numbers.reduce(function(acc, num) {
     return result;
   }
 
-  function onSteps(newSteps) {
+  function onSteps(newSteps, code = '') {
     stepsRef    = newSteps;
     runRevision++;
     llmBrains   = {};
@@ -292,9 +292,14 @@ const sum = numbers.reduce(function(acc, num) {
     // Explicitly override $current_url with a scrubbed value so the `code`
     // hash param (which holds the user's source) can never reach PostHog,
     // even if the global sanitize_properties hook is ever removed.
+    // code_length/chars carry the SIZE of the submission only — never the
+    // source itself — so we can measure how big the programs people run are.
     try {
+      const len = (code || '').length;
       posthog.capture('freeform_submitted', {
         $current_url: scrubUrl(window.location.href),
+        code_length: len,
+        chars: len,
       });
     } catch (_) {}
     // Kick off background narration for every unmatched step sequentially.
