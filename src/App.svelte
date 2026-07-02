@@ -38,6 +38,7 @@
   };
 
   let route = $state(getRoute());
+  let embed = $state(getEmbed());
   let LazyComponent = $state(null);
   let loadError = $state('');
   let loading = $state(false);
@@ -45,6 +46,13 @@
   function getRoute() {
     const parsed = parseUrlState();
     return parsed.route;
+  }
+
+  // Embed mode ('/embed/<route>') renders the same module chrome-free so it
+  // can be iframed on other sites. Detected from the URL; the module itself
+  // (ModuleShell) also self-detects this to hide its header/nav.
+  function getEmbed() {
+    return parseUrlState().embed;
   }
 
   async function loadRoute(r) {
@@ -78,7 +86,7 @@
 
   onMount(() => {
     // ── Popstate — back/forward buttons and pushState navigation ─────────────
-    const popHandler = () => { route = getRoute(); };
+    const popHandler = () => { route = getRoute(); embed = getEmbed(); };
     window.addEventListener('popstate', popHandler);
 
     // ── Click interception — internal links → pushState SPA navigation ───────
@@ -102,8 +110,28 @@
 </script>
 
 <ErrorBoundary>
-  <div class="app" class:is-home={route === 'home' || route === ''}>
-    {#if route === 'home' || route === ''}
+  <div class="app" class:is-home={!embed && (route === 'home' || route === '')} class:is-embed={embed}>
+    {#if embed}
+      <!-- ── Embed mode ('/embed/<route>') ─────────────────────────────────────
+           Renders ONLY the visualiser, chrome-free, to be iframed on other
+           sites. Reuses the same ROUTE_LOADERS + lazy module + ModuleShell as
+           the normal routes (so the Web Worker + watchdog + step-cap are all
+           shared). ModuleShell self-detects embed mode from the URL and hides
+           its own header/nav. -->
+      {#if loading}
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Loading…</p>
+        </div>
+      {:else if LazyComponent}
+        <LazyComponent />
+      {:else}
+        <div class="not-found">
+          <p>Nothing to embed</p>
+          <a href="/" target="_blank" rel="noopener">Open Vivix →</a>
+        </div>
+      {/if}
+    {:else if route === 'home' || route === ''}
       <Home />
     {:else if loading}
       <div class="loading-spinner">
@@ -146,8 +174,28 @@
     overflow: visible;
   }
 
+  /* Embed mode fills whatever box the host iframe gives it, edge to edge.
+     Inside an iframe, 100vh resolves to the iframe's own height (not the
+     device viewport), so the tool fills exactly the box the host sized —
+     the same technique the normal `.app` module view already uses. */
+  .app.is-embed {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+  }
+
   @media (max-width: 768px) {
     .app {
+      height: auto;
+      min-height: 100vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Match the mobile behaviour of normal modules: stack + scroll inside
+       the iframe rather than clipping at narrow widths. `.app.is-embed`
+       out-specifies the rule above, so it needs its own mobile override. */
+    .app.is-embed {
       height: auto;
       min-height: 100vh;
       overflow: auto;

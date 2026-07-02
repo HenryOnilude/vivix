@@ -133,6 +133,14 @@
   } = $props();
 
   // ── State ──────────────────────────────────────────────────────────────────
+  // Embed mode — set when this module is mounted under '/embed/<route>'.
+  // Detected from the URL (App.svelte routes it) so no module wrapper needs
+  // to pass a prop. When true we hide the site chrome (header, example nav,
+  // onboarding tour, next-module CTAs) and stop rewriting the URL, leaving
+  // just the visualiser for iframing. Defaults false → zero change to the
+  // normal routes. Read once at init: an embed never transitions to a
+  // non-embed mount without a full navigation (which remounts the module).
+  const embedMode = (typeof window !== 'undefined') && parseUrlState().embed === true;
   let selEx    = $state(0);
   // eslint-disable-next-line -- intentionally captures initial example code
   let codeText = $state(examples[0]?.code ?? '');
@@ -661,6 +669,11 @@
   // ── Silently update URL when state changes ────────────────────────────────
   $effect(() => {
     if (!routeKey) return;
+    // In embed mode the URL is '/embed/<route>'. updateUrlSilent (via
+    // buildShareUrl) would rewrite it to '/<route>', dropping the embed
+    // prefix and breaking the iframe on the next state change. Skip it —
+    // an embedded visualiser doesn't need a shareable address bar anyway.
+    if (embedMode) return;
     updateUrlSilent({
       route: routeKey,
       ex: selEx,
@@ -927,7 +940,8 @@
 <div class="mod" role="main" aria-label="{titlePrefix}{titleAccent} learning module"
      data-pr-step={_prStep}
      data-route={routeKey}>
-  <!-- Header -->
+  <!-- Header (hidden in embed mode — iframes show only the visualiser) -->
+  {#if !embedMode}
   <header class="hdr">
     <a href="/" class="back" aria-label="Back to all modules">← modules</a>
     <div class="title-group">
@@ -944,6 +958,7 @@
       <div class="share-toast" style="--acc:{accent}">{shareToast}</div>
     {/if}
   </header>
+  {/if}
 
   <!-- Optional module-level informational note (purely additive) -->
   {#if headerNote}
@@ -1328,7 +1343,7 @@
              Centered card with 10 s auto-advance countdown. Appears after
              the final example completes. Clicking outside cancels countdown
              but keeps the card visible.                                   -->
-        {#if _level2Visible}
+        {#if _level2Visible && !embedMode}
           <aside class="level2-card" aria-label="Next module">
             <div class="level2-progress" style="transform: scaleX({_level2Progress})"></div>
             <div class="level2-body">
@@ -1369,8 +1384,11 @@
 
   <!-- First-run onboarding tour. Deferred until the user has clicked
        Visualize at least once so the "engine detail" tooltips never
-       appear before there is anything to visualise. -->
-  <OnboardingTour {accent} active={hasRun} />
+       appear before there is anything to visualise. Suppressed in embed
+       mode — a site-wide product tour makes no sense inside an iframe. -->
+  {#if !embedMode}
+    <OnboardingTour {accent} active={hasRun} />
+  {/if}
 </div>
 
 <style>

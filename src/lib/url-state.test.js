@@ -9,7 +9,7 @@
 
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { encodeCode, decodeCode, parseUrlState, buildShareUrl } from './url-state.js';
+import { encodeCode, decodeCode, parseUrlState, buildShareUrl, buildEmbedUrl } from './url-state.js';
 
 describe('encodeCode / decodeCode', () => {
   it('round-trips simple ASCII code', () => {
@@ -139,5 +139,85 @@ describe('buildShareUrl', () => {
     const params = new URLSearchParams(u.search);
     const decoded = decodeCode(params.get('code'));
     expect(decoded).toBe(customCode);
+  });
+});
+
+// ── Embed mode ────────────────────────────────────────────────────────────
+// '/embed/<route>' renders the visualiser chrome-free for iframing. It must
+// reuse the SAME decoding as a share link — only the `embed` flag differs.
+
+describe('parseUrlState — embed prefix', () => {
+  it('flags embed and resolves the inner route', () => {
+    const result = parseUrlState('/embed/closures', '');
+    expect(result.embed).toBe(true);
+    expect(result.route).toBe('closures');
+  });
+
+  it('decodes ex/step/code identically to a normal route', () => {
+    const code = 'let x = 10;\nx = x + 5;';
+    const encoded = encodeCode(code);
+    const result = parseUrlState('/embed/for-loop', `?ex=2&step=7&code=${encoded}`);
+    expect(result.embed).toBe(true);
+    expect(result.route).toBe('for-loop');
+    expect(result.ex).toBe(2);
+    expect(result.step).toBe(7);
+    expect(result.code).toBe(code);
+  });
+
+  it('handles trailing slash on the embed route', () => {
+    const result = parseUrlState('/embed/variables/', '');
+    expect(result.embed).toBe(true);
+    expect(result.route).toBe('variables');
+  });
+
+  it('treats bare /embed as embed with home route (invalid-embed fallback)', () => {
+    const result = parseUrlState('/embed', '');
+    expect(result.embed).toBe(true);
+    expect(result.route).toBe('home');
+  });
+
+  it('does NOT flag embed for normal routes', () => {
+    expect(parseUrlState('/closures', '').embed).toBe(false);
+    expect(parseUrlState('/', '').embed).toBe(false);
+  });
+
+  it('does not treat a route merely starting with "embed" as embed', () => {
+    // Guard the regex anchor — a hypothetical '/embedded' route must not match.
+    const result = parseUrlState('/embedded', '');
+    expect(result.embed).toBe(false);
+    expect(result.route).toBe('embedded');
+  });
+});
+
+describe('buildEmbedUrl', () => {
+  it('builds an /embed/<route> URL', () => {
+    const url = buildEmbedUrl({ route: 'closures', ex: 0, step: -1, code: '', exampleCode: '', origin: 'https://vivix.dev' });
+    expect(url).toBe('https://vivix.dev/embed/closures');
+  });
+
+  it('omits the share attribution tag', () => {
+    const url = buildEmbedUrl({ route: 'closures', ex: 2, step: 3, code: '', exampleCode: '', origin: 'https://vivix.dev' });
+    expect(url).not.toContain('utm_source');
+  });
+
+  it('applies the same ex/step inclusion rules as buildShareUrl', () => {
+    const url = buildEmbedUrl({ route: 'variables', ex: 2, step: 5, code: '', exampleCode: '', origin: 'https://vivix.dev' });
+    expect(url).toContain('ex=2');
+    expect(url).toContain('step=5');
+
+    const url0 = buildEmbedUrl({ route: 'variables', ex: 0, step: -1, code: '', exampleCode: '', origin: 'https://vivix.dev' });
+    expect(url0).not.toContain('ex=');
+    expect(url0).not.toContain('step=');
+  });
+
+  it('round-trips custom code back through parseUrlState', () => {
+    const customCode = 'const add = (a, b) => a + b;\nadd(2, 3);';
+    const url = buildEmbedUrl({ route: 'function', ex: 0, step: 0, code: customCode, exampleCode: 'different', origin: 'https://vivix.dev' });
+
+    const u = new URL(url);
+    const parsed = parseUrlState(u.pathname, u.search);
+    expect(parsed.embed).toBe(true);
+    expect(parsed.route).toBe('function');
+    expect(parsed.code).toBe(customCode);
   });
 });

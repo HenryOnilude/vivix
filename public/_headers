@@ -1,0 +1,19 @@
+# Cloudflare Pages headers (https://developers.cloudflare.com/pages/configuration/headers/)
+#
+# Framing policy — scoped to the embed route ONLY.
+#
+# Every other path is intentionally left untouched here so its current
+# header behaviour is unchanged. Only /embed/* is made iframe-able so other
+# sites (blogs, course material) can embed the visualiser like a YouTube video.
+#
+# `frame-ancestors *` allows any site to frame /embed/*. To restrict it to a
+# specific allow-list instead, replace `*` with space-separated origins, e.g.
+#   Content-Security-Policy: frame-ancestors https://yoursite.com https://*.edu
+#
+# NOTE: Cloudflare Pages does not send X-Frame-Options by default, so no
+# removal is needed here. If an X-Frame-Options: DENY/SAMEORIGIN header is set
+# elsewhere (e.g. a Cloudflare Transform Rule or the dashboard), it must be
+# relaxed for /embed/* THERE — a _headers file cannot delete a header added by
+# another layer.
+/embed/*
+  Content-Security-Policy: frame-ancestors *

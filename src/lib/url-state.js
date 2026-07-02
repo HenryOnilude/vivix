@@ -44,16 +44,29 @@ export function decodeCode(b64) {
  *
  * @param {string} [pathname] - location pathname (e.g. '/closures'). Defaults to current.
  * @param {string} [search]   - location search  (e.g. '?ex=3').     Defaults to current.
- * @returns {{ route: string, ex: number|null, step: number|null, code: string|null }}
+ * @returns {{ route: string, embed: boolean, ex: number|null, step: number|null, code: string|null }}
  */
 export function parseUrlState(
   pathname = (typeof window !== 'undefined' ? window.location.pathname : '/'),
   search   = (typeof window !== 'undefined' ? window.location.search   : ''),
 ) {
-  // Strip leading/trailing slashes — '/closures/' and '/closures' both map to 'closures'.
-  const route = pathname.replace(/^\/+|\/+$/g, '') || 'home';
+  // Embed prefix — '/embed/closures' renders the same module chrome-free for
+  // iframing. We strip the prefix here so the rest of the decoding (route,
+  // ex, step, code) is byte-for-byte identical to a normal share URL; only
+  // the returned `embed` flag differs. '/embed' with no module resolves to
+  // 'home', which the embed router treats as an invalid-embed fallback.
+  let embed = false;
+  let path = pathname;
+  const embedMatch = path.replace(/^\/+/, '').match(/^embed(?:\/(.*))?$/);
+  if (embedMatch) {
+    embed = true;
+    path = '/' + (embedMatch[1] || '');
+  }
 
-  const result = { route, ex: null, step: null, code: null };
+  // Strip leading/trailing slashes — '/closures/' and '/closures' both map to 'closures'.
+  const route = path.replace(/^\/+|\/+$/g, '') || 'home';
+
+  const result = { route, embed, ex: null, step: null, code: null };
 
   const params = new URLSearchParams(search || '');
 
@@ -109,6 +122,37 @@ export function buildShareUrl({ route, ex, step, code, exampleCode }) {
   const query = params.toString();
   const base = window.location.origin;
   return `${base}/${route}${query ? '?' + query : ''}`;
+}
+
+/**
+ * Build an embeddable URL (chrome-free `/embed/<route>`) for the current
+ * visualization state. Reuses the exact same param encoding as
+ * `buildShareUrl` — `encodeCode` for custom code, and the same ex/step
+ * inclusion rules — so an embed link decodes identically to a share link.
+ * The only difference is the `/embed` path prefix and the absence of the
+ * `utm_source=share` attribution tag (embeds are traced separately).
+ *
+ * @param {Object} opts
+ * @param {string}  opts.route          - module route key (e.g. 'closures')
+ * @param {number}  opts.ex             - selected example index
+ * @param {number}  opts.step           - current step index (-1 if not started)
+ * @param {string}  opts.code           - current code in editor
+ * @param {string}  [opts.exampleCode]  - the code of the currently selected example (to detect custom code)
+ * @param {string}  [opts.origin]       - override origin (defaults to window.location.origin)
+ * @returns {string} Full `/embed/<route>` URL
+ */
+export function buildEmbedUrl({ route, ex, step, code, exampleCode, origin }) {
+  const params = new URLSearchParams();
+
+  if (ex != null && ex > 0) params.set('ex', String(ex));
+  if (step != null && step >= 0) params.set('step', String(step));
+
+  const isCustom = code && exampleCode && code !== exampleCode;
+  if (isCustom) params.set('code', encodeCode(code));
+
+  const query = params.toString();
+  const base = origin || (typeof window !== 'undefined' ? window.location.origin : '');
+  return `${base}/embed/${route}${query ? '?' + query : ''}`;
 }
 
 // ── Client-side navigation (History API) ───────────────────────────────────
