@@ -65,6 +65,7 @@ export function createInterpreterWorker() {
         finish({
           steps: [],
           error: 'Execution stopped',
+          timeout: true,
           friendly: {
             friendly: 'Execution stopped — this code may run too long or contain an unsupported pattern.',
             hint: 'Try simplifying the code, reducing loop sizes, or removing complex regular expressions.',

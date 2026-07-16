@@ -157,6 +157,13 @@
   let steps    = $state.raw([]);
   let playing  = $state(false);
   let timer    = $state(null);
+  /** Diagnostics for the auto-step timer: tracks the step index at the last
+   *  timer tick and how many consecutive ticks have fired without advancing.
+   *  If a bug causes oscillation or stuck ticks, we stop the timer and warn
+   *  instead of silently flooding analytics. */
+  let _lastTimerStep = -1;
+  let _timerRepeatCount = 0;
+  const MAX_TIMER_REPEAT = 5;
   let hasRun   = $state(false);
   let err      = $state('');
   /** @type {{ friendly:string, hint:string, raw:string }|null} */
@@ -323,6 +330,16 @@
         const result = await interpWorker.run(codeText, interpreterOptions);
         if (result.error) {
           errFriendly = result.friendly || friendlyError(result.error, codeText);
+          // Free-form timeout: a hung worker usually means an infinite loop
+          // or heavy recursion. Replace the generic worker message with the
+          // specific, actionable message requested for this failure mode.
+          if (result.timeout && routeKey === 'free-form') {
+            errFriendly = {
+              friendly: 'Your code is taking too long to run — check for infinite loops.',
+              hint: 'Try reducing loop iterations, adding a missing exit condition, or simplifying recursive calls. The interpreter stops after 10 seconds to protect your browser.',
+              raw: result.error,
+            };
+          }
           throw new Error(result.error);
         }
         rawSteps = result.steps;
@@ -379,10 +396,43 @@
   function goNext()  { if (hasRun && step < total - 1) _advanceStep(step + 1, 'manual'); }
   function goLast()  { if (hasRun) _advanceStep(total - 1,   'manual'); }
 
+  /** Clear the auto-step timer and reset its diagnostic state. */
+  function _clearTimer() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    playing = false;
+    _lastTimerStep = -1;
+    _timerRepeatCount = 0;
+  }
+
   function _startTimer(ms) {
+    // Prevent duplicate intervals (e.g. speed change, rapid toggles).
+    _clearTimer();
+    playing = true;
     timer = setInterval(() => {
-      if (step < total - 1) _advanceStep(step + 1, 'auto');
-      else                  _advanceStep(0,        'auto');
+      // No valid run state — bail out.
+      if (!hasRun || total <= 0) return _clearTimer();
+
+      // Permanently stop at the final step; never wrap back to 0.
+      if (step >= total - 1) return _clearTimer();
+
+      // Oscillation guard: don't fire again for the same step index we
+      // already advanced from. If the timer ticks without progress, count it
+      // and stop after MAX_TIMER_REPEAT to prevent runaway analytics loops.
+      if (step === _lastTimerStep) {
+        _timerRepeatCount++;
+        if (_timerRepeatCount > MAX_TIMER_REPEAT) {
+          console.warn(
+            `[Vivix] Auto-step timer fired ${MAX_TIMER_REPEAT} times without advancing (step=${step}). Stopping to prevent runaway loop.`
+          );
+          return _clearTimer();
+        }
+        return;
+      }
+
+      _lastTimerStep = step;
+      _timerRepeatCount = 0;
+      _advanceStep(step + 1, 'auto');
     }, ms);
   }
 
@@ -421,7 +471,7 @@
 
   function toggleAuto() {
     if (playing) {
-      clearInterval(timer); timer = null; playing = false;
+      _clearTimer();
     } else {
       // Rewind-to-start when toggling play from the final step counts as a
       // manual advancement (the user explicitly clicked Auto).
@@ -435,7 +485,6 @@
   function setSpeed(s) {
     speed = s;
     if (playing) {
-      clearInterval(timer);
       _startTimer(Math.round(1800 / s));
     }
   }
@@ -456,7 +505,7 @@
   function _reset() {
     hasRun = false; step = -1; steps = []; err = ''; errFriendly = null; dynamicCx = null;
     _lastStepAt = 0;
-    if (playing) { clearInterval(timer); timer = null; playing = false; }
+    if (playing) _clearTimer();
   }
 
   function editCode() { _reset(); mobileTab = 'code'; }
@@ -564,9 +613,20 @@
     _exitFired = false;
 
     // Fire `module_exit_early` on tab close / navigation away. Mirrors
-    // PostHog's $pageleave timing but carries our richer payload.
-    const _onPageHide = () => _maybeFireExitEarly();
+    // PostHog's $pageleave timing but carries our richer payload. Also stop
+    // the auto-step timer so a background tab can't keep firing events.
+    const _onPageHide = () => {
+      _clearTimer();
+      _maybeFireExitEarly();
+    };
     window.addEventListener('pagehide', _onPageHide);
+
+    // Pause auto-play when the tab is hidden to prevent background timers
+    // from firing analytics and consuming CPU.
+    const _onVisibilityChange = () => {
+      if (document.hidden && playing) _clearTimer();
+    };
+    document.addEventListener('visibilitychange', _onVisibilityChange);
 
     // Read URL params and apply initial state
     if (!_urlApplied) {
@@ -629,15 +689,17 @@
       document.removeEventListener('keydown', _onEsc);
       document.removeEventListener('pointerdown', _onOutsideClick);
       window.removeEventListener('pagehide', _onPageHide);
+      document.removeEventListener('visibilitychange', _onVisibilityChange);
       window.removeEventListener('pointerdown', _onUserInteraction);
       window.removeEventListener('keydown',     _onUserInteraction);
       _cancelAutoAdvance();
       // Component is unmounting (route change, parent unmount, etc.) —
       // emit module_exit_early if the user opened the module but never
       // completed it. Idempotent via _exitFired so pagehide + unmount
-      // can't double-fire.
+      // can't double-fire. Also clear the auto-step timer so route changes
+      // don't carry a running interval into the next module.
       _maybeFireExitEarly();
-      if (timer) clearInterval(timer);
+      _clearTimer();
       if (interpWorker) { interpWorker.terminate(); interpWorker = null; }
     };
   });

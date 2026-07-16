@@ -59,13 +59,26 @@ export function friendlyError(raw, code = '', line = '?') {
     };
   }
 
+  // ── async / await (detected by checkSupported after parse) ──────────────
+  // Acorn parses async functions fine in script mode, but the interpreter
+  // can't step through them. Give a specific, actionable message rather
+  // than the generic "Unsupported feature" fallback.
+  if (/async functions|async\/await/i.test(msg)) {
+    return {
+      friendly: 'This visualizer doesn\'t support async functions yet.',
+      hint: 'Async/await code can\'t be stepped through here yet. Try the Async/Await module for promise visualisations, or rewrite this code with synchronous logic.',
+      raw
+    };
+  }
+
   // ── import / export (parse fails before the checkSupported guard) ───────
   // Acorn parses with sourceType: 'script', so top-level module syntax throws
   // here rather than reaching checkSupported. Map it to the same helpful
   // guidance instead of falling through to the generic bracket-matching hint.
-  if (/sourceType: module/i.test(msg) || /['"]import['"] and ['"]export['"] may appear/i.test(msg)) {
+  // Also catches the checkSupported messages for ImportDeclaration / Export*.
+  if (/sourceType: module/i.test(msg) || /['"]import['"] and ['"]export['"] may appear/i.test(msg) || /import statements/i.test(msg) || /export statements/i.test(msg)) {
     return {
-      friendly: 'This visualizer can\'t run import or export statements.',
+      friendly: 'This visualizer works with plain scripts — remove import/export statements to run this.',
       hint: 'Vivix runs a single self-contained script — it doesn\'t support ES modules (import/export).\n\nTo visualize your code:\n• Remove the import and export lines\n• Paste just the function or logic you want to see, written in one block\n\nFor example, instead of:\n  import { useState } from "react";\n  export function Counter() { ... }\n\nPaste the plain logic:\n  let count = 0;\n  count++;',
       raw
     };

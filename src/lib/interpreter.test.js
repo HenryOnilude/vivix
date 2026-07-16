@@ -624,7 +624,7 @@ describe('parser.js — friendlyError', () => {
       "'import' and 'export' may appear only with 'sourceType: module' (1:0)",
       "import { useState } from 'react';\nexport function Counter() {}"
     );
-    expect(fe.friendly).toContain('import or export');
+    expect(fe.friendly).toContain('plain scripts');
     expect(fe.hint).toContain('one block');
     // Must NOT fall through to the generic bracket-matching fallback
     expect(fe.friendly).not.toContain('Something went wrong');
@@ -633,7 +633,17 @@ describe('parser.js — friendlyError', () => {
   it('maps import/export parse error through parseCode', () => {
     const result = parseCodeDirect("import x from 'y';");
     expect(result.error).toBeTruthy();
-    expect(result.friendly.friendly).toContain('import or export');
+    expect(result.friendly.friendly).toContain('remove import/export');
+  });
+
+  it('maps checkSupported async message to the specific friendly error', () => {
+    const fe = friendlyError('Unsupported feature: async functions (line 1). This visualizer doesn\'t support this syntax yet.');
+    expect(fe.friendly).toContain('doesn\'t support async functions');
+  });
+
+  it('maps checkSupported import/export message to the specific friendly error', () => {
+    const fe = friendlyError('Unsupported feature: import statements (line 1). This visualizer doesn\'t support this syntax yet.');
+    expect(fe.friendly).toContain('plain scripts');
   });
 });
 
